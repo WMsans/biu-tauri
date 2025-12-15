@@ -1,10 +1,13 @@
 import axios, { type CreateAxiosDefaults } from "axios";
 
 import { requestInterceptors } from "./request-interceptors";
+import { tauriAxiosAdapter } from "./tauri-axios-adapter";
 
+// Always use the Tauri adapter
 const axiosConfig: CreateAxiosDefaults = {
   timeout: 10000,
   withCredentials: true,
+  adapter: tauriAxiosAdapter, // Changed: Removed conditional check
 };
 
 export const axiosInstance = axios.create(axiosConfig);

@@ -9,6 +9,7 @@ import Theme from "./components/theme";
 import routes from "./routes";
 import { useAppUpdateStore } from "./store/app-update";
 import { usePlayList } from "./store/play-list";
+import { tauriAdapter } from "./utils/tauri-adapter";
 
 import "moment/locale/zh-cn";
 
@@ -27,16 +28,16 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    if (window.electron && window.electron.navigate) {
-      const removeListener = window.electron.navigate(path => navigate(path));
+    if (tauriAdapter && tauriAdapter.navigate) {
+      const removeListener = tauriAdapter.navigate(path => navigate(path));
       return removeListener;
     }
   }, [navigate]);
 
   // 订阅来自主进程的任务栏缩略按钮命令
   useEffect(() => {
-    if (window.electron && window.electron.onPlayerCommand) {
-      window.electron.onPlayerCommand(cmd => {
+    if (tauriAdapter && tauriAdapter.onPlayerCommand) {
+      tauriAdapter.onPlayerCommand(cmd => {
         const { prev, next, togglePlay } = usePlayList.getState();
         if (cmd === "prev") {
           prev();
@@ -50,7 +51,7 @@ export function App() {
   }, []);
 
   useEffect(() => {
-    const removeListener = window.electron.onUpdateAvailable(updateInfo => {
+    const removeListener = tauriAdapter.onUpdateAvailable(updateInfo => {
       setUpdate({
         isUpdateAvailable: true,
         latestVersion: updateInfo.latestVersion,
@@ -60,6 +61,21 @@ export function App() {
 
     return () => {
       removeListener();
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (usePlayList.getState().currentTime) {
+        localStorage.setItem("play-current-time", String(usePlayList.getState().currentTime));
+      }
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    // 清理函数
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
     };
   }, []);
 

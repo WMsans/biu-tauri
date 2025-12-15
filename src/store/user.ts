@@ -4,6 +4,7 @@ import { persist } from "zustand/middleware";
 import { getFavFolderCollectedList, type FavFolderCollectedItem } from "@/service/fav-folder-collected-list";
 import { getFavFolderCreatedListAll, type FavFolderItem } from "@/service/fav-folder-created-list-all";
 import { getUserInfo, type UserInfo } from "@/service/user-info";
+import { tauriAdapter } from "@/utils/tauri-adapter";
 
 interface UserState {
   user: UserInfo | null;
@@ -121,7 +122,24 @@ export const useUser = create<UserState & Action>()(
     }),
     {
       name: "user",
-      partialize: state => ({ user: state.user }),
+      partialize: state => state.user,
+      storage: {
+        getItem: async () => {
+          const store = await tauriAdapter.getStore("user-login-info");
+
+          return {
+            state: store,
+          };
+        },
+
+        setItem: async (_, value) => {
+          await tauriAdapter.setStore("user-login-info", value.state);
+        },
+
+        removeItem: async () => {
+          await tauriAdapter.clearStore("user-login-info");
+        },
+      },
     },
   ),
 );

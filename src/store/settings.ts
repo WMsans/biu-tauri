@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+import { tauriAdapter } from "@/utils/tauri-adapter";
 import { defaultAppSettings } from "@shared/settings/app-settings";
 
 interface SettingsActions {
@@ -30,24 +31,25 @@ export const useSettings = create<AppSettings & SettingsActions>()(
       name: "settings",
       storage: {
         getItem: async () => {
-          const store = await window.electron.getSettings();
+          // Use the specific getSettings command
+          const settings = await tauriAdapter.getSettings();
 
-          // 兼容之前的错误默认值
-          if (store.fontFamily === "system-default") {
-            store.fontFamily = "system-ui";
+          if (settings?.fontFamily === "system-default") {
+            settings.fontFamily = "system-ui";
           }
 
+          // Return the settings object directly as the state
           return {
-            state: store,
+            state: settings,
           };
         },
 
         setItem: async (_, value) => {
-          await window.electron.setSettings(value.state);
+          await tauriAdapter.setSettings(value.state);
         },
 
         removeItem: async () => {
-          await window.electron.clearSettings();
+          await tauriAdapter.clearSettings();
         },
       },
       partialize: state => {
@@ -62,6 +64,8 @@ export const useSettings = create<AppSettings & SettingsActions>()(
           borderRadius: state.borderRadius,
           audioQuality: state.audioQuality,
           hiddenMenuKeys: state.hiddenMenuKeys,
+          displayMode: state.displayMode,
+          ffmpegPath: state.ffmpegPath,
         };
       },
     },
