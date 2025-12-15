@@ -153,7 +153,6 @@ async fn run_proxy_server(port_state: Arc<Mutex<u16>>) {
         let mut p = port_state.lock().unwrap();
         *p = port;
     }
-    println!("Local Audio Proxy running on port: {}", port);
 
     let client = reqwest::Client::builder()
         .user_agent(DEFAULT_USER_AGENT)
