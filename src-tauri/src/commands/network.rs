@@ -1,6 +1,8 @@
 use crate::error::AppError;
-use crate::state::models::{AppHttpClient, HttpInvokePayload, ProxyPort};
+use crate::services::wbi;
+use crate::state::models::{AppHttpClient, HttpInvokePayload, ProxyPort, WbiStore};
 use serde_json;
+use std::collections::HashMap;
 use tauri::State;
 
 #[tauri::command]
@@ -48,4 +50,13 @@ pub async fn get_proxy_port(state: State<'_, ProxyPort>) -> Result<u16, AppError
         return Err(AppError::NetworkError("Proxy not ready".to_string()));
     }
     Ok(port)
+}
+
+#[tauri::command]
+pub async fn wbi_sign_params(
+    client: State<'_, AppHttpClient>,
+    wbi_store: State<'_, WbiStore>,
+    params: HashMap<String, String>,
+) -> Result<HashMap<String, String>, AppError> {
+    wbi::sign_params(&client.0, &wbi_store, params).await
 }

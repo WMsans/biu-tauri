@@ -1,9 +1,11 @@
 use crate::commands::store;
 use crate::error::AppError;
 use crate::services::http::DEFAULT_USER_AGENT;
+use crate::services::wbi;
 use crate::state::models::*;
 use futures_util::StreamExt;
 use reqwest::header::{HeaderMap, RANGE, REFERER, USER_AGENT};
+use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
 use tauri::async_runtime::JoinHandle;
@@ -13,15 +15,26 @@ use tokio::io::AsyncWriteExt;
 
 pub async fn fetch_bili_url(
     client: &reqwest::Client,
+    wbi_store: &WbiStore,
     bvid: &str,
     cid: &str,
 ) -> Result<String, AppError> {
-    let api_url = format!(
-        "https://api.bilibili.com/x/player/playurl?bvid={}&cid={}&qn=80&fnval=16",
-        bvid, cid
-    );
+    // 1. Prepare raw params
+    let mut params = HashMap::new();
+    params.insert("bvid".to_string(), bvid.to_string());
+    params.insert("cid".to_string(), cid.to_string());
+    params.insert("qn".to_string(), "80".to_string()); // 80: 1080P
+    params.insert("fnval".to_string(), "16".to_string()); // 16: Dash
+    params.insert("fnver".to_string(), "0".to_string());
+    params.insert("fourk".to_string(), "1".to_string());
+
+    // 2. Sign params using WBI service
+    let signed_params = wbi::sign_params(client, wbi_store, params).await?;
+
+    // 3. Construct URL
     let res = client
-        .get(&api_url)
+        .get("https://api.bilibili.com/x/player/wbi/playurl")
+        .query(&signed_params)
         .header(REFERER, "https://www.bilibili.com")
         .send()
         .await
@@ -58,9 +71,12 @@ pub async fn fetch_bili_url(
 pub fn spawn_download_task(
     app: AppHandle,
     client: reqwest::Client,
+    wbi_store: WbiStore, // Add WbiStore
     params: DownloadOptions,
 ) -> JoinHandle<()> {
     tauri::async_runtime::spawn(async move {
+        // We pass wbi_store but currently download_task_runner only downloads the file
+        // The URL is already fetched in the command. 
         if let Err(e) = download_task_runner(app, client, params).await {
             log::error!("Download task failed: {}", e);
         }

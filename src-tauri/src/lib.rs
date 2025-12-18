@@ -8,7 +8,7 @@ pub mod state;
 
 use crate::services::{http, proxy::run_proxy_server};
 use error::AppError;
-use state::models::{AppHttpClient, ProxyPort, TaskStore};
+use state::models::{AppHttpClient, ProxyPort, TaskStore, WbiStore, WbiKeysCache};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() -> Result<(), AppError> {
@@ -19,6 +19,9 @@ pub fn run() -> Result<(), AppError> {
 
     // 1. Initialize Task Store
     let task_store = TaskStore::new();
+    
+    // 2. Initialize WBI Store
+    let wbi_store = WbiStore(Arc::new(Mutex::new(WbiKeysCache::new())));
 
     // Start Proxy Server
     tauri::async_runtime::spawn(async move {
@@ -38,7 +41,8 @@ pub fn run() -> Result<(), AppError> {
         .plugin(tauri_plugin_http::init())
         .manage(AppHttpClient(http::build_client()))
         .manage(ProxyPort(proxy_port))
-        .manage(task_store) // 2. IMPORTANT: Register the store here
+        .manage(task_store)
+        .manage(wbi_store) // Register WBI Store
         .invoke_handler(|invoke| {
             commands::get_handlers()(invoke);
             true

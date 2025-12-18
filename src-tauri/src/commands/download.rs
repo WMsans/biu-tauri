@@ -17,10 +17,11 @@ pub async fn check_file_exists(app: AppHandle, filename: String) -> Result<bool,
 pub async fn start_download(
     app: AppHandle,
     client: State<'_, AppHttpClient>,
+    wbi_store: State<'_, WbiStore>, // Added
     params: DownloadOptions,
 ) -> Result<serde_json::Value, AppError> {
     // Legacy simple download without state tracking
-    spawn_download_task(app, client.0.clone(), params);
+    spawn_download_task(app, client.0.clone(), WbiStore(wbi_store.0.clone()), params);
     Ok(serde_json::json!({ "success": true }))
 }
 
@@ -38,13 +39,14 @@ pub async fn add_media_download_task(
     app: AppHandle,
     client: State<'_, AppHttpClient>,
     store: State<'_, TaskStore>,
+    wbi_store: State<'_, WbiStore>, // Added
     task: MediaDownloadRequest,
 ) -> Result<serde_json::Value, AppError> {
     let bvid = task.bvid.clone().ok_or(AppError::DatabaseError("Missing bvid".to_string()))?;
     let cid = task.cid.clone().ok_or(AppError::DatabaseError("Missing cid".to_string()))?;
 
-    // Use Helper
-    let audio_url = fetch_bili_url(&client.0, &bvid, &cid).await?;
+    // Use Helper with WBI signing
+    let audio_url = fetch_bili_url(&client.0, &wbi_store, &bvid, &cid).await?;
 
     let ext = if task.output_file_type == "mp3" { "mp3" } else { "m4a" };
     let safe_title: String = task
@@ -93,7 +95,7 @@ pub async fn add_media_download_task(
     };
 
     // Store handle
-    let handle = spawn_download_task(app, client.0.clone(), options);
+    let handle = spawn_download_task(app, client.0.clone(), WbiStore(wbi_store.0.clone()), options);
     store.handles.lock().unwrap().insert(task_id, handle);
 
     Ok(serde_json::json!({ "success": true, "message": "Download started" }))
@@ -135,6 +137,7 @@ pub async fn resume_media_download_task(
     app: AppHandle,
     client: State<'_, AppHttpClient>,
     store: State<'_, TaskStore>,
+    wbi_store: State<'_, WbiStore>, // Added
     id: String,
 ) -> Result<(), AppError> {
     let task_opt = {
@@ -147,7 +150,8 @@ pub async fn resume_media_download_task(
         let bvid = task.bvid.ok_or(AppError::DatabaseError("No BVID".to_string()))?;
         let cid = task.cid.ok_or(AppError::DatabaseError("No CID".to_string()))?;
 
-        let audio_url = fetch_bili_url(&client.0, &bvid, &cid).await?;
+        // Use WBI signing here too
+        let audio_url = fetch_bili_url(&client.0, &wbi_store, &bvid, &cid).await?;
 
         let filename = task.save_path.ok_or(AppError::DatabaseError("No save path".to_string()))?;
 
@@ -158,7 +162,7 @@ pub async fn resume_media_download_task(
             is_lossless: task.output_file_type != "mp3",
         };
 
-        let handle = spawn_download_task(app, client.0.clone(), options);
+        let handle = spawn_download_task(app, client.0.clone(), WbiStore(wbi_store.0.clone()), options);
         store.handles.lock().unwrap().insert(id, handle);
     }
     Ok(())
@@ -169,11 +173,11 @@ pub async fn retry_media_download_task(
     app: AppHandle,
     client: State<'_, AppHttpClient>,
     store: State<'_, TaskStore>,
+    wbi_store: State<'_, WbiStore>, // Added
     id: String,
 ) -> Result<(), AppError> {
     // Retry is effectively the same as resume in this architecture
-    // (range headers will handle partials, or start from 0 if missing)
-    resume_media_download_task(app, client, store, id).await
+    resume_media_download_task(app, client, store, wbi_store, id).await
 }
 
 #[tauri::command]

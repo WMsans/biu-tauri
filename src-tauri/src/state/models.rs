@@ -6,6 +6,26 @@ use tauri::async_runtime::JoinHandle;
 // Store the dynamic port of our local proxy
 pub struct ProxyPort(pub Arc<Mutex<u16>>);
 
+// WBI Keys Cache
+pub struct WbiKeysCache {
+    pub img_key: String,
+    pub sub_key: String,
+    pub last_fetch: u64,
+}
+
+impl WbiKeysCache {
+    pub fn new() -> Self {
+        Self {
+            img_key: String::new(),
+            sub_key: String::new(),
+            last_fetch: 0,
+        }
+    }
+}
+
+// Container for WBI Store
+pub struct WbiStore(pub Arc<Mutex<WbiKeysCache>>);
+
 // 1. Define the persistent state for tasks
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
