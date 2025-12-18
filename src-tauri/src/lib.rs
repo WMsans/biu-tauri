@@ -17,46 +17,13 @@ use tokio::net::TcpListener;
 use std::collections::HashMap;
 use tauri::async_runtime::JoinHandle;
 
+pub mod state;
+use state::models::*;
+
 // --- Constants ---
 const DEFAULT_USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
-// --- Types ---
 
-// Store the dynamic port of our local proxy
-pub struct ProxyPort(Arc<Mutex<u16>>);
-
-// 1. Define the persistent state for tasks
-#[derive(Debug, Serialize, Deserialize, Clone)]
-#[serde(rename_all = "camelCase")]
-pub struct MediaDownloadTaskState {
-    pub id: String,
-    // Base fields from request
-    pub output_file_type: String,
-    pub title: String,
-    pub cover: Option<String>,
-    pub bvid: Option<String>,
-    pub cid: Option<String>,
-    pub sid: Option<String>,
-    // Extended fields for status
-    pub audio_codecs: Option<String>,
-    pub audio_bandwidth: Option<u64>,
-    pub video_resolution: Option<String>,
-    pub video_frame_rate: Option<String>,
-    pub save_path: Option<String>,
-    pub total_bytes: Option<u64>,
-    pub download_progress: Option<u64>,
-    pub merge_progress: Option<u64>,
-    pub convert_progress: Option<u64>,
-    pub error: Option<String>,
-    pub status: String, // "pending", "downloading", "merging", "converting", "completed", "failed"
-}
-
-// 2. Define the Store Container
-
-pub struct TaskStore {
-    pub tasks: Arc<Mutex<Vec<MediaDownloadTaskState>>>,
-    pub handles: Arc<Mutex<HashMap<String, JoinHandle<()>>>>,
-}
 
 impl TaskStore {
     fn new() -> Self {
@@ -112,42 +79,7 @@ async fn fetch_bili_url(client: &reqwest::Client, bvid: &str, cid: &str) -> Resu
     .ok_or("No audio stream found".to_string())
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct AppSettings {
-    pub download_path: Option<String>,
-    #[serde(flatten)]
-    pub extra: std::collections::HashMap<String, serde_json::Value>,
-}
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct DownloadOptions {
-    pub id: String,
-    pub filename: String,
-    pub audio_url: String,
-    pub is_lossless: bool,
-}
-
-#[derive(Debug, Serialize, Clone)]
-pub struct DownloadProgress {
-    pub id: String,
-    pub status: String,
-    pub progress: Option<u64>,
-    pub downloaded_bytes: Option<u64>,
-    pub total_bytes: Option<u64>,
-    pub error: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct HttpInvokePayload {
-    pub url: String,
-    pub params: Option<serde_json::Value>,
-    pub headers: Option<std::collections::HashMap<String, String>>,
-    pub body: Option<serde_json::Value>,
-    pub timeout: Option<u64>,
-}
-
-// Global State for HTTP Client
-pub struct AppHttpClient(pub reqwest::Client);
 
 // --- Helper Functions ---
 
@@ -503,16 +435,7 @@ async fn get_media_download_task_list(
 }
 
 // Input struct for creating a task (simpler than the State struct)
-#[derive(Debug, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct MediaDownloadRequest {
-    pub output_file_type: String,
-    pub title: String,
-    pub cover: Option<String>,
-    pub bvid: Option<String>,
-    pub cid: Option<String>,
-    pub sid: Option<String>,
-}
+
 
 #[tauri::command]
 async fn add_media_download_task(
@@ -715,33 +638,7 @@ async fn show_file_in_folder(app: AppHandle, path: String) -> Result<(), String>
     Ok(())
 }
 
-// Bilibili API Response Helper Structs
-#[derive(Debug, Deserialize)]
-struct BiliPlayUrlResponse {
-    code: i32,
-    data: Option<BiliPlayUrlData>,
-}
 
-#[derive(Debug, Deserialize)]
-struct BiliPlayUrlData {
-    dash: Option<BiliDashData>,
-    durl: Option<Vec<BiliDurlData>>,
-}
-
-#[derive(Debug, Deserialize)]
-struct BiliDashData {
-    audio: Option<Vec<BiliDashMedia>>,
-}
-
-#[derive(Debug, Deserialize)]
-struct BiliDashMedia {
-    base_url: String,
-}
-
-#[derive(Debug, Deserialize)]
-struct BiliDurlData {
-    url: String,
-}
 
 fn spawn_download_task(
     app: AppHandle,
