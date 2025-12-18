@@ -1,28 +1,16 @@
-use font_kit::source::SystemSource;
 use futures_util::StreamExt;
-use reqwest::header::{
-    HeaderMap, HeaderName, ACCEPT_RANGES, CONTENT_LENGTH, CONTENT_RANGE, CONTENT_TYPE, COOKIE,
-    LOCATION, RANGE, REFERER, USER_AGENT,
-};
-use reqwest::Method;
-use serde::{Deserialize, Serialize};
-use std::fs::{self, File};
-use std::path::PathBuf;
-use std::str::FromStr;
+use reqwest::header::{CONTENT_LENGTH, CONTENT_RANGE, CONTENT_TYPE, RANGE, REFERER};
 use std::sync::{Arc, Mutex};
-use tauri::{AppHandle, Emitter, Manager, State, WebviewUrl, WebviewWindowBuilder, Window};
-use tauri_plugin_shell::ShellExt;
+use tauri::Manager;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 use std::collections::HashMap;
-use tauri::async_runtime::JoinHandle;
 
 pub mod state;
 pub mod commands;
+pub mod services;
 use state::models::*;
-
-// --- Constants ---
-pub const DEFAULT_USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
+use crate::services::http::build_client;
 
 
 
@@ -69,10 +57,7 @@ async fn run_proxy_server(port_state: Arc<Mutex<u16>>) {
         *p = port;
     }
 
-    let client = reqwest::Client::builder()
-        .user_agent(DEFAULT_USER_AGENT)
-        .build()
-        .unwrap();
+    let client = build_client();
 
     loop {
         if let Ok((mut socket, _)) = listener.accept().await {
@@ -236,12 +221,7 @@ fn extract_query_param(request: &str, key: &str) -> Option<String> {
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    let jar = std::sync::Arc::new(reqwest::cookie::Jar::default());
-    let client = reqwest::Client::builder()
-        .cookie_provider(jar)
-        .user_agent(DEFAULT_USER_AGENT)
-        .build()
-        .unwrap();
+    let client = build_client();
 
     let proxy_port = Arc::new(Mutex::new(0u16));
     let proxy_port_clone = proxy_port.clone();
