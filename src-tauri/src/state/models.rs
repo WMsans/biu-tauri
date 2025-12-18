@@ -38,6 +38,15 @@ pub struct TaskStore {
     pub handles: Arc<Mutex<HashMap<String, JoinHandle<()>>>>,
 }
 
+impl TaskStore {
+    pub fn new() -> Self {
+        Self {
+            tasks: Arc::new(Mutex::new(Vec::new())),
+            handles: Arc::new(Mutex::new(HashMap::new())),
+        }
+    }
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AppSettings {
     pub download_path: Option<String>,
