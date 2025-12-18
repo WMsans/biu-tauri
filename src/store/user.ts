@@ -35,6 +35,8 @@ export const useUser = create<UserState & Action>()(
         const res = await getUserInfo();
 
         if (res.code === 0 && res.data?.isLogin) {
+          await tauriAdapter.syncCookies(document.cookie);
+
           set(() => ({ user: res.data }));
 
           const result = await Promise.allSettled([

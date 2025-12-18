@@ -71,9 +71,10 @@ pub async fn fetch_bili_url(
 pub fn spawn_download_task(
     app: AppHandle,
     client: reqwest::Client,
-    wbi_store: WbiStore, // Add WbiStore
+    wbi_store: WbiStore, 
     params: DownloadOptions,
 ) -> JoinHandle<()> {
+    let _ = wbi_store;
     tauri::async_runtime::spawn(async move {
         // We pass wbi_store but currently download_task_runner only downloads the file
         // The URL is already fetched in the command. 

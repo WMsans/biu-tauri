@@ -3,6 +3,7 @@ import { getPassportLoginWebCookieInfo } from "@/service/passport-login-web-cook
 import { postPassportLoginWebCookieRefresh } from "@/service/passport-login-web-cookie-refresh";
 import { axiosInstance, biliRequest } from "@/service/request";
 import { useToken } from "@/store/token";
+import { tauriAdapter } from "@/utils/tauri-adapter";
 
 async function getCorrespondPath(timestamp: number, publicKey: CryptoKey) {
   const data = new TextEncoder().encode(`refresh_${timestamp}`);
@@ -62,6 +63,8 @@ export const refreshCookie = async () => {
           useToken.setState({
             tokenData: { refresh_token: newRefreshToken },
           });
+
+          await tauriAdapter.syncCookies(document.cookie);
         }
 
         return getRefreshResult.code === 0;

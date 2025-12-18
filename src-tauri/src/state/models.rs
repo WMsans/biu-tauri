@@ -2,6 +2,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use tauri::async_runtime::JoinHandle;
+use reqwest::cookie::Jar;
 
 // Store the dynamic port of our local proxy
 pub struct ProxyPort(pub Arc<Mutex<u16>>);
@@ -102,7 +103,10 @@ pub struct HttpInvokePayload {
 }
 
 // Global State for HTTP Client
-pub struct AppHttpClient(pub reqwest::Client);
+pub struct AppHttpClient {
+    pub client: reqwest::Client,
+    pub cookie_store: Arc<Jar>,
+}
 
 // Input struct for creating a task (simpler than the State struct)
 #[derive(Debug, Serialize, Deserialize)]

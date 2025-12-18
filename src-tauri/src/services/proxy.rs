@@ -35,7 +35,7 @@ pub async fn run_proxy_server(port_state: Arc<Mutex<u16>>) -> Result<()> {
 
     loop {
         if let Ok((mut socket, _)) = listener.accept().await {
-            let client_clone = client.clone();
+            let client_clone = client.client.clone();
             tokio::spawn(async move {
                 let mut buf = [0; 2048];
                 // Read the HTTP request (just enough to get headers)
