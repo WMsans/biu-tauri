@@ -34,7 +34,7 @@ const ReleaseNoteModal = ({ isOpen, onOpenChange }: Props) => {
   const handleOpenInstaller = async () => {
     try {
       if (downloadInfo?.filePath) {
-        const ok = await window.electron.showFileInFolder(downloadInfo.filePath);
+        const ok = await tauriAdapter.showFileInFolder(downloadInfo.filePath);
         if (!ok) {
           addToast({
             title: "无法打开安装包文件夹",

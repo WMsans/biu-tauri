@@ -56,6 +56,17 @@ export const tauriAdapter: any = {
 
   getMediaDownloadTaskList: () => invoke("get_media_download_task_list"),
 
+  pauseMediaDownloadTask: (id: string) => invoke("pause_media_download_task", { id }),
+
+  resumeMediaDownloadTask: (id: string) => invoke("resume_media_download_task", { id }),
+
+  retryMediaDownloadTask: (id: string) => invoke("retry_media_download_task", { id }),
+
+  cancelMediaDownloadTask: (id: string) => invoke("cancel_media_download_task", { id }),
+
+  // Pass the savePath (filename) from the task object
+  showFileInFolder: (path: string) => invoke("show_file_in_folder", { path }),
+
   // Cookies - Try document first (for WebView access), then backend
   getCookie: (key: string) => {
     const match = document.cookie.match(new RegExp("(^| )" + key + "=([^;]+)"));

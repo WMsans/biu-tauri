@@ -1,3 +1,5 @@
+import { tauriAdapter } from "@/utils/tauri-adapter";
+
 export const getUrlParams = (url: string) => {
   const urlParams = new URLSearchParams(url.split("?")[1]);
   return Object.fromEntries(urlParams.entries());
@@ -26,5 +28,5 @@ export const openBiliVideoLink = (data: {
   sid?: string | number;
   pageIndex?: number;
 }) => {
-  window.electron.openExternal(getBiliVideoLink(data));
+  tauriAdapter.openExternal(getBiliVideoLink(data));
 };

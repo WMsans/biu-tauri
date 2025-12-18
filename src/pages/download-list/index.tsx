@@ -36,7 +36,7 @@ const DownloadList = () => {
 
   useEffect(() => {
     const initList = async () => {
-      const list = await window.electron.getMediaDownloadTaskList();
+      const list = await tauriAdapter.getMediaDownloadTaskList();
       if (list.length) {
         setDownloadList(list);
       }
@@ -68,7 +68,7 @@ const DownloadList = () => {
   };
 
   const openDownloadDir = async () => {
-    await window.electron.openDirectory(downloadPath);
+    await tauriAdapter.openDirectory(downloadPath);
   };
 
   const getFileQuality = (item: MediaDownloadTask) => {
