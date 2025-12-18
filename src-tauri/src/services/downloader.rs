@@ -138,7 +138,19 @@ pub fn spawn_download_task(
                 // Merging/Converting Logic (Simplified copy from original)
                 update_status("merging", None, None, None, None);
                 if is_lossless {
-                     let _ = fs::rename(&temp_audio_path, &output_path);
+                    // Try to rename (move) first
+                    if let Err(_) = fs::rename(&temp_audio_path, &output_path) {
+                        // If rename fails (likely cross-device), try copy -> remove
+                        match fs::copy(&temp_audio_path, &output_path) {
+                            Ok(_) => {
+                                let _ = fs::remove_file(&temp_audio_path);
+                            }
+                            Err(e) => {
+                                update_status("failed", None, None, None, Some(format!("Move failed: {}", e)));
+                                return;
+                            }
+                        }
+                    }
                 } else {
                     update_status("converting", None, None, None, None);
                      let shell = app_handle.shell();
