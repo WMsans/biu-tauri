@@ -1,12 +1,12 @@
 use reqwest::cookie::Jar;
 use reqwest::Client;
 use std::sync::Arc;
-use crate::state::models::{AppHttpClient, HttpInvokePayload};
+use crate::state::models::HttpInvokePayload;
 use reqwest::header::{HeaderMap, HeaderName, CONTENT_TYPE};
 use reqwest::Method;
 use std::str::FromStr;
-use tauri::State;
 use serde_json;
+use crate::state::models::AppHttpClient;
 
 pub const DEFAULT_USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 

@@ -3,7 +3,6 @@ use font_kit::source::SystemSource;
 use serde_json;
 use std::path::PathBuf;
 use tauri::AppHandle;
-use tauri::Manager;
 
 #[tauri::command]
 pub async fn show_file_in_folder(app: AppHandle, path: String) -> Result<(), String> {
@@ -11,12 +10,10 @@ pub async fn show_file_in_folder(app: AppHandle, path: String) -> Result<(), Str
     let download_dir = PathBuf::from(settings.download_path.unwrap_or_default());
     let full_path = download_dir.join(&path);
 
-    let path_str = full_path.to_string_lossy().to_string();
-
     #[cfg(target_os = "windows")]
     {
         std::process::Command::new("explorer")
-            .args(["/select,", &path_str]) // Comma is important
+            .args(["/select,", &full_path.to_string_lossy().to_string()]) // Comma is important
             .spawn()
             .map_err(|e| e.to_string())?;
     }
@@ -24,7 +21,7 @@ pub async fn show_file_in_folder(app: AppHandle, path: String) -> Result<(), Str
     #[cfg(target_os = "macos")]
     {
         std::process::Command::new("open")
-            .args(["-R", &path_str])
+            .args(["-R", &full_path.to_string_lossy().to_string()])
             .spawn()
             .map_err(|e| e.to_string())?;
     }

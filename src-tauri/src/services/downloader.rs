@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use futures_util::StreamExt;
 use reqwest::header::{HeaderMap, REFERER, USER_AGENT, RANGE};
 use tauri::async_runtime::JoinHandle;
-use tauri::{AppHandle, Emitter, Manager, State};
+use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_shell::ShellExt;
 use tokio::io::AsyncWriteExt;
 use crate::state::models::*;

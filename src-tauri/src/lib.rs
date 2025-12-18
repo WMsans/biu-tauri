@@ -1,7 +1,6 @@
 use futures_util::StreamExt;
 use reqwest::header::{CONTENT_LENGTH, CONTENT_RANGE, CONTENT_TYPE, RANGE, REFERER};
 use std::sync::{Arc, Mutex};
-use tauri::Manager;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 use std::collections::HashMap;
@@ -19,17 +18,6 @@ impl TaskStore {
         Self {
             tasks: Arc::new(Mutex::new(Vec::new())),
             handles: Arc::new(Mutex::new(HashMap::new())),
-        }
-    }
-
-    // Helper to update a task safely
-    fn update_task<F>(&self, id: &str, f: F)
-    where
-        F: FnOnce(&mut MediaDownloadTaskState),
-    {
-        let mut tasks = self.tasks.lock().unwrap();
-        if let Some(task) = tasks.iter_mut().find(|t| t.id == id) {
-            f(task);
         }
     }
 }
