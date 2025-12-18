@@ -1,9 +1,10 @@
+use crate::error::AppError;
 use tauri::{AppHandle, Emitter, Manager, WebviewUrl, WebviewWindowBuilder, Window};
 
 #[tauri::command]
-pub async fn switch_to_mini(app: AppHandle, _window: Window) -> Result<(), String> {
+pub async fn switch_to_mini(app: AppHandle, _window: Window) -> Result<(), AppError> {
     if let Some(main_win) = app.get_webview_window("main") {
-        main_win.hide().unwrap();
+        main_win.hide()?;
     }
 
     if app.get_webview_window("mini").is_none() {
@@ -17,24 +18,23 @@ pub async fn switch_to_mini(app: AppHandle, _window: Window) -> Result<(), Strin
         .always_on_top(true)
         .decorations(false)
         .transparent(true)
-        .build()
-        .map_err(|e| e.to_string())?;
+        .build()?;
     } else {
         if let Some(mini) = app.get_webview_window("mini") {
-            mini.show().unwrap();
+            mini.show()?;
         }
     }
     Ok(())
 }
 
 #[tauri::command]
-pub async fn switch_to_main(app: AppHandle) -> Result<(), String> {
+pub async fn switch_to_main(app: AppHandle) -> Result<(), AppError> {
     if let Some(mini_win) = app.get_webview_window("mini") {
-        mini_win.close().unwrap();
+        mini_win.close()?;
     }
     if let Some(main_win) = app.get_webview_window("main") {
-        main_win.show().unwrap();
-        main_win.set_focus().unwrap();
+        main_win.show()?;
+        main_win.set_focus()?;
     }
     Ok(())
 }
@@ -71,8 +71,7 @@ pub fn is_full_screen(window: Window) -> bool {
 }
 
 #[tauri::command]
-pub async fn update_playback_state(app: AppHandle, is_playing: bool) -> Result<(), String> {
-    app.emit("playback-state-update", is_playing)
-        .map_err(|e| e.to_string())?;
+pub async fn update_playback_state(app: AppHandle, is_playing: bool) -> Result<(), AppError> {
+    app.emit("playback-state-update", is_playing)?;
     Ok(())
 }

@@ -2,5 +2,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 fn main() {
-  app_lib::run();
+    if let Err(e) = app_lib::run() {
+        log::error!("App failed to run: {}", e);
+        std::process::exit(1);
+    }
 }

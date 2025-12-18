@@ -1,17 +1,18 @@
+use anyhow::Result;
 use futures_util::StreamExt;
 use reqwest::header::{CONTENT_LENGTH, CONTENT_RANGE, CONTENT_TYPE, RANGE, REFERER};
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
-use std::collections::HashMap;
 
-pub mod state;
 pub mod commands;
+pub mod error;
 pub mod services;
-use state::models::*;
+pub mod state;
 use crate::services::http::build_client;
-
-
+use error::AppError;
+use state::models::*;
 
 impl TaskStore {
     fn new() -> Self {
@@ -22,22 +23,14 @@ impl TaskStore {
     }
 }
 
-
-
-
-
 // --- Helper Functions ---
-
-
 
 // --- Proxy Server Logic ---
 
-async fn run_proxy_server(port_state: Arc<Mutex<u16>>) {
+async fn run_proxy_server(port_state: Arc<Mutex<u16>>) -> Result<()> {
     // Bind to a random available port on localhost
-    let listener = TcpListener::bind("127.0.0.1:0")
-        .await
-        .expect("Failed to bind proxy");
-    let port = listener.local_addr().unwrap().port();
+    let listener = TcpListener::bind("127.0.0.1:0").await?;
+    let port = listener.local_addr()?.port();
 
     // Save the port so frontend can ask for it
     {
@@ -162,53 +155,14 @@ fn extract_query_param(request: &str, key: &str) -> Option<String> {
     None
 }
 
-
-
-
-
-
-
-
-
 // --- Download Commands ---
 
-
-
-
-
-
-
 // Input struct for creating a task (simpler than the State struct)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // --- Entry Point ---
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn run() {
+pub fn run() -> Result<(), AppError> {
     let client = build_client();
 
     let proxy_port = Arc::new(Mutex::new(0u16));
@@ -219,7 +173,9 @@ pub fn run() {
 
     // Start Proxy Server
     tauri::async_runtime::spawn(async move {
-        run_proxy_server(proxy_port_clone).await;
+        if let Err(e) = run_proxy_server(proxy_port_clone).await {
+            log::error!("Proxy server error: {}", e);
+        }
     });
 
     tauri::Builder::default()
@@ -246,4 +202,6 @@ pub fn run() {
         })
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+
+    Ok(())
 }

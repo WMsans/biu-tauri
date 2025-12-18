@@ -1,4 +1,5 @@
 use crate::commands::system;
+use crate::error::AppError;
 use serde_json;
 use tauri::{AppHandle, Manager};
 
@@ -8,7 +9,7 @@ pub fn get_app_version(app: AppHandle) -> String {
 }
 
 #[tauri::command]
-pub async fn check_app_update(_app: AppHandle) -> Result<serde_json::Value, String> {
+pub async fn check_app_update(_app: AppHandle) -> Result<serde_json::Value, AppError> {
     Ok(serde_json::json!({
         "isUpdateAvailable": false,
         "latestVersion": "",
@@ -17,8 +18,8 @@ pub async fn check_app_update(_app: AppHandle) -> Result<serde_json::Value, Stri
 }
 
 #[tauri::command]
-pub async fn download_app_update() -> Result<(), String> {
-    Err("Auto-update not configured".to_string())
+pub async fn download_app_update() -> Result<(), AppError> {
+    Err(AppError::NetworkError("Auto-update not configured".to_string()))
 }
 
 #[tauri::command]
@@ -27,7 +28,7 @@ pub async fn quit_and_install(app: AppHandle) {
 }
 
 #[tauri::command]
-pub async fn open_installer_directory(app: AppHandle) -> Result<bool, String> {
-    let path = app.path().download_dir().unwrap_or_default();
+pub async fn open_installer_directory(app: AppHandle) -> Result<bool, AppError> {
+    let path = app.path().download_dir().map_err(|e| AppError::TauriError(e))?;
     system::open_directory(app, Some(path.to_string_lossy().to_string())).await
 }

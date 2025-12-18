@@ -1,12 +1,13 @@
 use crate::commands::store;
+use crate::error::AppError;
 use font_kit::source::SystemSource;
 use serde_json;
 use std::path::PathBuf;
 use tauri::AppHandle;
 
 #[tauri::command]
-pub async fn show_file_in_folder(app: AppHandle, path: String) -> Result<(), String> {
-    let settings = store::load_settings(&app);
+pub async fn show_file_in_folder(app: AppHandle, path: String) -> Result<(), AppError> {
+    let settings = store::load_settings(&app)?;
     let download_dir = PathBuf::from(settings.download_path.unwrap_or_default());
     let full_path = download_dir.join(&path);
 
@@ -14,26 +15,21 @@ pub async fn show_file_in_folder(app: AppHandle, path: String) -> Result<(), Str
     {
         std::process::Command::new("explorer")
             .args(["/select,", &full_path.to_string_lossy().to_string()]) // Comma is important
-            .spawn()
-            .map_err(|e| e.to_string())?;
+            .spawn()?;
     }
 
     #[cfg(target_os = "macos")]
     {
         std::process::Command::new("open")
             .args(["-R", &full_path.to_string_lossy().to_string()])
-            .spawn()
-            .map_err(|e| e.to_string())?;
+            .spawn()?;
     }
 
     #[cfg(target_os = "linux")]
     {
         // Linux doesn't have a standard "highlight file" command. Open parent dir.
         if let Some(parent) = full_path.parent() {
-            std::process::Command::new("xdg-open")
-                .arg(parent)
-                .spawn()
-                .map_err(|e| e.to_string())?;
+            std::process::Command::new("xdg-open").arg(parent).spawn()?;
         }
     }
 
@@ -41,7 +37,7 @@ pub async fn show_file_in_folder(app: AppHandle, path: String) -> Result<(), Str
 }
 
 #[tauri::command]
-pub async fn select_directory(app: AppHandle) -> Result<Option<String>, String> {
+pub async fn select_directory(app: AppHandle) -> Result<Option<String>, AppError> {
     use tauri_plugin_dialog::DialogExt;
     let file_path = app.dialog().file().blocking_pick_folder();
     match file_path {
@@ -51,9 +47,11 @@ pub async fn select_directory(app: AppHandle) -> Result<Option<String>, String> 
 }
 
 #[tauri::command]
-pub async fn get_fonts() -> Result<Vec<serde_json::Value>, String> {
+pub async fn get_fonts() -> Result<Vec<serde_json::Value>, AppError> {
     let source = SystemSource::new();
-    let fonts = source.all_fonts().map_err(|e| e.to_string())?;
+    let fonts = source
+        .all_fonts()
+        .map_err(|e| AppError::IoError(std::io::Error::new(std::io::ErrorKind::Other, e)))?;
     let font_infos: Vec<serde_json::Value> = fonts
         .into_iter()
         .filter_map(|handle| {
@@ -69,11 +67,13 @@ pub async fn get_fonts() -> Result<Vec<serde_json::Value>, String> {
 }
 
 #[tauri::command]
-pub async fn open_directory(app: AppHandle, path: Option<String>) -> Result<bool, String> {
+pub async fn open_directory(app: AppHandle, path: Option<String>) -> Result<bool, AppError> {
     let target_dir = if let Some(d) = path {
         d
     } else {
-        store::load_settings(&app).download_path.unwrap_or_default()
+        store::load_settings(&app)?
+            .download_path
+            .unwrap_or_default()
     };
     println!("Path: {}", &target_dir);
     #[cfg(target_os = "windows")]

@@ -1,12 +1,13 @@
-use reqwest::cookie::Jar;
-use reqwest::Client;
-use std::sync::Arc;
-use crate::state::models::HttpInvokePayload;
-use reqwest::header::{HeaderMap, HeaderName, CONTENT_TYPE};
-use reqwest::Method;
-use std::str::FromStr;
-use serde_json;
+use crate::error::AppError;
 use crate::state::models::AppHttpClient;
+use crate::state::models::HttpInvokePayload;
+use reqwest::cookie::Jar;
+use reqwest::header::{HeaderMap, HeaderName, CONTENT_TYPE};
+use reqwest::Client;
+use reqwest::Method;
+use serde_json;
+use std::str::FromStr;
+use std::sync::Arc;
 
 pub const DEFAULT_USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
@@ -25,8 +26,9 @@ pub async fn make_request(
     url: String,
     body: Option<serde_json::Value>,
     options: Option<HttpInvokePayload>,
-) -> Result<serde_json::Value, String> {
-    let req_method = Method::from_str(&method.to_uppercase()).map_err(|e| e.to_string())?;
+) -> Result<serde_json::Value, AppError> {
+    let req_method =
+        Method::from_str(&method.to_uppercase()).map_err(|e| AppError::NetworkError(e.to_string()))?;
     let mut req = client.0.request(req_method, &url);
     let mut is_form = false;
 
@@ -66,8 +68,8 @@ pub async fn make_request(
         }
     }
 
-    let res = req.send().await.map_err(|e| e.to_string())?;
-    let text_res = res.text().await.map_err(|e| e.to_string())?;
+    let res = req.send().await.map_err(|e| AppError::NetworkError(e.to_string()))?;
+    let text_res = res.text().await.map_err(|e| AppError::NetworkError(e.to_string()))?;
 
     match serde_json::from_str::<serde_json::Value>(&text_res) {
         Ok(json) => Ok(json),
