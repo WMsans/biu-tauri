@@ -6,6 +6,7 @@ use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
 use crate::services::http::construct_client; 
 use reqwest_cookie_store::CookieStoreMutex;
+use tokio::sync::Semaphore;
 
 // --- Helper Functions ---
 
@@ -24,6 +25,7 @@ pub async fn run_proxy_server(port_state: Arc<Mutex<u16>>, cookie_store: Arc<Coo
     // Bind to a random available port on localhost
     let listener = TcpListener::bind("127.0.0.1:0").await?;
     let port = listener.local_addr()?.port();
+    let semaphore = Arc::new(Semaphore::new(10));
 
     // Save the port so frontend can ask for it
     {
@@ -35,8 +37,10 @@ pub async fn run_proxy_server(port_state: Arc<Mutex<u16>>, cookie_store: Arc<Coo
 
     loop {
         if let Ok((mut socket, _)) = listener.accept().await {
+            let permit = semaphore.clone().acquire_owned().await.unwrap();
             let client_clone = client.clone();
             tokio::spawn(async move {
+                let _permit = permit;
                 let mut buf = [0; 2048];
                 // Read the HTTP request (just enough to get headers)
                 if let Ok(n) = socket.read(&mut buf).await {
