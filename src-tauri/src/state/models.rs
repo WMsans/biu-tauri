@@ -82,6 +82,7 @@ pub struct DownloadOptions {
     pub id: String,
     pub filename: String,
     pub audio_url: String,
+    pub video_url: Option<String>, 
     pub is_lossless: bool,
 }
 
@@ -135,6 +136,7 @@ pub struct BiliPlayUrlData {
 #[derive(Debug, Deserialize)]
 pub struct BiliDashData {
     pub audio: Option<Vec<BiliDashMedia>>,
+    pub video: Option<Vec<BiliDashMedia>>,
 }
 
 #[derive(Debug, Deserialize)]
