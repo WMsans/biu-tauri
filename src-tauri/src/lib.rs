@@ -4,7 +4,8 @@ use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, TrayIconBuilder, TrayIconEvent},
     Manager,
-    Emitter
+    Emitter,
+    RunEvent
 };
 
 pub mod commands;
@@ -14,7 +15,7 @@ pub mod state;
 
 use crate::services::{http, proxy::run_proxy_server};
 use error::AppError;
-use state::models::{ProxyPort, TaskStore, WbiKeysCache, WbiStore};
+use state::models::{AppHttpClient, AppCookieStore, ProxyPort, TaskStore, WbiKeysCache, WbiStore};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() -> Result<(), AppError> {
@@ -27,14 +28,7 @@ pub fn run() -> Result<(), AppError> {
     // 2. Initialize WBI Store
     let wbi_store = WbiStore(Arc::new(Mutex::new(WbiKeysCache::new())));
 
-    // Start Proxy Server
-    tauri::async_runtime::spawn(async move {
-        if let Err(e) = run_proxy_server(proxy_port_clone).await {
-            log::error!("Proxy server error: {}", e);
-        }
-    });
-
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .plugin(
             tauri_plugin_log::Builder::new()
                 .level(tauri_plugin_log::log::LevelFilter::Info)
@@ -43,7 +37,45 @@ pub fn run() -> Result<(), AppError> {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_http::init())
-        .setup(|app| {
+        .manage(ProxyPort(proxy_port))
+        .manage(task_store)
+        .manage(wbi_store)
+        .setup(move |app| {
+            // --- Persistence Setup ---
+            
+            // 1. Initialize HTTP Client & Load Cookies
+            // Use the new build_client which handles directory lookup and loading
+            let (client, cookie_store) = http::build_client(app.handle())?;
+            
+            // --- Start Background Tasks ---
+            
+            // A. Auto-save Cookies Task (Lazy Timer)
+            let cookie_store_for_save = cookie_store.clone();
+            let app_handle_for_save = app.handle().clone();
+            tauri::async_runtime::spawn(async move {
+                loop {
+                    tokio::time::sleep(tokio::time::Duration::from_secs(60)).await;
+                    if let Err(e) = http::save_cookies(&app_handle_for_save, &cookie_store_for_save) {
+                        log::error!("Background cookie save failed: {}", e);
+                    }
+                }
+            });
+
+            // B. Start Proxy Server
+            // Pass the loaded cookie store to the proxy
+            let proxy_port_for_server = proxy_port_clone.clone(); 
+            let cookie_store_for_server = cookie_store.clone();
+            
+            tauri::async_runtime::spawn(async move {
+                if let Err(e) = run_proxy_server(proxy_port_for_server, cookie_store_for_server).await {
+                    log::error!("Proxy server error: {}", e);
+                }
+            });
+
+            // 2. Manage States
+            app.manage(AppCookieStore(cookie_store));
+            app.manage(AppHttpClient(client));
+
             // --- System Tray Implementation ---
 
             // 1. Create Menu Items
@@ -60,7 +92,7 @@ pub fn run() -> Result<(), AppError> {
                     &play_pause_i,
                     &prev_i,
                     &next_i,
-                    &show_hide_i, // Separators can be added here if needed using PredefinedMenuItem::separator(app)?
+                    &show_hide_i, 
                     &quit_i,
                 ],
             )?;
@@ -68,11 +100,11 @@ pub fn run() -> Result<(), AppError> {
             // 3. Configure the Tray
             let _tray = TrayIconBuilder::new()
                 .menu(&menu)
-                .icon(app.default_window_icon().unwrap().clone()) // Uses the default app icon
+                .icon(app.default_window_icon().unwrap().clone())
                 .on_menu_event(|app, event| {
                     match event.id().as_ref() {
                         "play_pause" => {
-                            let _ = app.emit("player:toggle", ()); // Emits to frontend
+                            let _ = app.emit("player:toggle", ()); 
                         }
                         "prev" => {
                             let _ = app.emit("player:prev", ());
@@ -117,16 +149,21 @@ pub fn run() -> Result<(), AppError> {
 
             Ok(())
         })
-        .manage(http::build_client()) // Updated: build_client() now returns AppHttpClient
-        .manage(ProxyPort(proxy_port))
-        .manage(task_store)
-        .manage(wbi_store) // Register WBI Store
         .invoke_handler(|invoke| {
             commands::get_handlers()(invoke);
             true
         })
-        .run(tauri::generate_context!())
-        .expect("error while running tauri application");
+        .build(tauri::generate_context!())
+        .expect("error while building tauri application");
+
+    app.run(|app_handle, event| {
+        if let RunEvent::ExitRequested { .. } = event {
+            let cookie_store_state = app_handle.state::<AppCookieStore>();
+            if let Err(e) = http::save_cookies(app_handle, &cookie_store_state.0) {
+                log::error!("Failed to save cookies on exit: {}", e);
+            }
+        }
+    });
 
     Ok(())
 }

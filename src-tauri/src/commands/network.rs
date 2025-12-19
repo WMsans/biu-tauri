@@ -4,23 +4,6 @@ use crate::state::models::{AppHttpClient, HttpInvokePayload, ProxyPort, WbiStore
 use serde_json;
 use std::collections::HashMap;
 use tauri::State;
-use reqwest::Url;
-
-#[tauri::command]
-pub async fn sync_cookies(
-    client: State<'_, AppHttpClient>,
-    cookie_str: String,
-) -> Result<(), AppError> {
-    let url = Url::parse("https://bilibili.com").unwrap();
-    // Parse the cookie string (e.g. "key=value; key2=value2")
-    for cookie in cookie_str.split(';') {
-        let trimmed = cookie.trim();
-        if !trimmed.is_empty() {
-            client.cookie_store.add_cookie_str(trimmed, &url);
-        }
-    }
-    Ok(())
-}
 
 #[tauri::command]
 pub async fn http_request(
@@ -75,5 +58,5 @@ pub async fn wbi_sign_params(
     wbi_store: State<'_, WbiStore>,
     params: HashMap<String, String>,
 ) -> Result<HashMap<String, String>, AppError> {
-    wbi::sign_params(&client.client, &wbi_store, params).await
+    wbi::sign_params(&client.0, &wbi_store, params).await
 }
