@@ -117,13 +117,13 @@ pub fn run() -> Result<(), AppError> {
                 .on_menu_event(|app, event| {
                     match event.id().as_ref() {
                         "play_pause" => {
-                            let _ = app.emit("shortcut:triggered", "togglePlay"); 
+                            let _ = app.emit("player:toggle", ()); 
                         }
                         "prev" => {
-                            let _ = app.emit("shortcut:triggered", "prev");
+                            let _ = app.emit("player:prev", ()); 
                         }
                         "next" => {
-                            let _ = app.emit("shortcut:triggered", "next");
+                            let _ = app.emit("player:next", ()); 
                         }
                         "show_hide" => {
                             if let Some(window) = app.get_webview_window("main") {
