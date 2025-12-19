@@ -148,3 +148,9 @@ pub struct BiliDashMedia {
 pub struct BiliDurlData {
     pub url: String,
 }
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ShortcutConfig {
+    pub id: String,
+    pub shortcut: String, // This is the accelerator (e.g., "CommandOrControl+P")
+}

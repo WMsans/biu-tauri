@@ -47,6 +47,17 @@ pub async fn select_directory(app: AppHandle) -> Result<Option<String>, AppError
 }
 
 #[tauri::command]
+pub async fn select_file(app: tauri::AppHandle) -> Result<Option<String>, AppError> {
+    use tauri_plugin_dialog::DialogExt;
+    // pick_file() allows the user to select a single file
+    let file_path = app.dialog().file().blocking_pick_file();
+    match file_path {
+        Some(path) => Ok(Some(path.to_string())),
+        None => Ok(None),
+    }
+}
+
+#[tauri::command]
 pub async fn get_fonts() -> Result<Vec<serde_json::Value>, AppError> {
     let source = SystemSource::new();
     let fonts = source

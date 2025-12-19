@@ -40,6 +40,33 @@ pub async fn switch_to_main(app: AppHandle) -> Result<(), AppError> {
 }
 
 #[tauri::command]
+pub async fn toggle_mini_player(app: AppHandle) -> Result<(), AppError> {
+    if let Some(mini_win) = app.get_webview_window("mini") {
+        mini_win.close()?;
+        if let Some(main_win) = app.get_webview_window("main") {
+            main_win.show()?;
+            main_win.set_focus()?;
+        }
+    } else {
+        if let Some(main_win) = app.get_webview_window("main") {
+            main_win.hide()?;
+        }
+        WebviewWindowBuilder::new(
+            &app,
+            "mini",
+            WebviewUrl::App("index.html#/mini-player".into()),
+        )
+        .title("Mini Player")
+        .inner_size(300.0, 300.0)
+        .always_on_top(true)
+        .decorations(false)
+        .transparent(true)
+        .build()?;
+    }
+    Ok(())
+}
+
+#[tauri::command]
 pub fn minimize_window(window: Window) {
     let _ = window.minimize();
 }

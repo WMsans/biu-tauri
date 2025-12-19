@@ -11,6 +11,8 @@ pub enum AppError {
     DatabaseError(String),
     #[error("Tauri error: {0}")]
     TauriError(#[from] tauri::Error),
+    #[error("Shortcut error: {0}")]
+    ShortcutError(#[from] tauri_plugin_global_shortcut::Error), 
     #[error("Reqwest error: {0}")]
     ReqwestError(#[from] reqwest::Error),
     #[error("Shell error: {0}")]

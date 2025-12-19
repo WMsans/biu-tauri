@@ -38,7 +38,7 @@ export default defineConfig({
     writeToDisk: true,
     lazyCompilation: false,
     cliShortcuts: false,
-    assetPrefix: "./",
+    assetPrefix: "http://localhost:5173/",
   },
   server: {
     port: 5173,

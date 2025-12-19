@@ -29,6 +29,7 @@ pub fn run() -> Result<(), AppError> {
     let wbi_store = WbiStore(Arc::new(Mutex::new(WbiKeysCache::new())));
 
     let app = tauri::Builder::default()
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .plugin(
             tauri_plugin_log::Builder::new()
                 .level(tauri_plugin_log::log::LevelFilter::Info)
@@ -51,11 +52,9 @@ pub fn run() -> Result<(), AppError> {
             // --- Persistence Setup ---
             
             // 1. Initialize HTTP Client & Load Cookies
-            // Use the new build_client which handles directory lookup and loading
             let (client, cookie_store) = http::build_client(app.handle())?;
 
             // 2. Load Tasks
-            // Load saved tasks from disk and populate the TaskStore
             if let Ok(saved_tasks) = commands::store::load_tasks(app.handle()) {
                 let store = app.state::<TaskStore>();
                 let mut tasks = store.tasks.lock().unwrap();
@@ -77,7 +76,6 @@ pub fn run() -> Result<(), AppError> {
             });
 
             // B. Start Proxy Server
-            // Pass the loaded cookie store to the proxy
             let proxy_port_for_server = proxy_port_clone.clone(); 
             let cookie_store_for_server = cookie_store.clone();
             
@@ -119,13 +117,13 @@ pub fn run() -> Result<(), AppError> {
                 .on_menu_event(|app, event| {
                     match event.id().as_ref() {
                         "play_pause" => {
-                            let _ = app.emit("player:toggle", ()); 
+                            let _ = app.emit("shortcut:triggered", "togglePlay"); 
                         }
                         "prev" => {
-                            let _ = app.emit("player:prev", ());
+                            let _ = app.emit("shortcut:triggered", "prev");
                         }
                         "next" => {
-                            let _ = app.emit("player:next", ());
+                            let _ = app.emit("shortcut:triggered", "next");
                         }
                         "show_hide" => {
                             if let Some(window) = app.get_webview_window("main") {

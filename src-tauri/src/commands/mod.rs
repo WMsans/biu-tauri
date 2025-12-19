@@ -6,6 +6,7 @@ pub mod network;
 pub mod store;
 pub mod system;
 pub mod window;
+pub mod shortcut;
 
 pub fn get_handlers() -> impl Fn(Invoke) -> bool {
     tauri::generate_handler![
@@ -28,7 +29,11 @@ pub fn get_handlers() -> impl Fn(Invoke) -> bool {
         network::http_get,
         network::http_post,
         network::get_proxy_port,
-        network::wbi_sign_params, // Registered
+        network::wbi_sign_params,
+        shortcut::register_shortcut,
+        shortcut::unregister_shortcut,
+        shortcut::register_all_shortcuts,
+        shortcut::unregister_all_shortcuts,
         store::get_settings,
         store::set_settings,
         store::get_store,
@@ -36,11 +41,13 @@ pub fn get_handlers() -> impl Fn(Invoke) -> bool {
         store::clear_store,
         store::clear_settings,
         system::select_directory,
+        system::select_file,
         system::get_fonts,
         system::open_directory,
         system::show_file_in_folder,
         window::switch_to_mini,
         window::switch_to_main,
+        window::toggle_mini_player,
         window::minimize_window,
         window::toggle_maximize_window,
         window::close_window,

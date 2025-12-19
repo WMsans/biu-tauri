@@ -39,8 +39,8 @@ export function App() {
 
   // 订阅来自主进程的任务栏缩略按钮命令
   useEffect(() => {
-    if (window.electron && window.electron.onPlayerCommand) {
-      const removeListener = window.electron.onPlayerCommand(cmd => {
+    if (tauriAdapter && tauriAdapter.onPlayerCommand) {
+      const removeListener = tauriAdapter.onPlayerCommand(cmd => {
         const { prev, next, togglePlay } = usePlayList.getState();
         if (cmd === "prev") {
           prev();
@@ -56,8 +56,8 @@ export function App() {
 
   // 订阅来自主进程的全局快捷键命令
   useEffect(() => {
-    if (window.electron && window.electron.onShortcutCommand) {
-      return window.electron.onShortcutCommand(cmd => {
+    if (tauriAdapter && tauriAdapter.onShortcutCommand) {
+      return tauriAdapter.onShortcutCommand(cmd => {
         const { prev, next, togglePlay, setVolume, volume } = usePlayList.getState();
 
         switch (cmd) {

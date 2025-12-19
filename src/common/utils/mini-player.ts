@@ -4,6 +4,7 @@ import { shallow } from "zustand/shallow";
 import type { PlayMode } from "@/common/constants/audio";
 
 import { usePlayList } from "@/store/play-list";
+import { tauriAdapter } from "@/utils/tauri-adapter";
 
 export type MiniPlayerCommandFromMini = "init" | "seek" | "togglePlayMode" | "next" | "prev" | "togglePlay";
 
@@ -179,7 +180,7 @@ export async function toggleMiniMode() {
       startMiniPlayerMainSync();
     }
 
-    await window.electron.toggleMiniPlayer();
+    await tauriAdapter.toggleMiniPlayer();
   } catch {
     addToast({
       title: "切换出错",

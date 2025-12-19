@@ -31,6 +31,7 @@ export const tauriAdapter: any = {
 
   // Dialogs & Shell
   selectDirectory: () => invoke("select_directory"),
+  selectFile: () => invoke("select_file"),
   openDirectory: (path?: string) => invoke("open_directory", { path }),
   openExternal: (url: string) => open(url),
 
@@ -66,6 +67,20 @@ export const tauriAdapter: any = {
 
   // Pass the savePath (filename) from the task object
   showFileInFolder: (path: string) => invoke("show_file_in_folder", { path }),
+
+  // Shortcuts
+  registerShortcut: (payload: { id: string; accelerator: string }) =>
+    invoke("register_shortcut", { id: payload.id, accelerator: payload.accelerator }),
+
+  unregisterShortcut: (id: string) => invoke("unregister_shortcut", { id }),
+
+  registerAllShortcuts: () => invoke("register_all_shortcuts"),
+
+  unregisterAllShortcuts: () => invoke("unregister_all_shortcuts"),
+
+  onShortcutTriggered: (cb: (id: string) => void) => {
+    return syncListen("shortcut:triggered", cb);
+  },
 
   // Cookies - Try document first (for WebView access), then backend
   getCookie: (key: string) => {

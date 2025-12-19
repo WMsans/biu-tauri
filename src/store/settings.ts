@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+import { tauriAdapter } from "@/utils/tauri-adapter";
 import { defaultAppSettings } from "@shared/settings/app-settings";
 import { StoreNameMap } from "@shared/store";
 
@@ -31,7 +32,7 @@ export const useSettings = create<AppSettings & SettingsActions>()(
       name: "settings",
       storage: {
         getItem: async () => {
-          const store = await window.electron.getStore(StoreNameMap.AppSettings);
+          const store = await tauriAdapter.getStore(StoreNameMap.AppSettings);
 
           if (store?.appSettings?.fontFamily === "system-default") {
             store.appSettings.fontFamily = "system-ui";
@@ -45,14 +46,14 @@ export const useSettings = create<AppSettings & SettingsActions>()(
 
         setItem: async (_, value) => {
           if (value.state) {
-            await window.electron.setStore(StoreNameMap.AppSettings, {
+            await tauriAdapter.setStore(StoreNameMap.AppSettings, {
               appSettings: value.state,
             });
           }
         },
 
         removeItem: async () => {
-          await window.electron.clearStore(StoreNameMap.AppSettings);
+          await tauriAdapter.clearStore(StoreNameMap.AppSettings);
         },
       },
       partialize: state => {

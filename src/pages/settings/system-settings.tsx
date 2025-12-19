@@ -8,6 +8,7 @@ import { RiArrowRightLongLine } from "@remixicon/react";
 import ColorPicker from "@/components/color-picker";
 import FontSelect from "@/components/font-select";
 import UpdateCheckButton from "@/components/update-check-button";
+import { tauriAdapter } from "@/utils/tauri-adapter";
 import { defaultAppSettings } from "@shared/settings/app-settings";
 
 import ImportExport from "./export-import";
@@ -208,7 +209,7 @@ export const SystemSettingsTab = ({
                 <Button
                   variant="flat"
                   onPress={async () => {
-                    const path = await window.electron.selectDirectory();
+                    const path = await tauriAdapter.selectDirectory();
                     if (path) setValue("downloadPath", path, { shouldDirty: true, shouldTouch: true });
                   }}
                 >
@@ -236,7 +237,7 @@ export const SystemSettingsTab = ({
                 <Button
                   variant="flat"
                   onPress={async () => {
-                    const path = await window.electron.selectFile();
+                    const path = await tauriAdapter.selectFile();
                     if (path) setValue("ffmpegPath", path, { shouldDirty: true, shouldTouch: true });
                   }}
                 >
