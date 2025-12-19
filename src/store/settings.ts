@@ -1,8 +1,8 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
-import { tauriAdapter } from "@/utils/tauri-adapter";
 import { defaultAppSettings } from "@shared/settings/app-settings";
+import { StoreNameMap } from "@shared/store";
 
 interface SettingsActions {
   getSettings: () => AppSettings;
@@ -31,25 +31,28 @@ export const useSettings = create<AppSettings & SettingsActions>()(
       name: "settings",
       storage: {
         getItem: async () => {
-          // Use the specific getSettings command
-          const settings = await tauriAdapter.getSettings();
+          const store = await window.electron.getStore(StoreNameMap.AppSettings);
 
-          if (settings?.fontFamily === "system-default") {
-            settings.fontFamily = "system-ui";
+          if (store?.appSettings?.fontFamily === "system-default") {
+            store.appSettings.fontFamily = "system-ui";
           }
 
           // Return the settings object directly as the state
           return {
-            state: settings,
+            state: store?.appSettings,
           };
         },
 
         setItem: async (_, value) => {
-          await tauriAdapter.setSettings(value.state);
+          if (value.state) {
+            await window.electron.setStore(StoreNameMap.AppSettings, {
+              appSettings: value.state,
+            });
+          }
         },
 
         removeItem: async () => {
-          await tauriAdapter.clearSettings();
+          await window.electron.clearStore(StoreNameMap.AppSettings);
         },
       },
       partialize: state => {

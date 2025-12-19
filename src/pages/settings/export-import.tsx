@@ -5,8 +5,8 @@ import { RiExportFill, RiImportFill } from "@remixicon/react";
 import { merge } from "es-toolkit/object";
 
 import { useSettings } from "@/store/settings";
-import { tauriAdapter } from "@/utils/tauri-adapter";
 import { defaultAppSettings } from "@shared/settings/app-settings";
+import { StoreNameMap } from "@shared/store";
 
 const ImportExport = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -15,8 +15,10 @@ const ImportExport = () => {
 
   const handleExport = async () => {
     try {
-      const settingStore = (await tauriAdapter.getStore("app-settings")) as { appSettings: AppSettings };
-      const blob = new Blob([JSON.stringify(settingStore.appSettings, null, 2)], { type: "application/json" });
+      const settingStore = await window.electron.getStore(StoreNameMap.AppSettings);
+      const blob = new Blob([JSON.stringify(settingStore?.appSettings ?? defaultAppSettings, null, 2)], {
+        type: "application/json",
+      });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -61,10 +63,10 @@ const ImportExport = () => {
   return (
     <div className="flex items-center space-x-2">
       <input ref={fileInputRef} type="file" accept="application/json" hidden onChange={handleImportFileChange} />
-      <Button size="sm" startContent={<RiExportFill size={16} />} onPress={handleExport}>
+      <Button size="sm" radius="md" startContent={<RiExportFill size={16} />} onPress={handleExport}>
         导出配置
       </Button>
-      <Button size="sm" startContent={<RiImportFill size={16} />} onPress={handleImportClick}>
+      <Button size="sm" radius="md" startContent={<RiImportFill size={16} />} onPress={handleImportClick}>
         导入配置
       </Button>
     </div>

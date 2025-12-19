@@ -478,6 +478,14 @@ export const usePlayList = create<State & Action>()(
           });
         },
         togglePlay: async () => {
+          if (!get().list?.length) {
+            return;
+          }
+
+          if (!get().playId) {
+            return;
+          }
+
           if (audio.paused) {
             set(state => {
               state.isPlaying = true;
@@ -575,6 +583,14 @@ export const usePlayList = create<State & Action>()(
         next: async () => {
           const { playMode, list, playId, nextId, shouldKeepPagesOrderInRandomPlayMode } = get();
 
+          if (!list?.length) {
+            return;
+          }
+
+          if (!playId) {
+            return;
+          }
+
           if (nextId) {
             set(state => {
               state.playId = nextId;
@@ -640,6 +656,14 @@ export const usePlayList = create<State & Action>()(
         },
         prev: async () => {
           const { playId, list } = get();
+
+          if (!list?.length) {
+            return;
+          }
+
+          if (!playId) {
+            return;
+          }
 
           const currentIndex = list.findIndex(item => item.id === playId);
           if (currentIndex === -1) return;
@@ -924,7 +948,7 @@ usePlayList.subscribe(async (state, prevState) => {
             resetAudioAndPlay(mvPlayData?.audioUrl, referer);
 
             updateMediaSession({
-              title: playItem.title,
+              title: playItem.pageTitle || playItem.title,
               artist: playItem.ownerName,
               cover: playItem.pageCover,
             });
@@ -950,7 +974,7 @@ usePlayList.subscribe(async (state, prevState) => {
               resetAudioAndPlay(mvPlayData?.audioUrl, referer);
 
               updateMediaSession({
-                title: firstMV.title,
+                title: firstMV.pageTitle || firstMV.title,
                 artist: firstMV.ownerName,
                 cover: firstMV.pageCover,
               });
