@@ -150,7 +150,7 @@ async fn download_task_runner(
                     // Race Condition Fix:
                     // If the user has paused the task (status="paused"), we should not overwrite it 
                     // with a running status (like "downloading") from the dying thread.
-                    if t.status == "paused" {
+                    if t.status.ends_with("Paused") {
                         return;
                     }
 

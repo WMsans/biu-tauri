@@ -132,7 +132,12 @@ pub async fn pause_media_download_task(
         let mut tasks = store.tasks.lock().unwrap();
         if let Some(task) = tasks.iter_mut().find(|t| t.id == id) {
             if task.status != "completed" {
-                task.status = "paused".to_string();
+                let status = match task.status.as_str() {
+                    "merging" => "mergePaused",
+                    "converting" => "convertPaused",
+                    _ => "downloadPaused",
+                };
+                task.status = status.to_string();
                 updated_task = Some(task.clone());
             }
         }
