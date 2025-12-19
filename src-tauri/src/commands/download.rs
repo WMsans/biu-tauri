@@ -166,11 +166,30 @@ pub async fn resume_media_download_task(
     id: String,
 ) -> Result<(), AppError> {
     let task_opt = {
-        let tasks = store.tasks.lock().unwrap();
-        tasks.iter().find(|t| t.id == id).cloned()
+        let mut tasks = store.tasks.lock().unwrap();
+        // 1. Update status inside a limited scope
+        let updated_task = if let Some(t) = tasks.iter_mut().find(|t| t.id == id) {
+            t.status = "pending".to_string();
+            t.error = None;
+            Some(t.clone())
+        } else {
+            None
+        };
+
+        // 2. Mutable borrow ends here, now we can save immutably
+        if updated_task.is_some() {
+            let _ = store::save_tasks(&app, &tasks);
+        }
+        updated_task
     };
 
     if let Some(task) = task_opt {
+        // Emit the UI update
+        app.emit(
+            "download:list-sync",
+            serde_json::json!({ "type": "update", "data": [task.clone()] }),
+        )?;
+
         let bvid = task.bvid.ok_or(AppError::DatabaseError("No BVID".to_string()))?;
         let cid = task.cid.ok_or(AppError::DatabaseError("No CID".to_string()))?;
 
