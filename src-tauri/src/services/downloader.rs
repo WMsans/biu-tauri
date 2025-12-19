@@ -75,7 +75,6 @@ pub fn spawn_download_task(
     wbi_store: WbiStore,
     params: DownloadOptions,
 ) -> JoinHandle<()> {
-    let _ = wbi_store;
     tauri::async_runtime::spawn(async move {
         if let Err(e) = download_task_runner(app, client, params).await {
             log::error!("Download task failed: {}", e);

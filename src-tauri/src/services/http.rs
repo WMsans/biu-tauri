@@ -2,7 +2,7 @@ use crate::error::AppError;
 use crate::state::models::AppHttpClient;
 use crate::state::models::HttpInvokePayload;
 use reqwest::cookie::Jar;
-use reqwest::header::{HeaderMap, HeaderName, CONTENT_TYPE, REFERER};
+use reqwest::header::{HeaderMap, HeaderName, CONTENT_TYPE};
 use reqwest::Client;
 use reqwest::Method;
 use serde_json;
@@ -11,22 +11,17 @@ use std::sync::Arc;
 
 pub const DEFAULT_USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
-pub fn build_client() -> AppHttpClient {
+pub fn build_client() -> Client {
     let jar = Arc::new(Jar::default());
-    let client = Client::builder()
-        .cookie_provider(jar.clone())
+    Client::builder()
+        .cookie_provider(jar)
         .user_agent(DEFAULT_USER_AGENT)
         .build()
-        .unwrap();
-    
-    AppHttpClient {
-        client,
-        cookie_store: jar,
-    }
+        .unwrap()
 }
 
 pub async fn make_request(
-    app_client: &AppHttpClient,
+    client: &AppHttpClient,
     method: String,
     url: String,
     body: Option<serde_json::Value>,
@@ -34,19 +29,14 @@ pub async fn make_request(
 ) -> Result<serde_json::Value, AppError> {
     let req_method =
         Method::from_str(&method.to_uppercase()).map_err(|e| AppError::NetworkError(e.to_string()))?;
-    let mut req = app_client.client.request(req_method, &url);
+    let mut req = client.0.request(req_method, &url);
     let mut is_form = false;
 
     if let Some(payload) = options {
         if let Some(headers) = payload.headers {
             let mut hmap = HeaderMap::new();
-            let mut has_referer = false;
-            
             for (k, v) in headers {
                 if let Ok(hname) = k.parse::<HeaderName>() {
-                    if hname == REFERER {
-                        has_referer = true;
-                    }
                     if let Ok(hval) = v.parse::<tauri::http::HeaderValue>() {
                         if hname == CONTENT_TYPE
                             && hval
@@ -60,27 +50,14 @@ pub async fn make_request(
                     }
                 }
             }
-            
-            // Interceptor: Ensure Referer is set to bilibili.com if not provided
-            if !has_referer {
-                 hmap.insert(REFERER, "https://www.bilibili.com".parse().unwrap());
-            }
-
             req = req.headers(hmap);
-        } else {
-            // Options present but no headers, inject Referer
-            req = req.header(REFERER, "https://www.bilibili.com");
         }
-
         if let Some(params) = payload.params {
             req = req.query(&params);
         }
         if let Some(timeout_ms) = payload.timeout {
             req = req.timeout(std::time::Duration::from_millis(timeout_ms));
         }
-    } else {
-        // No options provided, inject Referer
-        req = req.header(REFERER, "https://www.bilibili.com");
     }
 
     if let Some(b) = body {

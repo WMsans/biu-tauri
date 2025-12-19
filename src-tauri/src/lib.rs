@@ -14,7 +14,7 @@ pub mod state;
 
 use crate::services::{http, proxy::run_proxy_server};
 use error::AppError;
-use state::models::{ProxyPort, TaskStore, WbiKeysCache, WbiStore};
+use state::models::{AppHttpClient, ProxyPort, TaskStore, WbiKeysCache, WbiStore};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() -> Result<(), AppError> {
@@ -117,7 +117,7 @@ pub fn run() -> Result<(), AppError> {
 
             Ok(())
         })
-        .manage(http::build_client()) // Updated: build_client() now returns AppHttpClient
+        .manage(AppHttpClient(http::build_client()))
         .manage(ProxyPort(proxy_port))
         .manage(task_store)
         .manage(wbi_store) // Register WBI Store

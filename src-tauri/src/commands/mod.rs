@@ -28,8 +28,7 @@ pub fn get_handlers() -> impl Fn(Invoke) -> bool {
         network::http_get,
         network::http_post,
         network::get_proxy_port,
-        network::wbi_sign_params,
-        network::sync_cookies, 
+        network::wbi_sign_params, // Registered
         store::get_settings,
         store::set_settings,
         store::get_store,

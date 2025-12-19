@@ -21,7 +21,7 @@ pub async fn start_download(
     params: DownloadOptions,
 ) -> Result<serde_json::Value, AppError> {
     // Legacy simple download without state tracking
-    spawn_download_task(app, client.client.clone(), WbiStore(wbi_store.0.clone()), params);
+    spawn_download_task(app, client.0.clone(), WbiStore(wbi_store.0.clone()), params);
     Ok(serde_json::json!({ "success": true }))
 }
 
@@ -46,7 +46,7 @@ pub async fn add_media_download_task(
     let cid = task.cid.clone().ok_or(AppError::DatabaseError("Missing cid".to_string()))?;
 
     // Use Helper with WBI signing
-    let audio_url = fetch_bili_url(&client.client, &wbi_store, &bvid, &cid).await?;
+    let audio_url = fetch_bili_url(&client.0, &wbi_store, &bvid, &cid).await?;
 
     let ext = if task.output_file_type == "mp3" { "mp3" } else { "m4a" };
     let safe_title: String = task
@@ -95,7 +95,7 @@ pub async fn add_media_download_task(
     };
 
     // Store handle
-    let handle = spawn_download_task(app, client.client.clone(), WbiStore(wbi_store.0.clone()), options);
+    let handle = spawn_download_task(app, client.0.clone(), WbiStore(wbi_store.0.clone()), options);
     store.handles.lock().unwrap().insert(task_id, handle);
 
     Ok(serde_json::json!({ "success": true, "message": "Download started" }))
@@ -151,7 +151,7 @@ pub async fn resume_media_download_task(
         let cid = task.cid.ok_or(AppError::DatabaseError("No CID".to_string()))?;
 
         // Use WBI signing here too
-        let audio_url = fetch_bili_url(&client.client, &wbi_store, &bvid, &cid).await?;
+        let audio_url = fetch_bili_url(&client.0, &wbi_store, &bvid, &cid).await?;
 
         let filename = task.save_path.ok_or(AppError::DatabaseError("No save path".to_string()))?;
 
@@ -162,7 +162,7 @@ pub async fn resume_media_download_task(
             is_lossless: task.output_file_type != "mp3",
         };
 
-        let handle = spawn_download_task(app, client.client.clone(), WbiStore(wbi_store.0.clone()), options);
+        let handle = spawn_download_task(app, client.0.clone(), WbiStore(wbi_store.0.clone()), options);
         store.handles.lock().unwrap().insert(id, handle);
     }
     Ok(())

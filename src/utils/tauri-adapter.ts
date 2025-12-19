@@ -67,9 +67,7 @@ export const tauriAdapter: any = {
   // Pass the savePath (filename) from the task object
   showFileInFolder: (path: string) => invoke("show_file_in_folder", { path }),
 
-  // Cookies
-  syncCookies: (cookieStr: string) => invoke("sync_cookies", { cookieStr }),
-
+  // Cookies - Try document first (for WebView access), then backend
   getCookie: (key: string) => {
     const match = document.cookie.match(new RegExp("(^| )" + key + "=([^;]+)"));
     if (match) return Promise.resolve(match[2]);
