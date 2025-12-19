@@ -6,10 +6,6 @@ use tauri::{
     Manager,
     Emitter
 };
-use std::fs::File;
-use std::io::BufReader;
-use reqwest_cookie_store::CookieStoreMutex;
-use reqwest_cookie_store::CookieStore;
 
 pub mod commands;
 pub mod error;
@@ -31,8 +27,6 @@ pub fn run() -> Result<(), AppError> {
     // 2. Initialize WBI Store
     let wbi_store = WbiStore(Arc::new(Mutex::new(WbiKeysCache::new())));
 
-    // NOTE: Proxy server spawn moved to setup() to access cookie_store
-
     tauri::Builder::default()
         .plugin(
             tauri_plugin_log::Builder::new()
@@ -48,30 +42,13 @@ pub fn run() -> Result<(), AppError> {
         .setup(move |app| {
             // --- Persistence Setup ---
             
-            // 1. Resolve Data Directory
-            let app_data_dir = app.path().app_local_data_dir()
-                .expect("failed to resolve app local data dir");
+            // 1. Initialize HTTP Client & Load Cookies
+            // Use the new build_client which handles directory lookup and loading
+            let (client, cookie_store) = http::build_client(app.handle())?;
             
-            if !app_data_dir.exists() {
-                std::fs::create_dir_all(&app_data_dir)?;
-            }
-            
-            let cookie_path = app_data_dir.join("cookies.json");
-
-            // 2. Load Cookies
-            let cookie_store = if cookie_path.exists() {
-                let file = File::open(&cookie_path).map(BufReader::new).ok();
-                // Fix Deprecation: Use serde_json instead of load_json
-                file.and_then(|r| serde_json::from_reader(r).ok())
-                    .unwrap_or_default()
-            } else {
-                CookieStore::default()
-            };
-
-            let cookie_store = Arc::new(CookieStoreMutex::new(cookie_store));
-            
-            // --- Start Proxy Server (Moved here) ---
-            let proxy_port_for_server = proxy_port_clone.clone(); // Captured from outer scope
+            // --- Start Proxy Server ---
+            // Pass the loaded cookie store to the proxy
+            let proxy_port_for_server = proxy_port_clone.clone(); 
             let cookie_store_for_server = cookie_store.clone();
             
             tauri::async_runtime::spawn(async move {
@@ -80,10 +57,7 @@ pub fn run() -> Result<(), AppError> {
                 }
             });
 
-            // 3. Initialize HTTP Client with Cookies
-            let client = http::build_client(cookie_store.clone());
-
-            // 4. Manage States
+            // 2. Manage States
             app.manage(AppCookieStore(cookie_store));
             app.manage(AppHttpClient(client));
 
@@ -103,7 +77,7 @@ pub fn run() -> Result<(), AppError> {
                     &play_pause_i,
                     &prev_i,
                     &next_i,
-                    &show_hide_i, // Separators can be added here if needed using PredefinedMenuItem::separator(app)?
+                    &show_hide_i, 
                     &quit_i,
                 ],
             )?;
@@ -111,11 +85,11 @@ pub fn run() -> Result<(), AppError> {
             // 3. Configure the Tray
             let _tray = TrayIconBuilder::new()
                 .menu(&menu)
-                .icon(app.default_window_icon().unwrap().clone()) // Uses the default app icon
+                .icon(app.default_window_icon().unwrap().clone())
                 .on_menu_event(|app, event| {
                     match event.id().as_ref() {
                         "play_pause" => {
-                            let _ = app.emit("player:toggle", ()); // Emits to frontend
+                            let _ = app.emit("player:toggle", ()); 
                         }
                         "prev" => {
                             let _ = app.emit("player:prev", ());

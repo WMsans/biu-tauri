@@ -4,7 +4,7 @@ use reqwest::header::{CONTENT_LENGTH, CONTENT_RANGE, CONTENT_TYPE, RANGE, REFERE
 use std::sync::{Arc, Mutex};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpListener;
-use crate::services::http::build_client;
+use crate::services::http::construct_client; 
 use reqwest_cookie_store::CookieStoreMutex;
 
 // --- Helper Functions ---
@@ -31,8 +31,7 @@ pub async fn run_proxy_server(port_state: Arc<Mutex<u16>>, cookie_store: Arc<Coo
         *p = port;
     }
 
-    // Pass the cookie_store to build_client
-    let client = build_client(cookie_store);
+    let client = construct_client(cookie_store);
 
     loop {
         if let Ok((mut socket, _)) = listener.accept().await {
