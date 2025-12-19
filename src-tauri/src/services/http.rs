@@ -1,23 +1,72 @@
 use crate::error::AppError;
-use crate::state::models::AppHttpClient;
-use crate::state::models::HttpInvokePayload;
-use reqwest::cookie::Jar;
+use crate::state::models::{AppHttpClient, HttpInvokePayload};
+use reqwest_cookie_store::{CookieStore, CookieStoreMutex};
 use reqwest::header::{HeaderMap, HeaderName, CONTENT_TYPE};
-use reqwest::Client;
-use reqwest::Method;
+use reqwest::{Client, Method};
 use serde_json;
+use std::fs::File;
+use std::io::BufReader;
 use std::str::FromStr;
 use std::sync::Arc;
+use tauri::{AppHandle, Manager};
 
 pub const DEFAULT_USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
-pub fn build_client() -> Client {
-    let jar = Arc::new(Jar::default());
+/// Helper to construct a client with a specific cookie store.
+/// This replaces the old `build_client` for use cases like the Proxy server
+/// which already has access to the store.
+pub fn construct_client(cookie_store: Arc<CookieStoreMutex>) -> Client {
     Client::builder()
-        .cookie_provider(jar)
+        .cookie_provider(cookie_store)
         .user_agent(DEFAULT_USER_AGENT)
         .build()
-        .unwrap()
+        .unwrap_or_else(|_| Client::new())
+}
+
+/// Rewritten build_client to handle initialization from AppHandle.
+/// 1. Locates config dir
+/// 2. Loads cookies
+/// 3. Injects store
+pub fn build_client(app: &AppHandle) -> Result<(Client, Arc<CookieStoreMutex>), AppError> {
+    // 1. Locate the Config Directory
+    let app_data_dir = app.path().app_local_data_dir()
+        .map_err(|e| AppError::TauriError(e))?;
+
+    if !app_data_dir.exists() {
+        std::fs::create_dir_all(&app_data_dir).map_err(AppError::IoError)?;
+    }
+
+    // 2. Define the Cookie File Path
+    let cookie_path = app_data_dir.join("cookies.json");
+
+    // 3. Load Existing Cookies
+    let cookie_store_inner = if cookie_path.exists() {
+        let file = File::open(&cookie_path).map(BufReader::new).ok();
+        file.and_then(|r| serde_json::from_reader(r).ok())
+            .unwrap_or_default()
+    } else {
+        CookieStore::default()
+    };
+
+    let cookie_store = Arc::new(CookieStoreMutex::new(cookie_store_inner));
+
+    // 4. Inject the Store
+    let client = construct_client(cookie_store.clone());
+
+    Ok((client, cookie_store))
+}
+
+/// Save cookies to disk
+pub fn save_cookies(app: &AppHandle, store: &Arc<CookieStoreMutex>) -> Result<(), AppError> {
+    let app_data_dir = app.path().app_local_data_dir()
+        .map_err(|e| AppError::TauriError(e))?;
+    let cookie_path = app_data_dir.join("cookies.json");
+
+    let file = File::create(cookie_path).map_err(AppError::IoError)?;
+    let store = store.lock().unwrap();
+    serde_json::to_writer_pretty(file, &*store)
+        .map_err(|e| AppError::DatabaseError(e.to_string()))?;
+    Ok(())
 }
 
 pub async fn make_request(

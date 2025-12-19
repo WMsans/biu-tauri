@@ -17,14 +17,13 @@ pub async fn check_file_exists(app: AppHandle, filename: String) -> Result<bool,
 pub async fn start_download(
     app: AppHandle,
     client: State<'_, AppHttpClient>,
+    wbi_store: State<'_, WbiStore>, 
     params: DownloadOptions,
 ) -> Result<serde_json::Value, AppError> {
-    // Legacy simple download without state tracking
-    spawn_download_task(app, client.0.clone(), params);
+    spawn_download_task(app, client.0.clone(), WbiStore(wbi_store.0.clone()), params);
     Ok(serde_json::json!({ "success": true }))
 }
 
-// --- NEW: Command to get the list ---
 #[tauri::command]
 pub async fn get_media_download_task_list(
     state: State<'_, TaskStore>,
@@ -38,15 +37,25 @@ pub async fn add_media_download_task(
     app: AppHandle,
     client: State<'_, AppHttpClient>,
     store: State<'_, TaskStore>,
+    wbi_store: State<'_, WbiStore>, 
     task: MediaDownloadRequest,
 ) -> Result<serde_json::Value, AppError> {
     let bvid = task.bvid.clone().ok_or(AppError::DatabaseError("Missing bvid".to_string()))?;
     let cid = task.cid.clone().ok_or(AppError::DatabaseError("Missing cid".to_string()))?;
 
-    // Use Helper
-    let audio_url = fetch_bili_url(&client.0, &bvid, &cid).await?;
+    // Updated: fetch both audio and video urls
+    let (audio_url, video_url) = fetch_bili_url(&client.0, &wbi_store, &bvid, &cid).await?;
 
-    let ext = if task.output_file_type == "mp3" { "mp3" } else { "m4a" };
+    let is_video_mode = task.output_file_type == "video";
+
+    let ext = if is_video_mode { 
+        "mp4" 
+    } else if task.output_file_type == "mp3" { 
+        "mp3" 
+    } else { 
+        "m4a" 
+    };
+
     let safe_title: String = task
         .title
         .chars()
@@ -79,6 +88,9 @@ pub async fn add_media_download_task(
     {
         let mut tasks = store.tasks.lock().unwrap();
         tasks.push(new_task_state.clone());
+        // Save to disk
+        let _ = store::save_tasks(&app, &tasks);
+
         app.emit(
             "download:list-sync",
             serde_json::json!({ "type": "full", "data": *tasks }),
@@ -89,11 +101,13 @@ pub async fn add_media_download_task(
         id: task_id.clone(),
         filename,
         audio_url,
+        // Only provide video_url if we are in video mode
+        video_url: if is_video_mode { video_url } else { None },
+        // "video" mode is also considered lossless in terms of audio transcoding (we just copy/merge)
         is_lossless: task.output_file_type != "mp3",
     };
 
-    // Store handle
-    let handle = spawn_download_task(app, client.0.clone(), options);
+    let handle = spawn_download_task(app, client.0.clone(), WbiStore(wbi_store.0.clone()), options);
     store.handles.lock().unwrap().insert(task_id, handle);
 
     Ok(serde_json::json!({ "success": true, "message": "Download started" }))
@@ -105,7 +119,6 @@ pub async fn pause_media_download_task(
     store: State<'_, TaskStore>,
     id: String,
 ) -> Result<(), AppError> {
-    // 1. Abort execution
     {
         let mut handles = store.handles.lock().unwrap();
         if let Some(handle) = handles.remove(&id) {
@@ -113,19 +126,33 @@ pub async fn pause_media_download_task(
         }
     }
 
-    // 2. Update status manually (as abort stops the thread before it can update)
-    let mut tasks = store.tasks.lock().unwrap();
-    if let Some(task) = tasks.iter_mut().find(|t| t.id == id) {
-        if task.status != "completed" {
-            task.status = "paused".to_string();
-            // Emit sync
-            let updated = task.clone();
-            drop(tasks); // release lock
-            let _ = app.emit(
-                "download:list-sync",
-                serde_json::json!({ "type": "update", "data": [updated] }),
-            );
+    let mut updated_task: Option<MediaDownloadTaskState> = None;
+    
+    {
+        let mut tasks = store.tasks.lock().unwrap();
+        if let Some(task) = tasks.iter_mut().find(|t| t.id == id) {
+            if task.status != "completed" {
+                let status = match task.status.as_str() {
+                    "merging" => "mergePaused",
+                    "converting" => "convertPaused",
+                    _ => "downloadPaused",
+                };
+                task.status = status.to_string();
+                updated_task = Some(task.clone());
+            }
         }
+        
+        // Save while lock is still held, but `task` borrow is ended because we exited the if-let scope
+        if updated_task.is_some() {
+            let _ = store::save_tasks(&app, &tasks);
+        }
+    } // drop tasks lock
+
+    if let Some(updated) = updated_task {
+        let _ = app.emit(
+            "download:list-sync",
+            serde_json::json!({ "type": "update", "data": [updated] }),
+        );
     }
     Ok(())
 }
@@ -135,30 +162,52 @@ pub async fn resume_media_download_task(
     app: AppHandle,
     client: State<'_, AppHttpClient>,
     store: State<'_, TaskStore>,
+    wbi_store: State<'_, WbiStore>, 
     id: String,
 ) -> Result<(), AppError> {
     let task_opt = {
-        let tasks = store.tasks.lock().unwrap();
-        tasks.iter().find(|t| t.id == id).cloned()
+        let mut tasks = store.tasks.lock().unwrap();
+        // 1. Update status inside a limited scope
+        let updated_task = if let Some(t) = tasks.iter_mut().find(|t| t.id == id) {
+            t.status = "pending".to_string();
+            t.error = None;
+            Some(t.clone())
+        } else {
+            None
+        };
+
+        // 2. Mutable borrow ends here, now we can save immutably
+        if updated_task.is_some() {
+            let _ = store::save_tasks(&app, &tasks);
+        }
+        updated_task
     };
 
     if let Some(task) = task_opt {
-        // Re-fetch URL because it might have expired
+        // Emit the UI update
+        app.emit(
+            "download:list-sync",
+            serde_json::json!({ "type": "update", "data": [task.clone()] }),
+        )?;
+
         let bvid = task.bvid.ok_or(AppError::DatabaseError("No BVID".to_string()))?;
         let cid = task.cid.ok_or(AppError::DatabaseError("No CID".to_string()))?;
 
-        let audio_url = fetch_bili_url(&client.0, &bvid, &cid).await?;
+        // Updated fetch call
+        let (audio_url, video_url) = fetch_bili_url(&client.0, &wbi_store, &bvid, &cid).await?;
 
         let filename = task.save_path.ok_or(AppError::DatabaseError("No save path".to_string()))?;
+        let is_video_mode = task.output_file_type == "video";
 
         let options = DownloadOptions {
             id: id.clone(),
             filename,
             audio_url,
+            video_url: if is_video_mode { video_url } else { None },
             is_lossless: task.output_file_type != "mp3",
         };
 
-        let handle = spawn_download_task(app, client.0.clone(), options);
+        let handle = spawn_download_task(app, client.0.clone(), WbiStore(wbi_store.0.clone()), options);
         store.handles.lock().unwrap().insert(id, handle);
     }
     Ok(())
@@ -169,11 +218,10 @@ pub async fn retry_media_download_task(
     app: AppHandle,
     client: State<'_, AppHttpClient>,
     store: State<'_, TaskStore>,
+    wbi_store: State<'_, WbiStore>,
     id: String,
 ) -> Result<(), AppError> {
-    // Retry is effectively the same as resume in this architecture
-    // (range headers will handle partials, or start from 0 if missing)
-    resume_media_download_task(app, client, store, id).await
+    resume_media_download_task(app, client, store, wbi_store, id).await
 }
 
 #[tauri::command]
@@ -182,7 +230,6 @@ pub async fn cancel_media_download_task(
     store: State<'_, TaskStore>,
     id: String,
 ) -> Result<(), AppError> {
-    // 1. Abort
     {
         let mut handles = store.handles.lock().unwrap();
         if let Some(handle) = handles.remove(&id) {
@@ -190,17 +237,18 @@ pub async fn cancel_media_download_task(
         }
     }
 
-    // 2. Remove from List and Delete Files
     let mut tasks = store.tasks.lock().unwrap();
     if let Some(index) = tasks.iter().position(|t| t.id == id) {
         tasks.remove(index);
+        // Save to disk
+        let _ = store::save_tasks(&app, &tasks);
 
-        // Delete Temp Files
         let temp_dir = app.path().temp_dir().unwrap().join("biu-downloads");
         let temp_audio = temp_dir.join(format!("{}.audio.tmp", id));
+        let temp_video = temp_dir.join(format!("{}.video.tmp", id));
         let _ = fs::remove_file(temp_audio);
+        let _ = fs::remove_file(temp_video);
 
-        // Emit Full Sync
         let _ = app.emit(
             "download:list-sync",
             serde_json::json!({
@@ -219,8 +267,9 @@ pub async fn clear_media_download_task_list(
 ) -> Result<(), AppError> {
     let mut tasks = store.tasks.lock().unwrap();
     tasks.clear();
+    // Save to disk
+    let _ = store::save_tasks(&app, &tasks);
 
-    // Emit full sync event with empty list
     app.emit(
         "download:list-sync",
         serde_json::json!({

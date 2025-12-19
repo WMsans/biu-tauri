@@ -1,5 +1,5 @@
 use crate::error::AppError;
-use crate::state::models::AppSettings;
+use crate::state::models::{AppSettings, MediaDownloadTaskState};
 use serde_json;
 use std::fs::{self, File};
 use std::path::PathBuf;
@@ -11,6 +11,14 @@ pub fn get_settings_path(app: &AppHandle) -> PathBuf {
         .unwrap()
         .join("app-settings.json")
 }
+
+pub fn get_tasks_path(app: &AppHandle) -> PathBuf {
+    app.path()
+        .app_config_dir()
+        .unwrap()
+        .join("tasks.json")
+}
+
 pub fn load_settings(app: &AppHandle) -> Result<AppSettings, AppError> {
     let path = get_settings_path(app);
     if path.exists() {
@@ -32,6 +40,38 @@ pub fn load_settings(app: &AppHandle) -> Result<AppSettings, AppError> {
         extra: std::collections::HashMap::new(),
     })
 }
+
+pub fn load_tasks(app: &AppHandle) -> Result<Vec<MediaDownloadTaskState>, AppError> {
+    let path = get_tasks_path(app);
+    if path.exists() {
+        let file = File::open(path)?;
+        let reader = std::io::BufReader::new(file);
+        let mut tasks: Vec<MediaDownloadTaskState> = serde_json::from_reader(reader)
+            .map_err(|e| AppError::DatabaseError(e.to_string()))?;
+        
+        // Reset active statuses to paused on load (since the app was restarted)
+        for task in &mut tasks {
+            if task.status == "downloading" || task.status == "merging" || task.status == "converting" {
+                task.status = "paused".to_string();
+            }
+        }
+        Ok(tasks)
+    } else {
+        Ok(Vec::new())
+    }
+}
+
+pub fn save_tasks(app: &AppHandle, tasks: &[MediaDownloadTaskState]) -> Result<(), AppError> {
+    let path = get_tasks_path(app);
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent)?;
+    }
+    let file = File::create(path)?;
+    serde_json::to_writer_pretty(file, tasks)
+        .map_err(|e| AppError::DatabaseError(e.to_string()))?;
+    Ok(())
+}
+
 pub fn get_store_path(app: &AppHandle, key: &str) -> PathBuf {
     app.path()
         .app_config_dir()

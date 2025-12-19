@@ -2,9 +2,32 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use tauri::async_runtime::JoinHandle;
+use reqwest_cookie_store::CookieStoreMutex;
 
 // Store the dynamic port of our local proxy
 pub struct ProxyPort(pub Arc<Mutex<u16>>);
+
+pub struct AppCookieStore(pub Arc<CookieStoreMutex>);
+
+// WBI Keys Cache
+pub struct WbiKeysCache {
+    pub img_key: String,
+    pub sub_key: String,
+    pub last_fetch: u64,
+}
+
+impl WbiKeysCache {
+    pub fn new() -> Self {
+        Self {
+            img_key: String::new(),
+            sub_key: String::new(),
+            last_fetch: 0,
+        }
+    }
+}
+
+// Container for WBI Store
+pub struct WbiStore(pub Arc<Mutex<WbiKeysCache>>);
 
 // 1. Define the persistent state for tasks
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -59,6 +82,7 @@ pub struct DownloadOptions {
     pub id: String,
     pub filename: String,
     pub audio_url: String,
+    pub video_url: Option<String>, 
     pub is_lossless: bool,
 }
 
@@ -112,6 +136,7 @@ pub struct BiliPlayUrlData {
 #[derive(Debug, Deserialize)]
 pub struct BiliDashData {
     pub audio: Option<Vec<BiliDashMedia>>,
+    pub video: Option<Vec<BiliDashMedia>>,
 }
 
 #[derive(Debug, Deserialize)]
