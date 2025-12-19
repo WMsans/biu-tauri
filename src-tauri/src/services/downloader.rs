@@ -141,8 +141,21 @@ async fn download_task_runner(
             // Store Update
             if let Some(store) = app_handle.try_state::<TaskStore>() {
                 let mut tasks = store.tasks.lock().unwrap();
+                let mut updated_task: Option<MediaDownloadTaskState> = None;
+                let mut should_save = false;
+
                 if let Some(t) = tasks.iter_mut().find(|t| t.id == options_clone) {
+                    
+                    // Race Condition Fix:
+                    // If the user has paused the task (status="paused"), we should not overwrite it 
+                    // with a running status (like "downloading") from the dying thread.
+                    if t.status == "paused" {
+                        return;
+                    }
+
+                    let old_status = t.status.clone();
                     t.status = status.to_string();
+                    
                     if let Some(p) = progress {
                         // If converting, update convert_progress specific field
                         if status == "converting" || status == "merging" {
@@ -172,8 +185,22 @@ async fn download_task_runner(
                             handles.remove(&options_clone);
                         }
                     }
-                    // Emit Sync
-                    let updated = t.clone();
+                    
+                    // Check if we need to save to disk
+                    if t.status != old_status || status == "completed" || status == "failed" {
+                        should_save = true;
+                    }
+                    
+                    // Clone for emit
+                    updated_task = Some(t.clone());
+                }
+
+                // Now that the mutable borrow of 't' is gone, we can borrow 'tasks' immutably
+                if should_save {
+                    let _ = store::save_tasks(&app_handle, &tasks);
+                }
+
+                if let Some(updated) = updated_task {
                     drop(tasks);
                     let _ = app_handle.emit(
                         "download:list-sync",

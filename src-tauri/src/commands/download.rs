@@ -88,6 +88,9 @@ pub async fn add_media_download_task(
     {
         let mut tasks = store.tasks.lock().unwrap();
         tasks.push(new_task_state.clone());
+        // Save to disk
+        let _ = store::save_tasks(&app, &tasks);
+
         app.emit(
             "download:list-sync",
             serde_json::json!({ "type": "full", "data": *tasks }),
@@ -123,17 +126,28 @@ pub async fn pause_media_download_task(
         }
     }
 
-    let mut tasks = store.tasks.lock().unwrap();
-    if let Some(task) = tasks.iter_mut().find(|t| t.id == id) {
-        if task.status != "completed" {
-            task.status = "paused".to_string();
-            let updated = task.clone();
-            drop(tasks); 
-            let _ = app.emit(
-                "download:list-sync",
-                serde_json::json!({ "type": "update", "data": [updated] }),
-            );
+    let mut updated_task: Option<MediaDownloadTaskState> = None;
+    
+    {
+        let mut tasks = store.tasks.lock().unwrap();
+        if let Some(task) = tasks.iter_mut().find(|t| t.id == id) {
+            if task.status != "completed" {
+                task.status = "paused".to_string();
+                updated_task = Some(task.clone());
+            }
         }
+        
+        // Save while lock is still held, but `task` borrow is ended because we exited the if-let scope
+        if updated_task.is_some() {
+            let _ = store::save_tasks(&app, &tasks);
+        }
+    } // drop tasks lock
+
+    if let Some(updated) = updated_task {
+        let _ = app.emit(
+            "download:list-sync",
+            serde_json::json!({ "type": "update", "data": [updated] }),
+        );
     }
     Ok(())
 }
@@ -202,6 +216,8 @@ pub async fn cancel_media_download_task(
     let mut tasks = store.tasks.lock().unwrap();
     if let Some(index) = tasks.iter().position(|t| t.id == id) {
         tasks.remove(index);
+        // Save to disk
+        let _ = store::save_tasks(&app, &tasks);
 
         let temp_dir = app.path().temp_dir().unwrap().join("biu-downloads");
         let temp_audio = temp_dir.join(format!("{}.audio.tmp", id));
@@ -227,6 +243,8 @@ pub async fn clear_media_download_task_list(
 ) -> Result<(), AppError> {
     let mut tasks = store.tasks.lock().unwrap();
     tasks.clear();
+    // Save to disk
+    let _ = store::save_tasks(&app, &tasks);
 
     app.emit(
         "download:list-sync",

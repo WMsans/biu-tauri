@@ -46,6 +46,14 @@ pub fn run() -> Result<(), AppError> {
             // 1. Initialize HTTP Client & Load Cookies
             // Use the new build_client which handles directory lookup and loading
             let (client, cookie_store) = http::build_client(app.handle())?;
+
+            // 2. Load Tasks
+            // Load saved tasks from disk and populate the TaskStore
+            if let Ok(saved_tasks) = commands::store::load_tasks(app.handle()) {
+                let store = app.state::<TaskStore>();
+                let mut tasks = store.tasks.lock().unwrap();
+                *tasks = saved_tasks;
+            }
             
             // --- Start Background Tasks ---
             
@@ -72,7 +80,7 @@ pub fn run() -> Result<(), AppError> {
                 }
             });
 
-            // 2. Manage States
+            // 3. Manage States
             app.manage(AppCookieStore(cookie_store));
             app.manage(AppHttpClient(client));
 
