@@ -6,6 +6,10 @@ use tauri::{
     Manager,
     Emitter
 };
+use std::fs::File;
+use std::io::BufReader;
+use reqwest_cookie_store::CookieStoreMutex;
+use reqwest_cookie_store::CookieStore;
 
 pub mod commands;
 pub mod error;
@@ -14,7 +18,7 @@ pub mod state;
 
 use crate::services::{http, proxy::run_proxy_server};
 use error::AppError;
-use state::models::{AppHttpClient, ProxyPort, TaskStore, WbiKeysCache, WbiStore};
+use state::models::{AppHttpClient, AppCookieStore, ProxyPort, TaskStore, WbiKeysCache, WbiStore};
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() -> Result<(), AppError> {
@@ -27,12 +31,7 @@ pub fn run() -> Result<(), AppError> {
     // 2. Initialize WBI Store
     let wbi_store = WbiStore(Arc::new(Mutex::new(WbiKeysCache::new())));
 
-    // Start Proxy Server
-    tauri::async_runtime::spawn(async move {
-        if let Err(e) = run_proxy_server(proxy_port_clone).await {
-            log::error!("Proxy server error: {}", e);
-        }
-    });
+    // NOTE: Proxy server spawn moved to setup() to access cookie_store
 
     tauri::Builder::default()
         .plugin(
@@ -43,7 +42,51 @@ pub fn run() -> Result<(), AppError> {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_http::init())
-        .setup(|app| {
+        .manage(ProxyPort(proxy_port))
+        .manage(task_store)
+        .manage(wbi_store)
+        .setup(move |app| {
+            // --- Persistence Setup ---
+            
+            // 1. Resolve Data Directory
+            let app_data_dir = app.path().app_local_data_dir()
+                .expect("failed to resolve app local data dir");
+            
+            if !app_data_dir.exists() {
+                std::fs::create_dir_all(&app_data_dir)?;
+            }
+            
+            let cookie_path = app_data_dir.join("cookies.json");
+
+            // 2. Load Cookies
+            let cookie_store = if cookie_path.exists() {
+                let file = File::open(&cookie_path).map(BufReader::new).ok();
+                // Fix Deprecation: Use serde_json instead of load_json
+                file.and_then(|r| serde_json::from_reader(r).ok())
+                    .unwrap_or_default()
+            } else {
+                CookieStore::default()
+            };
+
+            let cookie_store = Arc::new(CookieStoreMutex::new(cookie_store));
+            
+            // --- Start Proxy Server (Moved here) ---
+            let proxy_port_for_server = proxy_port_clone.clone(); // Captured from outer scope
+            let cookie_store_for_server = cookie_store.clone();
+            
+            tauri::async_runtime::spawn(async move {
+                if let Err(e) = run_proxy_server(proxy_port_for_server, cookie_store_for_server).await {
+                    log::error!("Proxy server error: {}", e);
+                }
+            });
+
+            // 3. Initialize HTTP Client with Cookies
+            let client = http::build_client(cookie_store.clone());
+
+            // 4. Manage States
+            app.manage(AppCookieStore(cookie_store));
+            app.manage(AppHttpClient(client));
+
             // --- System Tray Implementation ---
 
             // 1. Create Menu Items
@@ -117,10 +160,6 @@ pub fn run() -> Result<(), AppError> {
 
             Ok(())
         })
-        .manage(AppHttpClient(http::build_client()))
-        .manage(ProxyPort(proxy_port))
-        .manage(task_store)
-        .manage(wbi_store) // Register WBI Store
         .invoke_handler(|invoke| {
             commands::get_handlers()(invoke);
             true

@@ -2,9 +2,12 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use tauri::async_runtime::JoinHandle;
+use reqwest_cookie_store::CookieStoreMutex;
 
 // Store the dynamic port of our local proxy
 pub struct ProxyPort(pub Arc<Mutex<u16>>);
+
+pub struct AppCookieStore(pub Arc<CookieStoreMutex>);
 
 // WBI Keys Cache
 pub struct WbiKeysCache {

@@ -1,7 +1,7 @@
 use crate::error::AppError;
 use crate::state::models::AppHttpClient;
 use crate::state::models::HttpInvokePayload;
-use reqwest::cookie::Jar;
+use reqwest_cookie_store::CookieStoreMutex;
 use reqwest::header::{HeaderMap, HeaderName, CONTENT_TYPE};
 use reqwest::Client;
 use reqwest::Method;
@@ -11,10 +11,9 @@ use std::sync::Arc;
 
 pub const DEFAULT_USER_AGENT: &str = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36";
 
-pub fn build_client() -> Client {
-    let jar = Arc::new(Jar::default());
+pub fn build_client(cookie_store: Arc<CookieStoreMutex>) -> Client {
     Client::builder()
-        .cookie_provider(jar)
+        .cookie_provider(cookie_store)
         .user_agent(DEFAULT_USER_AGENT)
         .build()
         .unwrap()
