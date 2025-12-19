@@ -56,6 +56,19 @@ pub fn build_client(app: &AppHandle) -> Result<(Client, Arc<CookieStoreMutex>), 
     Ok((client, cookie_store))
 }
 
+/// Save cookies to disk
+pub fn save_cookies(app: &AppHandle, store: &Arc<CookieStoreMutex>) -> Result<(), AppError> {
+    let app_data_dir = app.path().app_local_data_dir()
+        .map_err(|e| AppError::TauriError(e))?;
+    let cookie_path = app_data_dir.join("cookies.json");
+
+    let file = File::create(cookie_path).map_err(AppError::IoError)?;
+    let store = store.lock().unwrap();
+    serde_json::to_writer_pretty(file, &*store)
+        .map_err(|e| AppError::DatabaseError(e.to_string()))?;
+    Ok(())
+}
+
 pub async fn make_request(
     client: &AppHttpClient,
     method: String,
