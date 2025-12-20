@@ -1,6 +1,6 @@
 {
   "productName": "Biu",
-  "version": "0.1.0",
+  "version": "1.6.1",
   "identifier": "com.biu.app",
   "build": {
     "frontendDist": "../dist/web",
