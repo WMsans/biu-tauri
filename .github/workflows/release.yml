@@ -31,6 +31,14 @@ jobs:
         uses: dtolnay/rust-toolchain@stable
         # Note: Tauri v2 requires Rust 1.77+
 
+      - name: Rust cache
+        uses: swatinem/rust-cache@v2
+        with:
+          # The prefix for the cache key. Useful if you have multiple Rust projects in one repo.
+          prefix-key: "v1-tauri-release"
+          # This ensures the cache is saved even if the build fails (optional)
+          save-if: ${{ github.event_name == 'workflow_dispatch' }}
+
       - name: Install dependencies (Ubuntu only)
         if: matrix.platform == 'ubuntu-22.04'
         # These are required to build Tauri apps on Linux
