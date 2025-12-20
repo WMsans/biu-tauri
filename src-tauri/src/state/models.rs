@@ -71,6 +71,7 @@ impl TaskStore {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct AppSettings {
     pub download_path: Option<String>,
     #[serde(flatten)]

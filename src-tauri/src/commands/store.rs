@@ -32,7 +32,15 @@ pub fn load_settings(app: &AppHandle) -> Result<AppSettings, AppError> {
     if path.exists() {
         let file = File::open(path)?;
         let reader = std::io::BufReader::new(file);
-        let mut settings: AppSettings = serde_json::from_reader(reader)
+
+        // Read as raw Value first to handle structural mismatch (frontend wraps in "appSettings")
+        let val: serde_json::Value = serde_json::from_reader(reader)
+            .map_err(|e| AppError::DatabaseError(e.to_string()))?;
+
+        // Extract the actual settings object if wrapped, otherwise use root
+        let settings_val = val.get("appSettings").unwrap_or(&val);
+
+        let mut settings: AppSettings = serde_json::from_value(settings_val.clone())
             .map_err(|e| AppError::DatabaseError(e.to_string()))?;
 
         // FIX: If download_path is None or empty, fallback to system default
