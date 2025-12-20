@@ -2,7 +2,7 @@
 
 > ⚠️ **关于此 Fork (About this Fork)**
 >
-> 本项目是 [wood3n/biu](https://github.com/wood3n/biu) 的 Fork 版本。
+> 本项目是 [wood3n/biu](https://github.com/wood3n/biu) 的 Fork 版本。请移步至[tauri分支](https://github.com/WMsans/biu-tauri/tree/tauri)查看修改。
 >
 > **Fork 目的 / Purpose:**
 > 此分支的主要目的是个人学习与研究Tauri V2后端，在尽可能少的修改前端代码的同时减少内存和CPU使用。
