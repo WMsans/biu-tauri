@@ -12,6 +12,7 @@ import {
 
 import AsyncButton from "@/components/async-button";
 import ConfirmModal from "@/components/confirm-modal";
+import { tauriAdapter } from "@/utils/tauri-adapter";
 
 interface Props {
   data: MediaDownloadTask;
@@ -85,7 +86,7 @@ const DownloadActions = ({ data }: Props) => {
         }
 
         try {
-          await window.electron.showFileInFolder(data.savePath);
+          await tauriAdapter.showFileInFolder(data.savePath);
         } catch (err) {
           addToast({ title: `${err instanceof Error ? err.message : String(err)}`, color: "danger" });
         }
@@ -101,7 +102,7 @@ const DownloadActions = ({ data }: Props) => {
       onPress: async () => {
         if (pendingAction) return;
         lockAction("pause");
-        await window.electron.pauseMediaDownloadTask(data.id);
+        await tauriAdapter.pauseMediaDownloadTask(data.id);
       },
     },
     {
@@ -114,7 +115,7 @@ const DownloadActions = ({ data }: Props) => {
       onPress: async () => {
         if (pendingAction) return;
         lockAction("resume");
-        await window.electron.resumeMediaDownloadTask(data.id);
+        await tauriAdapter.resumeMediaDownloadTask(data.id);
       },
     },
     {
@@ -125,7 +126,7 @@ const DownloadActions = ({ data }: Props) => {
       onPress: async () => {
         if (pendingAction) return;
         lockAction("retry");
-        await window.electron.retryMediaDownloadTask(data.id);
+        await tauriAdapter.retryMediaDownloadTask(data.id);
       },
     },
     {
@@ -148,7 +149,7 @@ const DownloadActions = ({ data }: Props) => {
         }
 
         lockAction("delete");
-        await window.electron.cancelMediaDownloadTask(data.id);
+        await tauriAdapter.cancelMediaDownloadTask(data.id);
       },
     },
   ];
@@ -184,7 +185,7 @@ const DownloadActions = ({ data }: Props) => {
         onConfirm={async () => {
           if (pendingAction) return false;
           lockAction("delete");
-          await window.electron.cancelMediaDownloadTask(data.id);
+          await tauriAdapter.cancelMediaDownloadTask(data.id);
           return true;
         }}
       />

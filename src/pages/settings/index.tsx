@@ -7,6 +7,7 @@ import { useShallow } from "zustand/react/shallow";
 import ScrollContainer from "@/components/scroll-container";
 import { useAppUpdateStore } from "@/store/app-update";
 import { useSettings } from "@/store/settings";
+import { tauriAdapter } from "@/utils/tauri-adapter";
 
 import MenuSettings from "./menu-settings";
 import ShortcutSettingsPage from "./shortcut-settings";
@@ -77,7 +78,7 @@ const useSystemSettingsForm = () => {
   }, [watch, updateSettings]);
 
   useEffect(() => {
-    window.electron.getAppVersion().then(v => setAppVersion(v));
+    tauriAdapter.getAppVersion().then(v => setAppVersion(v));
   }, []);
 
   return {

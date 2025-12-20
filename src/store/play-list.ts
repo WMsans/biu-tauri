@@ -1,5 +1,5 @@
 import { addToast } from "@heroui/react";
-import log from "electron-log/renderer";
+import { invoke } from "@tauri-apps/api/core"; // Ensure you are importing invoke!
 import { shuffle } from "es-toolkit/array";
 import { remove } from "es-toolkit/array";
 import { uniqueId } from "es-toolkit/compat";
@@ -12,6 +12,7 @@ import { getAudioUrl, getDashUrl, isUrlValid } from "@/common/utils/audio";
 import { formatUrlProtocal } from "@/common/utils/url";
 import { getAudioSongInfo } from "@/service/audio-song-info";
 import { getWebInterfaceView } from "@/service/web-interface-view";
+import { tauriAdapter } from "@/utils/tauri-adapter";
 
 import { usePlayProgress } from "./play-progress";
 
@@ -80,6 +81,8 @@ interface State {
   nextId?: string;
   /** 是否在随机播放模式下保持视频分集顺序 */
   shouldKeepPagesOrderInRandomPlayMode: boolean;
+  // Store the local proxy port
+  proxyPort: number;
 }
 
 interface PlayItem {
@@ -203,8 +206,8 @@ const updatePlaybackState = () => {
     navigator.mediaSession.playbackState = audio.paused ? "paused" : "playing";
   }
   try {
-    if (window.electron && window.electron.updatePlaybackState) {
-      window.electron.updatePlaybackState(!audio.paused);
+    if (tauriAdapter && tauriAdapter.updatePlaybackState) {
+      tauriAdapter.updatePlaybackState(!audio.paused);
     }
   } catch (err) {
     // 渲染端上报失败不影响本地状态；仅记录日志便于定位
@@ -241,15 +244,28 @@ const isSame = (
   return false;
 };
 
+const getProxyUrl = (url: string, referer: string, port: number) => {
+  if (!url || !port) return url;
+  return `http://127.0.0.1:${port}/?url=${encodeURIComponent(url)}&referer=${encodeURIComponent(referer)}`;
+};
+
 export const usePlayList = create<State & Action>()(
   persist(
     immer((set, get) => {
       const ensureAudioSrcValid = async () => {
-        const { playId, list } = get();
+        const { playId, list, proxyPort } = get();
         const currentPlayItem = list.find(item => item.id === playId);
+
+        // Decide the referer based on item type
+        const referer = currentPlayItem?.bvid
+          ? `https://www.bilibili.com/video/${currentPlayItem.bvid}`
+          : "https://www.bilibili.com/";
+
         if (isUrlValid(currentPlayItem?.audioUrl)) {
-          if (audio.src !== currentPlayItem.audioUrl) {
-            audio.src = currentPlayItem.audioUrl;
+          const proxyUrl = getProxyUrl(currentPlayItem!.audioUrl!, referer, proxyPort);
+
+          if (audio.src !== proxyUrl) {
+            audio.src = proxyUrl;
           }
           const currentTime = usePlayProgress.getState().currentTime;
           if (typeof currentTime === "number" && currentTime > 0) {
@@ -269,16 +285,16 @@ export const usePlayList = create<State & Action>()(
               }
             }
             set(state => {
-              const listItem = state.list.find(item => item.id === state.playId);
-              if (listItem) {
-                listItem.audioUrl = mvPlayData.audioUrl;
-                listItem.videoUrl = mvPlayData.videoUrl;
-                listItem.isLossless = mvPlayData.isLossless;
-                listItem.isDolby = mvPlayData.isDolby;
+              const item = state.list.find(i => i.id === state.playId);
+              if (item) {
+                item.audioUrl = mvPlayData.audioUrl;
+                item.videoUrl = mvPlayData.videoUrl;
+                item.isLossless = mvPlayData.isLossless;
+                item.isDolby = mvPlayData.isDolby;
               }
             });
           } else {
-            log.error("无法获取音频播放链接", {
+            console.log.error("无法获取音频播放链接", {
               type: "mv",
               bvid: currentPlayItem.bvid,
               cid: currentPlayItem.cid,
@@ -300,14 +316,11 @@ export const usePlayList = create<State & Action>()(
               }
             }
             set(state => {
-              const listItem = state.list.find(item => item.id === state.playId);
-              if (listItem) {
-                listItem.audioUrl = musicPlayData.audioUrl;
-                listItem.isLossless = musicPlayData.isLossless;
-              }
+              const item = state.list.find(i => i.id === state.playId);
+              if (item) item.audioUrl = musicPlayData.audioUrl;
             });
           } else {
-            log.error("无法获取音频播放链接", {
+            console.log.error("无法获取音频播放链接", {
               type: "audio",
               sid: currentPlayItem.sid,
               title: currentPlayItem.title,
@@ -327,6 +340,8 @@ export const usePlayList = create<State & Action>()(
         duration: undefined,
         shouldKeepPagesOrderInRandomPlayMode: true,
         list: [],
+        proxyPort: 0, // Default 0
+
         init: async () => {
           if (audio) {
             audio.volume = get().volume;
@@ -404,23 +419,32 @@ export const usePlayList = create<State & Action>()(
                 get().seek(Math.round((audio.currentTime + offset) * 100) / 100);
               });
             }
+          }
 
-            if (get().playId) {
-              const playItem = get().list.find(item => item.id === get().playId);
-              if (playItem) {
-                await ensureAudioSrcValid();
+          // 2. GET THE PROXY PORT FROM RUST
+          try {
+            const port = await invoke<number>("get_proxy_port");
+            set({ proxyPort: port });
+            console.log("Got proxy port:", port);
+          } catch (e) {
+            console.error("Failed to get proxy port", e);
+          }
 
-                const localCurrentTime = localStorage.getItem("play-current-time");
-                if (localCurrentTime) {
-                  audio.currentTime = Number(localCurrentTime);
-                }
-
-                updateMediaSession({
-                  title: playItem.title,
-                  artist: playItem.ownerName,
-                  cover: playItem.pageCover,
-                });
+          // 3. Restore last played item
+          if (get().playId) {
+            const playItem = get().list.find(item => item.id === get().playId);
+            if (playItem) {
+              await ensureAudioSrcValid();
+              const localCurrentTime = localStorage.getItem("play-current-time");
+              if (localCurrentTime) {
+                audio.currentTime = Number(localCurrentTime);
               }
+
+              updateMediaSession({
+                title: playItem.title,
+                artist: playItem.ownerName,
+                cover: playItem.pageCover,
+              });
             }
           }
         },
@@ -882,11 +906,34 @@ export const usePlayList = create<State & Action>()(
   ),
 );
 
-function resetAudioAndPlay(url: string) {
-  audio.src = url;
+// Helper for resetting audio, using proxy logic
+function resetAudioAndPlay(url: string, referer: string) {
+  const { proxyPort } = usePlayList.getState();
+  const proxyUrl = getProxyUrl(url, referer, proxyPort);
+
+  audio.src = proxyUrl;
   audio.currentTime = 0;
   audio.load();
-  audio.play();
+  audio.play().catch(error => {
+    // Specify the issue based on the error name
+    let message = "播放出错";
+
+    switch (error.name) {
+      case "NotAllowedError":
+        message = "播放失败：浏览器阻止了自动播放 (NotAllowedError)";
+        break;
+      case "NotSupportedError":
+        message = "播放失败：不支持的音频格式或无效的播放源 (NotSupportedError)";
+        break;
+      case "AbortError":
+        // Interrupted by a new load request, usually safe to ignore
+        return;
+      default:
+        message = `播放失败：${error.message || "未知错误"}`;
+    }
+
+    toastError(message);
+  });
 }
 
 // 切换歌曲时，更新当前播放的歌曲信息
@@ -895,8 +942,10 @@ usePlayList.subscribe(async (state, prevState) => {
     // 切换歌曲
     if (state.playId) {
       const playItem = state.list.find(item => item.id === state.playId);
+      const referer = playItem?.bvid ? `https://www.bilibili.com/video/${playItem.bvid}` : "https://www.bilibili.com/";
+
       if (isUrlValid(playItem?.audioUrl) && audio.paused && !state.isPlaying) {
-        resetAudioAndPlay(playItem.audioUrl);
+        resetAudioAndPlay(playItem.audioUrl!, referer);
         return;
       }
 
@@ -904,7 +953,7 @@ usePlayList.subscribe(async (state, prevState) => {
         if (playItem?.bvid && playItem?.cid) {
           const mvPlayData = await getDashUrl(playItem.bvid, playItem.cid);
           if (mvPlayData?.audioUrl) {
-            resetAudioAndPlay(mvPlayData?.audioUrl);
+            resetAudioAndPlay(mvPlayData?.audioUrl, referer);
 
             updateMediaSession({
               title: playItem.pageTitle || playItem.title,
@@ -922,7 +971,7 @@ usePlayList.subscribe(async (state, prevState) => {
               }
             });
           } else {
-            log.error("无法获取音频播放链接", {
+            console.log.error("无法获取音频播放链接", {
               type: "mv",
               bvid: playItem.bvid,
               cid: playItem.cid,
@@ -937,7 +986,7 @@ usePlayList.subscribe(async (state, prevState) => {
           if (firstMV?.cid) {
             const mvPlayData = await getDashUrl(playItem.bvid, firstMV.cid);
             if (mvPlayData?.audioUrl) {
-              resetAudioAndPlay(mvPlayData?.audioUrl);
+              resetAudioAndPlay(mvPlayData?.audioUrl, referer);
 
               updateMediaSession({
                 title: firstMV.pageTitle || firstMV.title,
@@ -964,7 +1013,7 @@ usePlayList.subscribe(async (state, prevState) => {
                 state.playId = firstMV.id;
               });
             } else {
-              log.error("无法获取音频播放链接", {
+              console.log.error("无法获取音频播放链接", {
                 type: "mv",
                 bvid: playItem.bvid,
                 cid: firstMV.cid,
@@ -974,7 +1023,7 @@ usePlayList.subscribe(async (state, prevState) => {
               toastError("无法获取音频播放链接");
             }
           } else {
-            log.error("无法获取音频播放链接", {
+            console.log.error("无法获取音频播放链接", {
               type: "mv",
               bvid: playItem.bvid,
               title: playItem.title,
@@ -988,7 +1037,7 @@ usePlayList.subscribe(async (state, prevState) => {
       if (playItem?.type === "audio" && playItem?.sid) {
         const musicPlayData = await getAudioUrl(playItem.sid);
         if (musicPlayData?.audioUrl) {
-          resetAudioAndPlay(musicPlayData?.audioUrl);
+          resetAudioAndPlay(musicPlayData?.audioUrl, referer);
 
           updateMediaSession({
             title: playItem.title,
@@ -1003,7 +1052,7 @@ usePlayList.subscribe(async (state, prevState) => {
             }
           });
         } else {
-          log.error("无法获取音频播放链接", {
+          console.log.error("无法获取音频播放链接", {
             type: "audio",
             sid: playItem.sid,
             title: playItem.title,

@@ -5,6 +5,7 @@ import { RiExportFill, RiImportFill } from "@remixicon/react";
 import { merge } from "es-toolkit/object";
 
 import { useSettings } from "@/store/settings";
+import { tauriAdapter } from "@/utils/tauri-adapter";
 import { defaultAppSettings } from "@shared/settings/app-settings";
 import { StoreNameMap } from "@shared/store";
 
@@ -15,7 +16,7 @@ const ImportExport = () => {
 
   const handleExport = async () => {
     try {
-      const settingStore = await window.electron.getStore(StoreNameMap.AppSettings);
+      const settingStore = await tauriAdapter.getStore(StoreNameMap.AppSettings);
       const blob = new Blob([JSON.stringify(settingStore?.appSettings ?? defaultAppSettings, null, 2)], {
         type: "application/json",
       });

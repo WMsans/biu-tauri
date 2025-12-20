@@ -1,0 +1,29 @@
+{
+  "categories": [
+    {
+      "title": "🚀 Features",
+      "labels": ["feat", "feature"]
+    },
+    {
+      "title": "🩹 Fixes",
+      "labels": ["fix", "bug"]
+    },
+    {
+      "title": "❤️ Contributors",
+      "labels": ["contrib", "contribution"]
+    },
+    {
+      "title": "UI Improvements",
+      "labels": ["style", "ui"]
+    }
+  ],
+  "template": "#{{TITLE}}\n\n#{{CHANGELOG}}\n\n<details>\n<summary>Uncategorized</summary>\n\n#{{UNCATEGORIZED}}\n</details>",
+  "pr_template": "- #{{TITLE}}",
+  "empty_template": "- No changes",
+  "label_extractor": [
+    {
+      "pattern": "^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test){1}(\\([\\w\\-\\.]+\\))?(!)?: ([\\w ])+([\\s\\S]*)",
+      "target": "$1"
+    }
+  ]
+}

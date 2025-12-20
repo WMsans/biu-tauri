@@ -10,16 +10,17 @@ import {
 } from "@remixicon/react";
 
 import { toggleMiniMode } from "@/common/utils/mini-player";
+import { tauriAdapter } from "@/utils/tauri-adapter";
 
 const WindowAction = () => {
   const [isMaximized, setIsMaximized] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
 
   useEffect(() => {
-    window.electron.isMaximized().then(setIsMaximized);
-    window.electron.isFullScreen().then(setIsFullScreen);
-    const unlistenMaximize = window.electron.onWindowMaximizeChange(setIsMaximized);
-    const unlistenFullScreen = window.electron.onWindowFullScreenChange(setIsFullScreen);
+    tauriAdapter.isMaximized().then(setIsMaximized);
+    tauriAdapter.isFullScreen().then(setIsFullScreen);
+    const unlistenMaximize = tauriAdapter.onWindowMaximizeChange(setIsMaximized);
+    const unlistenFullScreen = tauriAdapter.onWindowFullScreenChange(setIsFullScreen);
 
     return () => {
       unlistenMaximize();
@@ -28,15 +29,15 @@ const WindowAction = () => {
   }, []);
 
   const handleMinimize = () => {
-    window.electron.minimizeWindow();
+    tauriAdapter.minimizeWindow();
   };
 
   const handleMaximize = () => {
-    window.electron.toggleMaximizeWindow();
+    tauriAdapter.toggleMaximizeWindow();
   };
 
   const handleClose = () => {
-    window.electron.closeWindow();
+    tauriAdapter.closeWindow();
   };
 
   return (

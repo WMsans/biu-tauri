@@ -1,0 +1,32 @@
+{
+  "productName": "Biu",
+  "version": "1.6.1",
+  "identifier": "com.biu.app",
+  "build": {
+    "frontendDist": "../dist/web",
+    "devUrl": "http://localhost:5173",
+    "beforeDevCommand": "pnpm dev",
+    "beforeBuildCommand": "pnpm build"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Biu",
+        "width": 800,
+        "height": 600,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": false,
+        "transparent": true
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": ["../electron/icons/logo.png", "../electron/icons/win/logo.ico"]
+  }
+}

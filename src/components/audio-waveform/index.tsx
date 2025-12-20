@@ -8,13 +8,21 @@ interface AudioWaveformProps {
   barColor?: string;
 }
 
-// 全局存储每个音频元素的 source 节点，避免重复创建
+// 1. Use a SINGLE global AudioContext instance (Lazy initialized)
+let globalAudioContext: AudioContext | null = null;
+
+const getAudioContext = () => {
+  if (!globalAudioContext) {
+    globalAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+  }
+  return globalAudioContext;
+};
+
+// Store source nodes to avoid "MediaElementAudioSourceNode can only be created once" errors
 const audioSourceMap = new WeakMap<HTMLAudioElement, MediaElementAudioSourceNode>();
-const audioContextMap = new WeakMap<HTMLAudioElement, AudioContext>();
 
 /**
- * 音频波形可视化组件
- * 使用 Web Audio API 的 AnalyserNode 来实时显示音频波形
+ * Audio Waveform Visualization Component
  */
 const AudioWaveform = ({
   audioElement,
@@ -39,28 +47,24 @@ const AudioWaveform = ({
     const currentTime = audioElement.currentTime;
     const volume = audioElement.volume;
 
-    // 使用 WeakMap 存储，避免重复创建（一个音频元素只能有一个 source）
-    let audioContext = audioContextMap.get(audioElement);
+    // 2. Retrieve the global singleton context
+    const audioContext = getAudioContext();
     let source = audioSourceMap.get(audioElement);
 
     try {
-      if (!audioContext) {
-        audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-        audioContextMap.set(audioElement, audioContext);
-      }
-
       if (!source) {
+        // Create source and connect to destination (speakers) only once per element
         source = audioContext.createMediaElementSource(audioElement);
         audioSourceMap.set(audioElement, source);
-        // createMediaElementSource 会"接管"音频元素的输出，必须连接到 destination 才能播放
         source.connect(audioContext.destination);
       }
 
+      // Create a new analyser for this visualization instance
       const analyser = audioContext.createAnalyser();
       analyser.fftSize = 256;
       analyser.smoothingTimeConstant = 0.8;
 
-      // source 可以同时连接到多个目标节点（destination 用于播放，analyser 用于分析）
+      // Connect source -> analyser
       source.connect(analyser);
 
       if (audioContext.state === "suspended") {
@@ -69,13 +73,14 @@ const AudioWaveform = ({
         });
       }
 
+      // Restore audio state if messed up by connection
       audioElement.volume = volume;
-      if (currentTime !== audioElement.currentTime) {
+      // Only set currentTime if significantly different to avoid glitches
+      if (Math.abs(audioElement.currentTime - currentTime) > 0.1) {
         audioElement.currentTime = currentTime;
       }
 
       if (wasPlaying) {
-        // 使用 setTimeout 确保连接完成后再播放
         timeoutRef.current = setTimeout(() => {
           audioElement.play().catch(err => {
             console.warn("Failed to resume playback:", err);
@@ -117,7 +122,7 @@ const AudioWaveform = ({
 
       draw();
     } catch (error) {
-      console.error("Failed to create audio context:", error);
+      console.error("Failed to create audio setup:", error);
     }
 
     return () => {
@@ -127,7 +132,7 @@ const AudioWaveform = ({
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
-      // 断开 analyser 连接，保持 source -> destination 连接以继续播放
+      // 3. Only disconnect the analyser. Do NOT close the context or disconnect the source from destination.
       if (analyserRef.current && source) {
         try {
           source.disconnect(analyserRef.current);

@@ -1,10 +1,19 @@
 import axios, { type CreateAxiosDefaults } from "axios";
 
 import { requestInterceptors } from "./request-interceptors";
+import { tauriAxiosAdapter } from "./tauri-axios-adapter";
 
+// Always use the Tauri adapter
 const axiosConfig: CreateAxiosDefaults = {
   timeout: 10000,
   withCredentials: true,
+  adapter: tauriAxiosAdapter,
+  // ADD THIS BLOCK:
+  headers: {
+    Referer: "https://www.bilibili.com",
+    "User-Agent":
+      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+  },
 };
 
 export const axiosInstance = axios.create(axiosConfig);

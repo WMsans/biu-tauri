@@ -5,6 +5,7 @@ import { RiInformationLine } from "@remixicon/react";
 import { filesize } from "filesize";
 
 import { useAppUpdateStore } from "@/store/app-update";
+import { tauriAdapter } from "@/utils/tauri-adapter";
 
 import Typography from "../typography";
 
@@ -23,7 +24,7 @@ const ReleaseNoteModal = ({ isOpen, onOpenChange }: Props) => {
   const startDownload = async () => {
     setStatus("downloading");
     try {
-      await window.electron.downloadAppUpdate();
+      await tauriAdapter.downloadAppUpdate();
     } catch (e) {
       setStatus("error");
       setError(e instanceof Error ? e.message : String(e));
@@ -33,7 +34,7 @@ const ReleaseNoteModal = ({ isOpen, onOpenChange }: Props) => {
   const handleOpenInstaller = async () => {
     try {
       if (downloadInfo?.filePath) {
-        const ok = await window.electron.showFileInFolder(downloadInfo.filePath);
+        const ok = await tauriAdapter.showFileInFolder(downloadInfo.filePath);
         if (!ok) {
           addToast({
             title: "无法打开安装包文件夹",
@@ -51,7 +52,7 @@ const ReleaseNoteModal = ({ isOpen, onOpenChange }: Props) => {
   };
 
   useEffect(() => {
-    const removeListener = window.electron.onDownloadAppProgress(info => {
+    const removeListener = tauriAdapter.onDownloadAppProgress(info => {
       setStatus(info.status);
       switch (info.status) {
         case "downloading":
@@ -109,8 +110,8 @@ const ReleaseNoteModal = ({ isOpen, onOpenChange }: Props) => {
                   <RiInformationLine size={16} />
                   <span className="text-sm text-zinc-500 dark:text-zinc-400">安装包已下载完成</span>
                 </span>
-                {window.electron.isSupportAutoUpdate() ? (
-                  <Button color="primary" onPress={window.electron.quitAndInstall}>
+                {tauriAdapter.isSupportAutoUpdate() ? (
+                  <Button color="primary" onPress={tauriAdapter.quitAndInstall}>
                     退出并安装更新
                   </Button>
                 ) : (
