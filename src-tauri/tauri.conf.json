@@ -20,10 +20,6 @@
         "transparent": true
       }
     ],
-    "trayIcon": {
-      "iconPath": "../electron/icons/win/tray.ico",
-      "iconAsTemplate": true
-    },
     "security": {
       "csp": null
     }

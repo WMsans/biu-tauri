@@ -141,42 +141,42 @@ pub fn run() -> Result<(), AppError> {
             )?;
 
             // 3. Configure the Tray
-            let _tray = TrayIconBuilder::new()
-                .menu(&menu)
-                .icon(app.default_window_icon().unwrap().clone())
-                .on_menu_event(|app, event| match event.id().as_ref() {
-                    "play_pause" => {
-                        let _ = app.emit("player:toggle", ());
-                    }
-                    "prev" => {
-                        let _ = app.emit("player:prev", ());
-                    }
-                    "next" => {
-                        let _ = app.emit("player:next", ());
-                    }
-                    "show_hide" => {
-                        if let Some(window) = app.get_webview_window("main") {
-                            toggle_window_visibility(&window);
-                        }
-                    }
-                    "quit" => {
-                        app.exit(0);
-                    }
-                    _ => {}
-                })
-                .on_tray_icon_event(|tray, event| {
-                    if let TrayIconEvent::Click {
-                        button: MouseButton::Left,
-                        ..
-                    } = event
-                    {
-                        let app = tray.app_handle();
-                        if let Some(window) = app.get_webview_window("main") {
-                            toggle_window_visibility(&window);
-                        }
-                    }
-                })
-                .build(app)?;
+            let _tray = tauri::tray::TrayIconBuilder::with_id("main") // Changed from .new() to .with_id("main")
+    .menu(&menu)
+    .icon(app.default_window_icon().unwrap().clone())
+    .on_menu_event(|app, event| match event.id().as_ref() {
+        "play_pause" => {
+            let _ = app.emit("player:toggle", ());
+        }
+        "prev" => {
+            let _ = app.emit("player:prev", ());
+        }
+        "next" => {
+            let _ = app.emit("player:next", ());
+        }
+        "show_hide" => {
+            if let Some(window) = app.get_webview_window("main") {
+                toggle_window_visibility(&window);
+            }
+        }
+        "quit" => {
+            app.exit(0);
+        }
+        _ => {}
+    })
+    .on_tray_icon_event(|tray, event| {
+        if let TrayIconEvent::Click {
+            button: MouseButton::Left,
+            ..
+        } = event
+        {
+            let app = tray.app_handle();
+            if let Some(window) = app.get_webview_window("main") {
+                toggle_window_visibility(&window);
+            }
+        }
+    })
+    .build(app)?;
 
             Ok(())
         })
