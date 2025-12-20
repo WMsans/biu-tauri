@@ -1,6 +1,6 @@
 {
   "name": "biu",
-  "version": "1.6.0-beta.13",
+  "version": "1.6.1",
   "private": true,
   "type": "module",
   "description": "music application based on bilibili api",
@@ -29,9 +29,9 @@
     "build": "rsbuild build",
     "test": "vitest",
     "knip": "knip --no-exit-code --max-show-issues 5 --reporter github-actions",
-    "release": "changelogen --release --push --hideAuthorEmail",
-    "release:beta": "changelogen --release --push --hideAuthorEmail --prerelease beta",
-    "release:alpha": "changelogen --release --push --hideAuthorEmail --prerelease alpha"
+    "release": "git fetch --tags --force && changelogen --release --push --hideAuthorEmail",
+    "release:beta": "git fetch --tags --force && changelogen --release --push --hideAuthorEmail --prerelease beta",
+    "release:alpha": "git fetch --tags --force && changelogen --release --push --hideAuthorEmail --prerelease alpha"
   },
   "dependencies": {
     "@heroui/react": "^2.8.3",
@@ -76,7 +76,7 @@
     "@commitlint/cli": "^20.1.0",
     "@commitlint/config-conventional": "^20.0.0",
     "@eslint-react/eslint-plugin": "^1.53.1",
-    "@eslint/js": "^9.39.1",
+    "@eslint/js": "^9.39.2",
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@rsbuild/core": "^1.5.4",
     "@rsbuild/plugin-react": "^1.4.0",
@@ -93,7 +93,7 @@
     "@vitejs/plugin-react": "^5.1.1",
     "changelogen": "^0.6.2",
     "chokidar": "^4.0.3",
-    "eslint": "^9.39.1",
+    "eslint": "^9.39.2",
     "eslint-config-prettier": "^10.1.8",
     "eslint-import-resolver-typescript": "^4.4.4",
     "eslint-plugin-import": "^2.32.0",
@@ -101,7 +101,7 @@
     "eslint-plugin-perfectionist": "^4.15.1",
     "eslint-plugin-prettier": "^5.5.4",
     "eslint-plugin-react-hooks": "^5.2.0",
-    "eslint-plugin-react-refresh": "^0.4.24",
+    "eslint-plugin-react-refresh": "^0.4.26",
     "eslint-plugin-unused-imports": "^4.3.0",
     "globals": "^16.3.0",
     "husky": "^9.1.7",

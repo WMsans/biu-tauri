@@ -14,6 +14,8 @@ import { getAudioSongInfo } from "@/service/audio-song-info";
 import { getWebInterfaceView } from "@/service/web-interface-view";
 import { tauriAdapter } from "@/utils/tauri-adapter";
 
+import { usePlayProgress } from "./play-progress";
+
 export type PlayDataType = "mv" | "audio";
 
 export interface PlayData {
@@ -69,8 +71,6 @@ interface State {
   playMode: PlayMode;
   // 播放速率（0.5x - 2.0x）
   rate: number;
-  // 当前时间（秒）
-  currentTime: number | undefined;
   // 总时长（秒）
   duration: number | undefined;
   /** 播放队列 */
@@ -267,7 +267,7 @@ export const usePlayList = create<State & Action>()(
           if (audio.src !== proxyUrl) {
             audio.src = proxyUrl;
           }
-          const currentTime = get().currentTime;
+          const currentTime = usePlayProgress.getState().currentTime;
           if (typeof currentTime === "number" && currentTime > 0) {
             audio.currentTime = currentTime;
           }
@@ -277,11 +277,12 @@ export const usePlayList = create<State & Action>()(
         if (currentPlayItem?.type === "mv" && currentPlayItem?.bvid && currentPlayItem?.cid) {
           const mvPlayData = await getDashUrl(currentPlayItem.bvid, currentPlayItem.cid);
           if (mvPlayData?.audioUrl) {
-            const pUrl = getProxyUrl(mvPlayData.audioUrl, referer, proxyPort);
-            if (audio.src !== pUrl) {
-              audio.src = pUrl;
-              const currentTime = get().currentTime;
-              if (typeof currentTime === "number") audio.currentTime = currentTime;
+            if (audio.src !== mvPlayData.audioUrl) {
+              audio.src = mvPlayData.audioUrl;
+              const currentTime = usePlayProgress.getState().currentTime;
+              if (typeof currentTime === "number") {
+                audio.currentTime = currentTime;
+              }
             }
             set(state => {
               const item = state.list.find(i => i.id === state.playId);
@@ -293,6 +294,13 @@ export const usePlayList = create<State & Action>()(
               }
             });
           } else {
+            log.error("无法获取音频播放链接", {
+              type: "mv",
+              bvid: currentPlayItem.bvid,
+              cid: currentPlayItem.cid,
+              title: currentPlayItem.title,
+              mvPlayData,
+            });
             toastError("无法获取音频播放链接");
           }
         }
@@ -300,17 +308,24 @@ export const usePlayList = create<State & Action>()(
         if (currentPlayItem?.type === "audio" && currentPlayItem?.sid) {
           const musicPlayData = await getAudioUrl(currentPlayItem.sid);
           if (musicPlayData?.audioUrl) {
-            const pUrl = getProxyUrl(musicPlayData.audioUrl, referer, proxyPort);
-            if (audio.src !== pUrl) {
-              audio.src = pUrl;
-              const currentTime = get().currentTime;
-              if (typeof currentTime === "number") audio.currentTime = currentTime;
+            if (audio.src !== musicPlayData.audioUrl) {
+              audio.src = musicPlayData.audioUrl;
+              const currentTime = usePlayProgress.getState().currentTime;
+              if (typeof currentTime === "number") {
+                audio.currentTime = currentTime;
+              }
             }
             set(state => {
               const item = state.list.find(i => i.id === state.playId);
               if (item) item.audioUrl = musicPlayData.audioUrl;
             });
           } else {
+            log.error("无法获取音频播放链接", {
+              type: "audio",
+              sid: currentPlayItem.sid,
+              title: currentPlayItem.title,
+              musicPlayData,
+            });
             toastError("无法获取音频播放链接");
           }
         }
@@ -322,7 +337,6 @@ export const usePlayList = create<State & Action>()(
         volume: 0.5,
         playMode: PlayMode.Loop,
         rate: 1,
-        currentTime: undefined,
         duration: undefined,
         shouldKeepPagesOrderInRandomPlayMode: true,
         list: [],
@@ -345,7 +359,7 @@ export const usePlayList = create<State & Action>()(
 
             audio.ontimeupdate = () => {
               const currentTime = Math.round(audio.currentTime * 100) / 100;
-              set({ currentTime });
+              usePlayProgress.getState().setCurrentTime(currentTime);
             };
 
             audio.onseeked = () => {
@@ -473,9 +487,7 @@ export const usePlayList = create<State & Action>()(
           if (audio) {
             audio.currentTime = s;
           }
-          set(state => {
-            state.currentTime = s;
-          });
+          usePlayProgress.getState().setCurrentTime(s);
         },
         togglePlay: async () => {
           if (!get().list?.length) {
@@ -606,9 +618,7 @@ export const usePlayList = create<State & Action>()(
             case PlayMode.Single:
             case PlayMode.Loop: {
               if (list.length === 1) {
-                set(state => {
-                  state.currentTime = 0;
-                });
+                audio.currentTime = 0;
                 audio.play();
                 break;
               }
@@ -622,9 +632,7 @@ export const usePlayList = create<State & Action>()(
               const currentPlayItem = list[currentIndex];
 
               if (list.length === 1) {
-                set(state => {
-                  state.currentTime = 0;
-                });
+                audio.currentTime = 0;
                 audio.play();
                 break;
               }
@@ -866,12 +874,12 @@ export const usePlayList = create<State & Action>()(
           }
           set(state => {
             state.isPlaying = false;
-            state.currentTime = undefined;
             state.duration = undefined;
             state.list = [];
             state.playId = undefined;
             state.nextId = undefined;
           });
+          usePlayProgress.getState().setCurrentTime(0);
         },
         getPlayItem: () => {
           const { playId, list } = get();
@@ -963,6 +971,13 @@ usePlayList.subscribe(async (state, prevState) => {
               }
             });
           } else {
+            log.error("无法获取音频播放链接", {
+              type: "mv",
+              bvid: playItem.bvid,
+              cid: playItem.cid,
+              title: playItem.title,
+              mvPlayData,
+            });
             toastError("无法获取音频播放链接");
           }
         } else if (playItem?.bvid) {
@@ -998,9 +1013,22 @@ usePlayList.subscribe(async (state, prevState) => {
                 state.playId = firstMV.id;
               });
             } else {
+              log.error("无法获取音频播放链接", {
+                type: "mv",
+                bvid: playItem.bvid,
+                cid: firstMV.cid,
+                title: firstMV.title,
+                mvPlayData,
+              });
               toastError("无法获取音频播放链接");
             }
           } else {
+            log.error("无法获取音频播放链接", {
+              type: "mv",
+              bvid: playItem.bvid,
+              title: playItem.title,
+              mvData,
+            });
             toastError("无法获取音频播放链接");
           }
         }
@@ -1024,6 +1052,12 @@ usePlayList.subscribe(async (state, prevState) => {
             }
           });
         } else {
+          log.error("无法获取音频播放链接", {
+            type: "audio",
+            sid: playItem.sid,
+            title: playItem.title,
+            musicPlayData,
+          });
           toastError("无法获取音频播放链接");
         }
       }
