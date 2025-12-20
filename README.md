@@ -1,4 +1,15 @@
-<h1 align="center">Biu 音乐播放器</h1>
+<h1 align="center">【Fork】Biu 音乐播放器</h1>
+
+> ⚠️ **关于此 Fork (About this Fork)**
+>
+> 本项目是 [wood3n/biu](https://github.com/wood3n/biu) 的 Fork 版本。
+>
+> **Fork 目的 / Purpose:**
+> 此分支的主要目的是个人学习与研究Tauri V2后端，在尽可能少的修改前端代码的同时减少内存和CPU使用。
+>
+> **Fork Modifications:**
+> * 使用Tauri V2 和 Rust 重写后端
+
 <p align="center">
   <img src="./screenshots/logo.svg" alt="Biu logo" width="120" />
 </p>
@@ -9,7 +20,7 @@
   非官方项目，与哔哩哔哩无任何官方关联或背书
 </p>
 <p align="center">
-  <a href="https://github.com/wood3n/biu/releases">
+  <a href="https://github.com/WMsans/biu-tauri/releases">
     <img src="https://badgen.net/github/tag/wood3n/biu?label=最新版本&color=blueviolet" alt="Latest Version" />
   </a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-orange.svg" alt="License" /></a>
@@ -45,6 +56,46 @@
 
 ---
 
+## 🛠️ 本地开发与构建 (Build & Run)
+
+如果你想在本地运行或编译此 Fork 版本，请按照以下步骤操作：
+
+### 1. 环境准备 (Prerequisites)
+请确保你的系统已安装以下环境：
+- **Node.js**: 建议使用最新的 LTS 版本。
+- **pnpm**: 本项目使用 pnpm 作为包管理器 (`npm install -g pnpm`)。
+- **Rust & Cargo**: Tauri 开发必须环境 (请参考 [Tauri 前置要求](https://tauri.app/v1/guides/getting-started/prerequisites))。
+
+### 2. 安装依赖 (Install Dependencies)
+在项目根目录下运行：
+```bash
+pnpm install
+```
+### 3. 开发模式运行 (Development)
+启动本地开发环境（包含前端热更新与 Tauri 窗口）：
+```bash
+# 启动 Tauri 桌面应用开发模式
+pnpm tauri dev
+```
+>注意：pnpm dev (即 rsbuild dev) 仅启动前端服务，如果需要调试桌面端 API，请使用 pnpm tauri dev。
+### 4. 构建生产版本 (Build)
+打包生成适用于你当前系统的安装包：
+```bash
+pnpm tauri build
+```
+构建完成后，安装包将位于 ```src-tauri/target/release/bundle/``` 目录下。
+### 5. 其他命令
+- 代码检查与格式化:
+```bash
+# 运行 ESLint
+pnpm run lint-staged
+# 运行 Knip 检查无用文件
+pnpm knip
+```
+- 测试:
+```bash
+pnpm test
+```
 ## ✨ 特色功能
 - 🎼 支持登录 Bilibili 并获取收藏夹、稍后再看、历史记录等信息
 - 🎧 高品质音频播放，优先拉取更高码率音频流（如无损 Flac，192K/Hi-Res）
@@ -55,7 +106,7 @@
 - ♻️ 安装包支持自动检测更新，始终保持最新体验
 
 ## 下载和使用
-- 下载页面：[GitHub Releases](https://github.com/wood3n/biu/releases/latest)
+- 下载页面：[GitHub Releases](https://github.com/WMsans/biu-tauri/releases)
 - 快速选择：
   - <img alt="Windows" src="https://img.shields.io/badge/Windows-0078D6?logo=windows&logoColor=white" /> 优先选安装包 `win-setup`；需要免安装/无管理员权限选 `win-portable`
   - <img alt="macOS" src="https://img.shields.io/badge/macOS-000000?logo=apple&logoColor=white" /> 优先选 `dmg`；需要脚本/自动化分发可选 `zip`
@@ -260,7 +311,3 @@
 - 数据来源于用户调用的公开接口与个人账户授权；使用时需遵守 Bilibili 的《用户协议》《社区规则》及相关法律法规。
 - 禁止绕过登录/会员权限、DRM/加密措施，或进行批量爬取、恶意抓取等违反平台规则的行为。
 - 如需商业授权或调整许可，请联系作者；如涉及权利或合规问题，请通过 Issues 反馈以便及时处理。
----
-## 🌟 Star History
-
-[![Star History Chart](https://api.star-history.com/svg?repos=wood3n/biu&type=date&legend=top-left)](https://www.star-history.com/#wood3n/biu&type=date&legend=top-left)
