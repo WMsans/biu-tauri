@@ -20,14 +20,12 @@ use state::models::{
 };
 
 fn toggle_window_visibility(window: &WebviewWindow) {
-    if let Ok(is_visible) = window.is_visible() {
-        if is_visible {
-            let _ = window.hide();
-        } else {
-            let _ = window.show();
-            let _ = window.unminimize();
-            let _ = window.set_focus();
-        }
+    if window.is_visible().unwrap_or(false) {
+        let _ = window.hide();
+    } else {
+        let _ = window.show();
+        let _ = window.unminimize();
+        let _ = window.set_focus();
     }
 }
 
@@ -62,6 +60,20 @@ pub fn run() -> Result<(), AppError> {
         .manage(ProxyPort(proxy_port))
         .manage(task_store)
         .manage(wbi_store)
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                let app = window.app_handle();
+                let settings = load_settings(app).unwrap_or_default();
+                let close_behavior = settings.close_window_option.unwrap_or("hide".to_string());
+
+                if close_behavior == "hide" {
+                    if window.label() == "main" {
+                        let _ = window.hide();
+                        api.prevent_close();
+                    }
+                }
+            }
+        })
         .setup(move |app| {
             // --- Persistence Setup ---
 
@@ -172,23 +184,11 @@ pub fn run() -> Result<(), AppError> {
         .expect("error while building tauri application");
 
     app.run(move |app, event| {
-        if let RunEvent::ExitRequested { api, .. } = event {
-            let settings: AppSettings = load_settings(app).unwrap_or_default();
-            let close_behavior = settings.close_window_option.unwrap_or("hide".to_string());
-
-            if close_behavior == "exit" {
-                // Save cookies before exiting
-                let cookie_store_state = app.state::<AppCookieStore>();
-                if let Err(e) = http::save_cookies(app, &cookie_store_state.0) {
-                    log::error!("Failed to save cookies on exit: {}", e);
-                }
-                // No api.prevent_exit() means the app will close
-            } else {
-                // This is a window close event, so just hide the window
-                api.prevent_exit();
-                if let Some(window) = app.get_webview_window("main") {
-                    let _ = window.hide();
-                }
+        if let RunEvent::ExitRequested { .. } = event {
+            // Save cookies before exiting
+            let cookie_store_state = app.state::<AppCookieStore>();
+            if let Err(e) = http::save_cookies(app, &cookie_store_state.0) {
+                log::error!("Failed to save cookies on exit: {}", e);
             }
         }
     });
