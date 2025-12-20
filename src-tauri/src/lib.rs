@@ -3,7 +3,7 @@ use std::sync::{Arc, Mutex};
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, TrayIconBuilder, TrayIconEvent},
-    Emitter, Manager, RunEvent,
+    Emitter, Manager, RunEvent, WebviewWindow,
 };
 
 pub mod commands;
@@ -11,14 +11,25 @@ pub mod error;
 pub mod services;
 pub mod state;
 
+use crate::commands::store::load_settings;
 use crate::services::{http, proxy::run_proxy_server};
+use crate::state::models::AppSettings;
 use error::AppError;
 use state::models::{
     AppCookieStore, AppHttpClient, ProxyPort, TaskStore, WbiKeysCache, WbiStore,
 };
 
-// Newtype to manage the quitting state
-struct QuittingState(Arc<Mutex<bool>>);
+fn toggle_window_visibility(window: &WebviewWindow) {
+    if let Ok(is_visible) = window.is_visible() {
+        if is_visible {
+            let _ = window.hide();
+        } else {
+            let _ = window.show();
+            let _ = window.unminimize();
+            let _ = window.set_focus();
+        }
+    }
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() -> Result<(), AppError> {
@@ -30,9 +41,6 @@ pub fn run() -> Result<(), AppError> {
 
     // 2. Initialize WBI Store
     let wbi_store = WbiStore(Arc::new(Mutex::new(WbiKeysCache::new())));
-
-    // 3. Quitting State
-    let quitting = Arc::new(Mutex::new(false));
 
     let app = tauri::Builder::default()
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
@@ -54,7 +62,6 @@ pub fn run() -> Result<(), AppError> {
         .manage(ProxyPort(proxy_port))
         .manage(task_store)
         .manage(wbi_store)
-        .manage(QuittingState(quitting.clone()))
         .setup(move |app| {
             // --- Persistence Setup ---
 
@@ -133,18 +140,10 @@ pub fn run() -> Result<(), AppError> {
                     }
                     "show_hide" => {
                         if let Some(window) = app.get_webview_window("main") {
-                            if window.is_visible().unwrap_or(false) {
-                                let _ = window.hide();
-                            } else {
-                                let _ = window.show();
-                                let _ = window.set_focus();
-                            }
+                            toggle_window_visibility(&window);
                         }
                     }
                     "quit" => {
-                        let state = app.state::<QuittingState>();
-                        let mut quitting = state.0.lock().unwrap();
-                        *quitting = true;
                         app.exit(0);
                     }
                     _ => {}
@@ -157,12 +156,7 @@ pub fn run() -> Result<(), AppError> {
                     {
                         let app = tray.app_handle();
                         if let Some(window) = app.get_webview_window("main") {
-                            if window.is_visible().unwrap_or(false) {
-                                let _ = window.hide();
-                            } else {
-                                let _ = window.show();
-                                let _ = window.set_focus();
-                            }
+                            toggle_window_visibility(&window);
                         }
                     }
                 })
@@ -177,13 +171,13 @@ pub fn run() -> Result<(), AppError> {
         .build(tauri::generate_context!())
         .expect("error while building tauri application");
 
-    app.run(|app, event| {
+    app.run(move |app, event| {
         if let RunEvent::ExitRequested { api, .. } = event {
-            let state = app.state::<QuittingState>();
-            let quitting = state.0.lock().unwrap();
+            let settings: AppSettings = load_settings(app).unwrap_or_default();
+            let close_behavior = settings.close_window_option.unwrap_or("hide".to_string());
 
-            if *quitting {
-                // This is a real exit, so save cookies and allow it
+            if close_behavior == "exit" {
+                // Save cookies before exiting
                 let cookie_store_state = app.state::<AppCookieStore>();
                 if let Err(e) = http::save_cookies(app, &cookie_store_state.0) {
                     log::error!("Failed to save cookies on exit: {}", e);
