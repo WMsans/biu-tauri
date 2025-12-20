@@ -3,9 +3,7 @@ use std::sync::{Arc, Mutex};
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, TrayIconBuilder, TrayIconEvent},
-    Manager,
-    Emitter,
-    RunEvent
+    Emitter, Manager, RunEvent, WebviewWindow,
 };
 
 pub mod commands;
@@ -13,9 +11,23 @@ pub mod error;
 pub mod services;
 pub mod state;
 
+use crate::commands::store::load_settings;
 use crate::services::{http, proxy::run_proxy_server};
+use crate::state::models::AppSettings;
 use error::AppError;
-use state::models::{AppHttpClient, AppCookieStore, ProxyPort, TaskStore, WbiKeysCache, WbiStore};
+use state::models::{
+    AppCookieStore, AppHttpClient, ProxyPort, TaskStore, WbiKeysCache, WbiStore,
+};
+
+fn toggle_window_visibility(window: &WebviewWindow) {
+    if window.is_visible().unwrap_or(false) {
+        let _ = window.hide();
+    } else {
+        let _ = window.show();
+        let _ = window.unminimize();
+        let _ = window.set_focus();
+    }
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() -> Result<(), AppError> {
@@ -48,9 +60,23 @@ pub fn run() -> Result<(), AppError> {
         .manage(ProxyPort(proxy_port))
         .manage(task_store)
         .manage(wbi_store)
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                let app = window.app_handle();
+                let settings = load_settings(app).unwrap_or_default();
+                let close_behavior = settings.close_window_option.unwrap_or("hide".to_string());
+
+                if close_behavior == "hide" {
+                    if window.label() == "main" {
+                        let _ = window.hide();
+                        api.prevent_close();
+                    }
+                }
+            }
+        })
         .setup(move |app| {
             // --- Persistence Setup ---
-            
+
             // 1. Initialize HTTP Client & Load Cookies
             let (client, cookie_store) = http::build_client(app.handle())?;
 
@@ -60,27 +86,31 @@ pub fn run() -> Result<(), AppError> {
                 let mut tasks = store.tasks.lock().unwrap();
                 *tasks = saved_tasks;
             }
-            
+
             // --- Start Background Tasks ---
-            
+
             // A. Auto-save Cookies Task (Lazy Timer)
             let cookie_store_for_save = cookie_store.clone();
             let app_handle_for_save = app.handle().clone();
             tauri::async_runtime::spawn(async move {
                 loop {
                     tokio::time::sleep(tokio::time::Duration::from_secs(60)).await;
-                    if let Err(e) = http::save_cookies(&app_handle_for_save, &cookie_store_for_save) {
+                    if let Err(e) =
+                        http::save_cookies(&app_handle_for_save, &cookie_store_for_save)
+                    {
                         log::error!("Background cookie save failed: {}", e);
                     }
                 }
             });
 
             // B. Start Proxy Server
-            let proxy_port_for_server = proxy_port_clone.clone(); 
+            let proxy_port_for_server = proxy_port_clone.clone();
             let cookie_store_for_server = cookie_store.clone();
-            
+
             tauri::async_runtime::spawn(async move {
-                if let Err(e) = run_proxy_server(proxy_port_for_server, cookie_store_for_server).await {
+                if let Err(e) =
+                    run_proxy_server(proxy_port_for_server, cookie_store_for_server).await
+                {
                     log::error!("Proxy server error: {}", e);
                 }
             });
@@ -92,54 +122,43 @@ pub fn run() -> Result<(), AppError> {
             // --- System Tray Implementation ---
 
             // 1. Create Menu Items
-            let play_pause_i = MenuItem::with_id(app, "play_pause", "Play/Pause", true, None::<&str>)?;
+            let play_pause_i =
+                MenuItem::with_id(app, "play_pause", "Play/Pause", true, None::<&str>)?;
             let prev_i = MenuItem::with_id(app, "prev", "Previous", true, None::<&str>)?;
             let next_i = MenuItem::with_id(app, "next", "Next", true, None::<&str>)?;
-            let show_hide_i = MenuItem::with_id(app, "show_hide", "Show/Hide", true, None::<&str>)?;
+            let show_hide_i =
+                MenuItem::with_id(app, "show_hide", "Show/Hide", true, None::<&str>)?;
             let quit_i = MenuItem::with_id(app, "quit", "Quit", true, None::<&str>)?;
 
             // 2. Build the Menu
             let menu = Menu::with_items(
                 app,
-                &[
-                    &play_pause_i,
-                    &prev_i,
-                    &next_i,
-                    &show_hide_i, 
-                    &quit_i,
-                ],
+                &[&play_pause_i, &prev_i, &next_i, &show_hide_i, &quit_i],
             )?;
 
             // 3. Configure the Tray
             let _tray = TrayIconBuilder::new()
                 .menu(&menu)
                 .icon(app.default_window_icon().unwrap().clone())
-                .on_menu_event(|app, event| {
-                    match event.id().as_ref() {
-                        "play_pause" => {
-                            let _ = app.emit("player:toggle", ()); 
-                        }
-                        "prev" => {
-                            let _ = app.emit("player:prev", ()); 
-                        }
-                        "next" => {
-                            let _ = app.emit("player:next", ()); 
-                        }
-                        "show_hide" => {
-                            if let Some(window) = app.get_webview_window("main") {
-                                if window.is_visible().unwrap_or(false) {
-                                    let _ = window.hide();
-                                } else {
-                                    let _ = window.show();
-                                    let _ = window.set_focus();
-                                }
-                            }
-                        }
-                        "quit" => {
-                            app.exit(0);
-                        }
-                        _ => {}
+                .on_menu_event(|app, event| match event.id().as_ref() {
+                    "play_pause" => {
+                        let _ = app.emit("player:toggle", ());
                     }
+                    "prev" => {
+                        let _ = app.emit("player:prev", ());
+                    }
+                    "next" => {
+                        let _ = app.emit("player:next", ());
+                    }
+                    "show_hide" => {
+                        if let Some(window) = app.get_webview_window("main") {
+                            toggle_window_visibility(&window);
+                        }
+                    }
+                    "quit" => {
+                        app.exit(0);
+                    }
+                    _ => {}
                 })
                 .on_tray_icon_event(|tray, event| {
                     if let TrayIconEvent::Click {
@@ -149,12 +168,7 @@ pub fn run() -> Result<(), AppError> {
                     {
                         let app = tray.app_handle();
                         if let Some(window) = app.get_webview_window("main") {
-                            if window.is_visible().unwrap_or(false) {
-                                let _ = window.hide();
-                            } else {
-                                let _ = window.show();
-                                let _ = window.set_focus();
-                            }
+                            toggle_window_visibility(&window);
                         }
                     }
                 })
@@ -169,10 +183,11 @@ pub fn run() -> Result<(), AppError> {
         .build(tauri::generate_context!())
         .expect("error while building tauri application");
 
-    app.run(|app_handle, event| {
+    app.run(move |app, event| {
         if let RunEvent::ExitRequested { .. } = event {
-            let cookie_store_state = app_handle.state::<AppCookieStore>();
-            if let Err(e) = http::save_cookies(app_handle, &cookie_store_state.0) {
+            // Save cookies before exiting
+            let cookie_store_state = app.state::<AppCookieStore>();
+            if let Err(e) = http::save_cookies(app, &cookie_store_state.0) {
                 log::error!("Failed to save cookies on exit: {}", e);
             }
         }

@@ -52,10 +52,9 @@ pub fn load_settings(app: &AppHandle) -> Result<AppSettings, AppError> {
     }
 
     // Defaults if file doesn't exist
-    Ok(AppSettings {
-        download_path: Some(get_default_download_dir(app)),
-        extra: std::collections::HashMap::new(),
-    })
+    let mut settings = AppSettings::default();
+    settings.download_path = Some(get_default_download_dir(app));
+    Ok(settings)
 }
 
 pub fn load_tasks(app: &AppHandle) -> Result<Vec<MediaDownloadTaskState>, AppError> {
