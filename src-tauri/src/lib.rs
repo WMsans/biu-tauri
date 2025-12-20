@@ -169,11 +169,31 @@ pub fn run() -> Result<(), AppError> {
         .build(tauri::generate_context!())
         .expect("error while building tauri application");
 
-    app.run(|app_handle, event| {
-        if let RunEvent::ExitRequested { .. } = event {
-            let cookie_store_state = app_handle.state::<AppCookieStore>();
-            if let Err(e) = http::save_cookies(app_handle, &cookie_store_state.0) {
+    app.run(|app, event| {
+        if let RunEvent::ExitRequested { api, .. } = event {
+            // Persist cookies on exit
+            let cookie_store_state = app.state::<AppCookieStore>();
+            if let Err(e) = http::save_cookies(app, &cookie_store_state.0) {
                 log::error!("Failed to save cookies on exit: {}", e);
+            }
+
+            // Check settings before quitting
+            let settings = commands::store::load_settings(app).ok();
+            let Some(settings) = settings else {
+                return; // Should ideally not happen, but exit gracefully if it does
+            };
+
+            let close_behavior = settings
+                .extra
+                .get("closeWindowOption")
+                .and_then(|v| v.as_str())
+                .unwrap_or("exit");
+
+            if close_behavior == "hide" {
+                api.prevent_exit();
+                if let Some(window) = app.get_webview_window("main") {
+                    let _ = window.hide();
+                }
             }
         }
     });
