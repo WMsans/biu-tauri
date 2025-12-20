@@ -144,6 +144,7 @@ export const tauriAdapter: any = {
   // Window Management
   switchToMiniPlayer: () => invoke("switch_to_mini"),
   switchToMainWindow: () => invoke("switch_to_main"),
+  toggleMiniPlayer: () => invoke("toggle_mini_player"),
   minimizeWindow: () => invoke("minimize_window"),
   toggleMaximizeWindow: () => invoke("toggle_maximize_window"),
   closeWindow: () => invoke("close_window"),
