@@ -46,4 +46,4 @@ panic = "abort" # Removes stack unwind code
 codegen-units = 1 # Allows for maximum optimization at the cost of compile time
 lto = true # Link Time Optimization
 opt-level = "z" # Optimize for size (or "3" for speed, "s" is a balance)
-strip = true # Remove debug symbols
+strip = false # Remove debug symbols
