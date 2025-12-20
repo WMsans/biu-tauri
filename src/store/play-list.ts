@@ -294,7 +294,7 @@ export const usePlayList = create<State & Action>()(
               }
             });
           } else {
-            log.error("无法获取音频播放链接", {
+            console.log.error("无法获取音频播放链接", {
               type: "mv",
               bvid: currentPlayItem.bvid,
               cid: currentPlayItem.cid,
@@ -320,7 +320,7 @@ export const usePlayList = create<State & Action>()(
               if (item) item.audioUrl = musicPlayData.audioUrl;
             });
           } else {
-            log.error("无法获取音频播放链接", {
+            console.log.error("无法获取音频播放链接", {
               type: "audio",
               sid: currentPlayItem.sid,
               title: currentPlayItem.title,
@@ -971,7 +971,7 @@ usePlayList.subscribe(async (state, prevState) => {
               }
             });
           } else {
-            log.error("无法获取音频播放链接", {
+            console.log.error("无法获取音频播放链接", {
               type: "mv",
               bvid: playItem.bvid,
               cid: playItem.cid,
@@ -1013,7 +1013,7 @@ usePlayList.subscribe(async (state, prevState) => {
                 state.playId = firstMV.id;
               });
             } else {
-              log.error("无法获取音频播放链接", {
+              console.log.error("无法获取音频播放链接", {
                 type: "mv",
                 bvid: playItem.bvid,
                 cid: firstMV.cid,
@@ -1023,7 +1023,7 @@ usePlayList.subscribe(async (state, prevState) => {
               toastError("无法获取音频播放链接");
             }
           } else {
-            log.error("无法获取音频播放链接", {
+            console.log.error("无法获取音频播放链接", {
               type: "mv",
               bvid: playItem.bvid,
               title: playItem.title,
@@ -1052,7 +1052,7 @@ usePlayList.subscribe(async (state, prevState) => {
             }
           });
         } else {
-          log.error("无法获取音频播放链接", {
+          console.log.error("无法获取音频播放链接", {
             type: "audio",
             sid: playItem.sid,
             title: playItem.title,
