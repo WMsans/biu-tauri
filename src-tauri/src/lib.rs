@@ -45,6 +45,10 @@ pub fn run() -> Result<(), AppError> {
         .plugin(
             tauri_plugin_log::Builder::new()
                 .level(tauri_plugin_log::log::LevelFilter::Info)
+                .filter(|metadata| {
+                    !(metadata.target() == "font_kit::loaders::freetype"
+                        && metadata.level() == tauri_plugin_log::log::Level::Warn)
+                })
                 .build(),
         )
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
