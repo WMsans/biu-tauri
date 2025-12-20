@@ -1,4 +1,4 @@
-<h1 align="center">【Fork】Bilibili音乐播放器 (Biu)</h1>
+<h1 align="center">【Fork】Biu 音乐播放器</h1>
 
 > ⚠️ **关于此 Fork (About this Fork)**
 >
@@ -20,7 +20,7 @@
   非官方项目，与哔哩哔哩无任何官方关联或背书
 </p>
 <p align="center">
-  <a href="https://github.com/wood3n/biu/releases">
+  <a href="https://github.com/WMsans/biu-tauri/releases">
     <img src="https://badgen.net/github/tag/wood3n/biu?label=最新版本&color=blueviolet" alt="Latest Version" />
   </a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-orange.svg" alt="License" /></a>
@@ -106,7 +106,7 @@ pnpm test
 - ♻️ 安装包支持自动检测更新，始终保持最新体验
 
 ## 下载和使用
-- 下载页面：[GitHub Releases](https://github.com/wood3n/biu/releases/latest)
+- 下载页面：[GitHub Releases](https://github.com/WMsans/biu-tauri/releases)
 - 快速选择：
   - <img alt="Windows" src="https://img.shields.io/badge/Windows-0078D6?logo=windows&logoColor=white" /> 优先选安装包 `win-setup`；需要免安装/无管理员权限选 `win-portable`
   - <img alt="macOS" src="https://img.shields.io/badge/macOS-000000?logo=apple&logoColor=white" /> 优先选 `dmg`；需要脚本/自动化分发可选 `zip`
