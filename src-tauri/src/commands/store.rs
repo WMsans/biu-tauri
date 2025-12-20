@@ -19,24 +19,33 @@ pub fn get_tasks_path(app: &AppHandle) -> PathBuf {
         .join("tasks.json")
 }
 
+// Helper to get the system default download directory safely
+fn get_default_download_dir(app: &AppHandle) -> String {
+    app.path()
+        .download_dir()
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_else(|_| ".".to_string())
+}
+
 pub fn load_settings(app: &AppHandle) -> Result<AppSettings, AppError> {
     let path = get_settings_path(app);
     if path.exists() {
         let file = File::open(path)?;
         let reader = std::io::BufReader::new(file);
-        let settings = serde_json::from_reader(reader)
+        let mut settings: AppSettings = serde_json::from_reader(reader)
             .map_err(|e| AppError::DatabaseError(e.to_string()))?;
+
+        // FIX: If download_path is None or empty, fallback to system default
+        if settings.download_path.as_ref().map(|s| s.trim().is_empty()).unwrap_or(true) {
+            settings.download_path = Some(get_default_download_dir(app));
+        }
+
         return Ok(settings);
     }
-    // Defaults
+
+    // Defaults if file doesn't exist
     Ok(AppSettings {
-        download_path: Some(
-            app.path()
-                .download_dir()
-                .unwrap()
-                .to_string_lossy()
-                .to_string(),
-        ),
+        download_path: Some(get_default_download_dir(app)),
         extra: std::collections::HashMap::new(),
     })
 }
@@ -48,7 +57,7 @@ pub fn load_tasks(app: &AppHandle) -> Result<Vec<MediaDownloadTaskState>, AppErr
         let reader = std::io::BufReader::new(file);
         let mut tasks: Vec<MediaDownloadTaskState> = serde_json::from_reader(reader)
             .map_err(|e| AppError::DatabaseError(e.to_string()))?;
-        
+
         // Reset active statuses to paused on load (since the app was restarted)
         for task in &mut tasks {
             if task.status == "downloading" || task.status == "merging" || task.status == "converting" {
