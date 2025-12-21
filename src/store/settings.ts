@@ -4,6 +4,8 @@ import { persist } from "zustand/middleware";
 import { defaultAppSettings } from "@shared/settings/app-settings";
 import { StoreNameMap } from "@shared/store";
 
+import i18n from "../i18n";
+
 interface SettingsActions {
   getSettings: () => AppSettings;
   update: (patch: Partial<AppSettings>) => void;
@@ -21,6 +23,9 @@ export const useSettings = create<AppSettings & SettingsActions>()(
         }, {} as AppSettings);
       },
       update: (patch: Partial<AppSettings>) => {
+        if (patch.language) {
+          i18n.changeLanguage(patch.language);
+        }
         set(patch);
       },
       reset: () => {
@@ -57,6 +62,7 @@ export const useSettings = create<AppSettings & SettingsActions>()(
       },
       partialize: state => {
         return {
+          language: state.language,
           downloadPath: state.downloadPath,
           closeWindowOption: state.closeWindowOption,
           autoStart: state.autoStart,

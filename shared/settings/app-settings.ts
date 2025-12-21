@@ -1,4 +1,5 @@
 export const defaultAppSettings: AppSettings = {
+  language: "zh-CN",
   autoStart: false,
   closeWindowOption: "hide",
   fontFamily: "system-ui",

@@ -1,4 +1,5 @@
 import React, { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useLocation, useNavigate } from "react-router";
 
 import { Chip, Input, Listbox, ListboxItem } from "@heroui/react";
@@ -11,6 +12,7 @@ import { useSearchHistory } from "@/store/search-history";
 import { useUser } from "@/store/user";
 
 const SearchInput: React.FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const user = useUser(s => s.user);
 
@@ -68,7 +70,7 @@ const SearchInput: React.FC = () => {
           }
         }}
         onFocus={() => setOpen(true)}
-        placeholder="搜索"
+        placeholder={t("search.placeholder")}
         endContent={
           <div
             onClick={handleSearchClick}
@@ -81,7 +83,7 @@ const SearchInput: React.FC = () => {
                 handleSearchClick();
               }
             }}
-            aria-label="搜索"
+            aria-label={t("search.searchAriaLabel")}
           >
             <RiSearchLine size={16} />
           </div>
@@ -98,7 +100,7 @@ const SearchInput: React.FC = () => {
         )}
       >
         <Listbox
-          aria-label="搜索建议"
+          aria-label={t("search.suggestionsAriaLabel")}
           selectionMode="none"
           items={
             suggestionsData?.map(item => ({
@@ -107,12 +109,12 @@ const SearchInput: React.FC = () => {
               name: item.name,
             })) || []
           }
-          emptyContent="暂无搜索建议"
+          emptyContent={t("search.noSuggestions")}
           topContent={
             searchHistoryItems.length > 0 && (
               <>
                 <div className="mb-1 flex items-center justify-between px-1">
-                  <span className="text-sm">搜索历史</span>
+                  <span className="text-sm">{t("search.history")}</span>
                   <span
                     className="text-foreground-400 hover:text-foreground-600 cursor-pointer text-xs"
                     onClick={() => {
@@ -120,7 +122,7 @@ const SearchInput: React.FC = () => {
                       inputRef.current?.focus();
                     }}
                   >
-                    清除全部
+                    {t("search.clearAll")}
                   </span>
                 </div>
                 <div className="mb-1 flex flex-wrap gap-2">

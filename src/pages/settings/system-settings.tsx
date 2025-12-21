@@ -1,6 +1,7 @@
 import React from "react";
 import { Controller } from "react-hook-form";
 import type { Control, UseFormSetValue } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 import { Button, Divider, Form, Input, Radio, RadioGroup, Select, SelectItem, Slider, Switch } from "@heroui/react";
 import { RiArrowRightLongLine } from "@remixicon/react";
@@ -29,22 +30,50 @@ export const SystemSettingsTab = ({
   latestVersion,
   setValue,
 }: SystemSettingsTabProps) => {
+  const { t } = useTranslation();
   return (
     <Form className="space-y-6">
-      <h2>外观</h2>
+      <h2>{t("settings.system.appearance.title")}</h2>
+      {/* Language */}
+      <div className="flex w-full items-center justify-between">
+        <div className="mr-6 space-y-1">
+          <div className="text-medium font-medium">{t("settings.system.appearance.language.label")}</div>
+          <div className="text-sm text-zinc-500">{t("settings.system.appearance.language.description")}</div>
+        </div>
+        <div className="w-[140px]">
+          <Controller
+            control={control}
+            name="language"
+            render={({ field }) => (
+              <Select
+                aria-label="Language"
+                selectedKeys={[field.value]}
+                onSelectionChange={keys => {
+                  const value = Array.from(keys)[0] as "en" | "zh-CN" | "zh-TW";
+                  field.onChange(value);
+                }}
+              >
+                <SelectItem key="en">English</SelectItem>
+                <SelectItem key="zh-CN">简体中文</SelectItem>
+                <SelectItem key="zh-TW">繁體中文</SelectItem>
+              </Select>
+            )}
+          />
+        </div>
+      </div>
       {/* 显示模式 */}
       <div className="flex w-full items-center justify-between">
         <div className="mr-6 space-y-1">
-          <div className="text-medium font-medium">显示模式</div>
-          <div className="text-sm text-zinc-500">选择媒体内容的显示样式</div>
+          <div className="text-medium font-medium">{t("settings.system.appearance.displayMode.label")}</div>
+          <div className="text-sm text-zinc-500">{t("settings.system.appearance.displayMode.description")}</div>
         </div>
         <Controller
           control={control}
           name="displayMode"
           render={({ field }) => (
             <RadioGroup orientation="horizontal" value={field.value} onValueChange={field.onChange}>
-              <Radio value="card">卡片</Radio>
-              <Radio value="list">列表</Radio>
+              <Radio value="card">{t("settings.system.appearance.displayMode.card")}</Radio>
+              <Radio value="list">{t("settings.system.appearance.displayMode.list")}</Radio>
             </RadioGroup>
           )}
         />
@@ -52,8 +81,8 @@ export const SystemSettingsTab = ({
       {/* 字体选择 */}
       <div className="flex w-full items-center justify-between">
         <div className="mr-6 space-y-1">
-          <div className="text-medium font-medium">字体</div>
-          <div className="text-sm text-zinc-500">选择界面显示的字体</div>
+          <div className="text-medium font-medium">{t("settings.system.appearance.font.label")}</div>
+          <div className="text-sm text-zinc-500">{t("settings.system.appearance.font.description")}</div>
         </div>
         <div className="w-[360px]">
           <Controller
@@ -66,8 +95,10 @@ export const SystemSettingsTab = ({
 
       <div className="flex w-full items-center justify-between">
         <div className="mr-6 space-y-1">
-          <div className="text-medium font-medium">内容区域颜色</div>
-          <div className="text-sm text-zinc-500">更改应用内容区域的颜色</div>
+          <div className="text-medium font-medium">{t("settings.system.appearance.contentBackgroundColor.label")}</div>
+          <div className="text-sm text-zinc-500">
+            {t("settings.system.appearance.contentBackgroundColor.description")}
+          </div>
         </div>
         <div className="flex w-[360px] justify-end">
           <Controller
@@ -86,8 +117,8 @@ export const SystemSettingsTab = ({
 
       <div className="flex w-full items-center justify-between">
         <div className="mr-6 space-y-1">
-          <div className="text-medium font-medium">布局颜色</div>
-          <div className="text-sm text-zinc-500">更改应用布局背景颜色</div>
+          <div className="text-medium font-medium">{t("settings.system.appearance.backgroundColor.label")}</div>
+          <div className="text-sm text-zinc-500">{t("settings.system.appearance.backgroundColor.description")}</div>
         </div>
         <div className="flex w-[360px] justify-end">
           <Controller
@@ -106,8 +137,8 @@ export const SystemSettingsTab = ({
 
       <div className="flex w-full items-center justify-between">
         <div className="mr-6 space-y-1">
-          <div className="text-medium font-medium">主题颜色</div>
-          <div className="text-sm text-zinc-500">更改应用的主色调</div>
+          <div className="text-medium font-medium">{t("settings.system.appearance.themeColor.label")}</div>
+          <div className="text-sm text-zinc-500">{t("settings.system.appearance.themeColor.description")}</div>
         </div>
         <div className="flex w-[360px] justify-end">
           <Controller
@@ -127,8 +158,8 @@ export const SystemSettingsTab = ({
       {/* 全局圆角设置 */}
       <div className="flex w-full items-center justify-between">
         <div className="mr-6 space-y-1">
-          <div className="text-medium font-medium">圆角</div>
-          <div className="text-sm text-zinc-500">调整界面控件的圆角大小</div>
+          <div className="text-medium font-medium">{t("settings.system.appearance.borderRadius.label")}</div>
+          <div className="text-sm text-zinc-500">{t("settings.system.appearance.borderRadius.description")}</div>
         </div>
         <div className="w-[360px]">
           <Controller
@@ -139,7 +170,7 @@ export const SystemSettingsTab = ({
                 showTooltip={false}
                 size="sm"
                 endContent={<span>{field.value}px</span>}
-                aria-label="全局圆角"
+                aria-label={t("settings.system.appearance.borderRadius.label")}
                 value={field.value}
                 onChange={v => field.onChange(Number(v))}
                 minValue={0}
@@ -154,13 +185,13 @@ export const SystemSettingsTab = ({
         </div>
       </div>
       <Divider />
-      <h2>播放</h2>
+      <h2>{t("settings.system.playback.title")}</h2>
       {/* 音质选择 */}
       <div className="flex w-full items-center justify-between">
         <div className="mr-6 space-y-1">
-          <div className="text-medium font-medium">音质偏好</div>
+          <div className="text-medium font-medium">{t("settings.system.playback.audioQuality.label")}</div>
           <div className="text-sm text-zinc-500">
-            {audioQuality === "auto" && "自动选择最高音质"}
+            {audioQuality === "auto" && t("settings.system.playback.audioQuality.autoDescription")}
             {audioQuality === "lossless" && "FLAC / Hi-Res"}
             {audioQuality === "high" && "180-320 kbps"}
             {audioQuality === "medium" && "100-140 kbps"}
@@ -173,30 +204,30 @@ export const SystemSettingsTab = ({
             name="audioQuality"
             render={({ field }) => (
               <Select
-                aria-label="音质偏好"
+                aria-label={t("settings.system.playback.audioQuality.label")}
                 selectedKeys={[field.value]}
                 onSelectionChange={keys => {
                   const value = Array.from(keys)[0] as AudioQuality;
                   field.onChange(value);
                 }}
               >
-                <SelectItem key="auto">自动</SelectItem>
-                <SelectItem key="lossless">无损</SelectItem>
-                <SelectItem key="high">高品质</SelectItem>
-                <SelectItem key="medium">中等</SelectItem>
-                <SelectItem key="low">低品质</SelectItem>
+                <SelectItem key="auto">{t("settings.system.playback.audioQuality.auto")}</SelectItem>
+                <SelectItem key="lossless">{t("settings.system.playback.audioQuality.lossless")}</SelectItem>
+                <SelectItem key="high">{t("settings.system.playback.audioQuality.high")}</SelectItem>
+                <SelectItem key="medium">{t("settings.system.playback.audioQuality.medium")}</SelectItem>
+                <SelectItem key="low">{t("settings.system.playback.audioQuality.low")}</SelectItem>
               </Select>
             )}
           />
         </div>
       </div>
       <Divider />
-      <h2>下载</h2>
+      <h2>{t("settings.system.download.title")}</h2>
       {/* 下载目录配置 */}
       <div className="flex w-full items-center justify-between">
         <div className="mr-6 space-y-1">
-          <div className="text-medium font-medium">下载目录</div>
-          <div className="text-sm text-zinc-500">选择音视频保存的位置</div>
+          <div className="text-medium font-medium">{t("settings.system.download.path.label")}</div>
+          <div className="text-sm text-zinc-500">{t("settings.system.download.path.description")}</div>
         </div>
         <div className="w-[360px]">
           <Controller
@@ -204,7 +235,12 @@ export const SystemSettingsTab = ({
             name="downloadPath"
             render={({ field }) => (
               <div className="flex items-center space-x-1">
-                <Input isDisabled placeholder="选择文件夹" value={field.value} onValueChange={field.onChange} />
+                <Input
+                  isDisabled
+                  placeholder={t("settings.system.download.path.placeholder")}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                />
                 <Button
                   variant="flat"
                   onPress={async () => {
@@ -212,7 +248,7 @@ export const SystemSettingsTab = ({
                     if (path) setValue("downloadPath", path, { shouldDirty: true, shouldTouch: true });
                   }}
                 >
-                  选择
+                  {t("common.select")}
                 </Button>
               </div>
             )}
@@ -223,8 +259,8 @@ export const SystemSettingsTab = ({
       {/* FFmpeg 路径配置 */}
       <div className="flex w-full items-center justify-between">
         <div className="mr-6 space-y-1">
-          <div className="text-medium font-medium">FFmpeg 路径</div>
-          <div className="text-sm text-zinc-500">手动指定 FFmpeg 可执行文件路径</div>
+          <div className="text-medium font-medium">{t("settings.system.download.ffmpegPath.label")}</div>
+          <div className="text-sm text-zinc-500">{t("settings.system.download.ffmpegPath.description")}</div>
         </div>
         <div className="w-[360px]">
           <Controller
@@ -232,7 +268,12 @@ export const SystemSettingsTab = ({
             name="ffmpegPath"
             render={({ field }) => (
               <div className="flex items-center space-x-1">
-                <Input isDisabled placeholder="自动检测" value={field.value} onValueChange={field.onChange} />
+                <Input
+                  isDisabled
+                  placeholder={t("settings.system.download.ffmpegPath.placeholder")}
+                  value={field.value}
+                  onValueChange={field.onChange}
+                />
                 <Button
                   variant="flat"
                   onPress={async () => {
@@ -240,7 +281,7 @@ export const SystemSettingsTab = ({
                     if (path) setValue("ffmpegPath", path, { shouldDirty: true, shouldTouch: true });
                   }}
                 >
-                  选择
+                  {t("common.select")}
                 </Button>
               </div>
             )}
@@ -248,20 +289,20 @@ export const SystemSettingsTab = ({
         </div>
       </div>
       <Divider />
-      <h2>系统</h2>
+      <h2>{t("settings.system.system.title")}</h2>
       {/* 窗口关闭选项 */}
       <div className="flex w-full items-center justify-between">
         <div className="mr-6 space-y-1">
-          <div className="text-medium font-medium">窗口关闭</div>
-          <div className="text-sm text-zinc-500">选择窗口关闭时的行为</div>
+          <div className="text-medium font-medium">{t("settings.system.system.closeWindowOption.label")}</div>
+          <div className="text-sm text-zinc-500">{t("settings.system.system.closeWindowOption.description")}</div>
         </div>
         <Controller
           control={control}
           name="closeWindowOption"
           render={({ field }) => (
             <RadioGroup orientation="horizontal" value={field.value} onValueChange={field.onChange}>
-              <Radio value="hide">隐藏到托盘</Radio>
-              <Radio value="exit">直接退出</Radio>
+              <Radio value="hide">{t("settings.system.system.closeWindowOption.hide")}</Radio>
+              <Radio value="exit">{t("settings.system.system.closeWindowOption.exit")}</Radio>
             </RadioGroup>
           )}
         />
@@ -270,8 +311,8 @@ export const SystemSettingsTab = ({
       {/* 开机自启动开关 */}
       <div className="flex w-full items-center justify-between">
         <div className="mr-6 space-y-1">
-          <div className="text-medium font-medium">开机自启动</div>
-          <div className="text-sm text-zinc-500">系统登录后自动启动应用</div>
+          <div className="text-medium font-medium">{t("settings.system.system.autoStart.label")}</div>
+          <div className="text-sm text-zinc-500">{t("settings.system.system.autoStart.description")}</div>
         </div>
         <div className="flex w-[360px] justify-end">
           <Controller
@@ -283,10 +324,10 @@ export const SystemSettingsTab = ({
       </div>
 
       <Divider />
-      <h2>关于应用</h2>
+      <h2>{t("settings.system.about.title")}</h2>
       <div className="flex w-full items-center justify-between">
         <div className="mr-6 flex items-center space-x-1">
-          <span>当前版本 {appVersion}</span>
+          <span>{t("settings.system.about.version", { version: appVersion })}</span>
           {isUpdateAvailable && Boolean(latestVersion) && (
             <>
               <RiArrowRightLongLine size={16} />

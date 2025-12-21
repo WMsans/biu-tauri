@@ -1,6 +1,7 @@
 type AudioQuality = "auto" | "lossless" | "high" | "medium" | "low";
 
 interface AppSettings {
+  language: "en" | "zh-CN" | "zh-TW";
   fontFamily: string;
   backgroundColor: string;
   contentBackgroundColor: string;
