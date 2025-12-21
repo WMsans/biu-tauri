@@ -6,6 +6,8 @@ import * as t from "@babel/types";
 import fs from "fs";
 import path from "path";
 
+import { LANGUAGES } from "../shared/locales/index.ts";
+
 // Deal with esm/cjs interop
 const traverse = _traverse.default;
 const generate = _generator.default;
@@ -216,11 +218,9 @@ async function main() {
     });
   }
 
-  const localeFiles = [
-    path.join(LOCALES_DIR, "en", "translation.json"),
-    path.join(LOCALES_DIR, "zh-CN", "translation.json"),
-    path.join(LOCALES_DIR, "zh-TW", "translation.json"),
-  ];
+  const localeFiles = LANGUAGES.map(lang =>
+    path.join(process.cwd(), "shared", "locales", lang.value, "translation.json"),
+  );
 
   const translations: Record<string, any> = {};
   const existingValues = new Set<string>();
@@ -228,15 +228,17 @@ async function main() {
   const stringToKey = new Map<string, string>();
 
   for (const file of localeFiles) {
-    const content = await fs.promises.readFile(file, "utf-8");
-    translations[file] = JSON.parse(content);
-    Object.entries(translations[file]).forEach(([key, value]) => {
-      existingKeys.add(key);
-      if (typeof value === "string") {
-        existingValues.add(value);
-        stringToKey.set(value, key);
-      }
-    });
+    if (fs.existsSync(file)) {
+      const content = await fs.promises.readFile(file, "utf-8");
+      translations[file] = JSON.parse(content);
+      Object.entries(translations[file]).forEach(([key, value]) => {
+        existingKeys.add(key);
+        if (typeof value === "string") {
+          existingValues.add(value);
+          stringToKey.set(value, key);
+        }
+      });
+    }
   }
 
   let newStringsCount = 0;
@@ -248,14 +250,18 @@ async function main() {
       newStringsCount++;
 
       for (const file of localeFiles) {
-        translations[file][key] = value;
+        if (translations[file]) {
+          translations[file][key] = value;
+        }
       }
     }
   }
 
   if (newStringsCount > 0) {
     for (const file of localeFiles) {
-      await fs.promises.writeFile(file, JSON.stringify(translations[file], null, 2) + "\n");
+      if (fs.existsSync(file)) {
+        await fs.promises.writeFile(file, JSON.stringify(translations[file], null, 2) + "\n");
+      }
     }
   }
 
