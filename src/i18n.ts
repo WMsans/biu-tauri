@@ -2,24 +2,33 @@ import { initReactI18next } from "react-i18next";
 
 import i18n from "i18next";
 
-import translationEN from "./locales/en/translation.json";
-import translationZHCN from "./locales/zh-CN/translation.json";
-import translationZHTW from "./locales/zh-TW/translation.json";
+import { LANGUAGES } from "@shared/locales";
+import en from "@shared/locales/en/translation.json";
+import zhCN from "@shared/locales/zh-CN/translation.json";
+import zhTW from "@shared/locales/zh-TW/translation.json";
 
-const resources = {
-  en: {
-    translation: translationEN,
-  },
-  "zh-CN": {
-    translation: translationZHCN,
-  },
-  "zh-TW": {
-    translation: translationZHTW,
-  },
+// Add new translations here
+const translations: Record<string, unknown> = {
+  en,
+  "zh-CN": zhCN,
+  "zh-TW": zhTW,
 };
+
+const resources = LANGUAGES.reduce(
+  (acc, { value }) => {
+    if (translations[value]) {
+      acc[value] = {
+        translation: translations[value],
+      };
+    }
+    return acc;
+  },
+  {} as Record<string, { translation: unknown }>,
+);
 
 i18n.use(initReactI18next).init({
   resources,
+  lng: "en",
   fallbackLng: "en",
   interpolation: {
     escapeValue: false,

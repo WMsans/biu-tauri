@@ -6,9 +6,12 @@ import { useTranslation } from "react-i18next";
 import { Button, Divider, Form, Input, Radio, RadioGroup, Select, SelectItem, Slider, Switch } from "@heroui/react";
 import { RiArrowRightLongLine } from "@remixicon/react";
 
+import type { LANGUAGE_VALUE_LIST } from "@shared/locales";
+
 import ColorPicker from "@/components/color-picker";
 import FontSelect from "@/components/font-select";
 import UpdateCheckButton from "@/components/update-check-button";
+import { LANGUAGES } from "@shared/locales";
 import { defaultAppSettings } from "@shared/settings/app-settings";
 
 import ImportExport from "./export-import";
@@ -49,15 +52,15 @@ export const SystemSettingsTab = ({
                 aria-label="Language"
                 selectedKeys={[field.value]}
                 onSelectionChange={keys => {
-                  const value = Array.from(keys)[0] as "en" | "zh-CN" | "zh-TW";
+                  const value = Array.from(keys)[0] as (typeof LANGUAGE_VALUE_LIST)[number];
                   if (value) {
                     field.onChange(value);
                   }
                 }}
               >
-                <SelectItem key="en">English</SelectItem>
-                <SelectItem key="zh-CN">简体中文</SelectItem>
-                <SelectItem key="zh-TW">繁體中文</SelectItem>
+                {LANGUAGES.map(lang => (
+                  <SelectItem key={lang.value}>{lang.label}</SelectItem>
+                ))}
               </Select>
             )}
           />

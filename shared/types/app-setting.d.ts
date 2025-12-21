@@ -1,7 +1,9 @@
+import type { LANGUAGE_VALUE_LIST } from "@shared/locales";
+
 type AudioQuality = "auto" | "lossless" | "high" | "medium" | "low";
 
 interface AppSettings {
-  language: "en" | "zh-CN" | "zh-TW";
+  language: (typeof LANGUAGE_VALUE_LIST)[number];
   fontFamily: string;
   backgroundColor: string;
   contentBackgroundColor: string;
