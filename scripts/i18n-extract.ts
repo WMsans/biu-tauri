@@ -18,7 +18,8 @@ const LOCALES_DIR = path.join(SRC_DIR, "locales");
 const FILE_EXTENSIONS = [".ts", ".tsx"];
 const IGNORED_DIRS = [LOCALES_DIR];
 
-const TARGET_ATTRIBUTES = ["placeholder", "title", "alt", "label", "aria-label", "tooltip"];
+// Added keys likely to appear in objects (like 'label')
+const TARGET_ATTRIBUTES = ["placeholder", "title", "alt", "label", "aria-label", "tooltip", "name"];
 
 async function findFiles(dir: string): Promise<string[]> {
   let files: string[] = [];
@@ -62,6 +63,20 @@ async function extractStringsFromFile(filePath: string): Promise<string[]> {
         if (typeof attributeName === "string" && TARGET_ATTRIBUTES.includes(attributeName)) {
           const valueNode = path.node.value;
           if (valueNode?.type === "StringLiteral") {
+            const value = valueNode.value.trim();
+            if (value) {
+              extractedStrings.push(value);
+            }
+          }
+        }
+      },
+      ObjectProperty(path) {
+        const keyNode = path.node.key;
+        // Check if key is an Identifier and matches target attributes
+        if (t.isIdentifier(keyNode) && TARGET_ATTRIBUTES.includes(keyNode.name)) {
+          const valueNode = path.node.value;
+          // Check if value is a string
+          if (t.isStringLiteral(valueNode)) {
             const value = valueNode.value.trim();
             if (value) {
               extractedStrings.push(value);
@@ -115,6 +130,7 @@ async function replaceStringsInFile(filePath: string, stringToKey: Map<string, s
 
   let needsTFunction = false;
   let useTranslationImported = false;
+  let i18nextImported = false;
 
   traverse(ast, {
     ImportDeclaration(path) {
@@ -126,6 +142,14 @@ async function replaceStringsInFile(filePath: string, stringToKey: Map<string, s
             spec.imported.name === "useTranslation"
           ) {
             useTranslationImported = true;
+          }
+        });
+      }
+      // Check for i18next import (fallback for non-components)
+      if (path.node.source.value === "i18next") {
+        path.node.specifiers.forEach(spec => {
+          if (spec.local.name === "t" || (spec.type === "ImportSpecifier" && spec.imported.name === "t")) {
+            i18nextImported = true;
           }
         });
       }
@@ -154,10 +178,28 @@ async function replaceStringsInFile(filePath: string, stringToKey: Map<string, s
         }
       }
     },
+    ObjectProperty(path) {
+      const keyNode = path.node.key;
+      if (t.isIdentifier(keyNode) && TARGET_ATTRIBUTES.includes(keyNode.name)) {
+        const valueNode = path.node.value;
+        if (t.isStringLiteral(valueNode)) {
+          const value = valueNode.value.trim();
+          if (stringToKey.has(value)) {
+            needsTFunction = true;
+            const key = stringToKey.get(value)!;
+            // Create t('key') expression
+            const replacement = template.expression(`t('${key}')`)();
+            path.get("value").replaceWith(replacement);
+          }
+        }
+      }
+    },
   });
 
   if (needsTFunction) {
     let tFunctionInjectedInFile = false;
+
+    // 1. Try to inject useTranslation hook into Components
     traverse(ast, {
       "FunctionDeclaration|ArrowFunctionExpression"(path) {
         if (tFunctionInjectedInFile) return;
@@ -181,17 +223,32 @@ async function replaceStringsInFile(filePath: string, stringToKey: Map<string, s
             if (!path.scope.hasBinding("t")) {
               const useTranslationHook = template.statement("const { t } = useTranslation();")();
               body.unshiftContainer("body", useTranslationHook);
-              tFunctionInjectedInFile = true; // Assume one component per file for simplicity
+              tFunctionInjectedInFile = true;
+            } else {
+              // If t is already bound (e.g. props), assume we are good
+              tFunctionInjectedInFile = true;
             }
           }
         }
       },
     });
 
-    if (!useTranslationImported) {
-      const importDeclaration = template.statement(`import { useTranslation } from 'react-i18next';`)();
-      const program = ast.program;
-      program.body.unshift(importDeclaration);
+    // 2. Handle Imports
+    const program = ast.program;
+
+    if (tFunctionInjectedInFile) {
+      // We used the hook, so ensure React import exists
+      if (!useTranslationImported) {
+        const importDeclaration = template.statement(`import { useTranslation } from 'react-i18next';`)();
+        program.body.unshift(importDeclaration);
+      }
+    } else {
+      // We replaced strings but found no component to inject hook into (e.g., menus.tsx).
+      // Fallback: Import 't' directly from 'i18next'
+      if (!i18nextImported) {
+        const importDeclaration = template.statement(`import { t } from 'i18next';`)();
+        program.body.unshift(importDeclaration);
+      }
     }
 
     const { code } = generate(ast, {
