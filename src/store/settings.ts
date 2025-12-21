@@ -77,6 +77,11 @@ export const useSettings = create<AppSettings & SettingsActions>()(
           ffmpegPath: state.ffmpegPath,
         };
       },
+      onRehydrateStorage: () => state => {
+        if (state?.language) {
+          i18n.changeLanguage(state.language);
+        }
+      },
     },
   ),
 );

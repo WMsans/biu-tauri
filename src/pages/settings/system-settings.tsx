@@ -50,7 +50,9 @@ export const SystemSettingsTab = ({
                 selectedKeys={[field.value]}
                 onSelectionChange={keys => {
                   const value = Array.from(keys)[0] as "en" | "zh-CN" | "zh-TW";
-                  field.onChange(value);
+                  if (value) {
+                    field.onChange(value);
+                  }
                 }}
               >
                 <SelectItem key="en">English</SelectItem>
