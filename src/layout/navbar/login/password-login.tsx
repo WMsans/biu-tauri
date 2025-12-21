@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 import { Button, Form, Input, Tooltip, addToast } from "@heroui/react";
 import { RiEyeLine, RiEyeOffLine, RiQuestionLine } from "@remixicon/react";
@@ -22,6 +23,7 @@ interface PasswordLoginForm {
 }
 
 const PasswordLogin = ({ onClose }: PasswordLoginProps) => {
+  const { t } = useTranslation();
   const { verify, loading: geetestLoading } = useGeetest();
   const [isPwdVisible, setPwdVisible] = useState<boolean>(false);
   const usernameRef = useRef<HTMLInputElement>(null);
@@ -71,7 +73,7 @@ const PasswordLogin = ({ onClose }: PasswordLoginProps) => {
       encryptor.setPublicKey(webKey.data.key);
       const encrypted = encryptor.encrypt(webKey.data.hash + rawPwd);
       if (!encrypted) {
-        addToast({ title: "密码加密失败，请重试", color: "danger" });
+        addToast({ title: t("layout.navbar.login.password-login..2"), color: "danger" });
         return;
       }
 
@@ -92,7 +94,7 @@ const PasswordLogin = ({ onClose }: PasswordLoginProps) => {
       });
 
       if (resp.code === 0) {
-        addToast({ title: "登录成功", color: "success" });
+        addToast({ title: t("layout.navbar.login.code-login..6"), color: "success" });
         updateToken({
           tokenData: { refresh_token: resp.data?.refresh_token },
           nextCheckRefreshTime: moment().add(2, "days").unix(),
@@ -111,7 +113,7 @@ const PasswordLogin = ({ onClose }: PasswordLoginProps) => {
     <Form className="flex w-full flex-col gap-4" onSubmit={handleSubmit(onSubmitPasswordLogin)}>
       <Controller
         control={control}
-        name="username"
+        name={t("layout.navbar.login.password-login.username")}
         rules={{ required: "请输入账号" }}
         render={({ field }) => (
           <Input
@@ -120,7 +122,7 @@ const PasswordLogin = ({ onClose }: PasswordLoginProps) => {
               field.ref(e);
               usernameRef.current = e;
             }}
-            placeholder="请输入账号"
+            placeholder={t("layout.navbar.login.password-login.")}
             variant="bordered"
             autoComplete="username"
             isInvalid={!!errors.username}
@@ -131,7 +133,7 @@ const PasswordLogin = ({ onClose }: PasswordLoginProps) => {
 
       <Controller
         control={control}
-        name="password"
+        name={t("layout.navbar.login.password-login.password")}
         rules={{ required: "请输入密码" }}
         render={({ field }) => (
           <Input
@@ -141,7 +143,7 @@ const PasswordLogin = ({ onClose }: PasswordLoginProps) => {
               passwordRef.current = e;
             }}
             type={isPwdVisible ? "text" : "password"}
-            placeholder="请输入密码"
+            placeholder={t("layout.navbar.login.password-login..1")}
             variant="bordered"
             autoComplete="current-password"
             isInvalid={!!errors.password}
@@ -192,7 +194,7 @@ const PasswordLogin = ({ onClose }: PasswordLoginProps) => {
         isDisabled={isSubmitting || geetestLoading}
         isLoading={isSubmitting || geetestLoading}
       >
-        登录
+        {t("layout.navbar.login.code-login..3")}
       </Button>
     </Form>
   );

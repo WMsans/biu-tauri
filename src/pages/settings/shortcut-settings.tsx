@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 import { Checkbox, addToast } from "@heroui/react";
 import { useShallow } from "zustand/react/shallow";
@@ -8,6 +9,7 @@ import ShortcutKeyInput from "@/components/shortcut-key-input";
 import { useShortcutSettings } from "@/store/shortcuts";
 
 const ShortcutSettingsPage = () => {
+  const { t } = useTranslation();
   const { shortcuts, globalShortcuts, enableGlobalShortcuts, refresh, update, reset } = useShortcutSettings(
     useShallow(state => ({
       shortcuts: state.shortcuts,
@@ -56,7 +58,7 @@ const ShortcutSettingsPage = () => {
 
       if (!registerSuccess) {
         addToast({
-          title: "与系统或其他应用快捷键冲突",
+          title: t("pages.settings.shortcut-settings..5"),
           color: "danger",
         });
         return;
@@ -93,16 +95,16 @@ const ShortcutSettingsPage = () => {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2>快捷键设置</h2>
+        <h2>{t("pages.settings.index..4")}</h2>
         <AsyncButton size="sm" radius="md" variant="flat" onPress={handleReset}>
-          恢复默认
+          {t("pages.settings.shortcut-settings.")}
         </AsyncButton>
       </div>
 
       <div className="grid grid-cols-[1fr_200px_200px] gap-4 text-sm font-medium text-zinc-500">
-        <div>功能说明</div>
-        <div>应用内快捷键</div>
-        <div>全局快捷键</div>
+        <div>{t("pages.settings.shortcut-settings..1")}</div>
+        <div>{t("pages.settings.shortcut-settings..2")}</div>
+        <div>{t("pages.settings.shortcut-settings..3")}</div>
       </div>
 
       <div className="space-y-4">
@@ -118,6 +120,7 @@ const ShortcutSettingsPage = () => {
                 isInvalid={item.isConflict}
                 errorMessage={item.error}
               />
+
               {Boolean(globalShortcut) && (
                 <ShortcutKeyInput
                   value={globalShortcut.shortcut}
@@ -133,7 +136,7 @@ const ShortcutSettingsPage = () => {
       </div>
       <div className="text-end">
         <Checkbox isSelected={enableGlobalShortcuts} onValueChange={handleToggleEnableGlobalShortcut}>
-          启用全局快捷键
+          {t("pages.settings.shortcut-settings..4")}
         </Checkbox>
       </div>
     </div>

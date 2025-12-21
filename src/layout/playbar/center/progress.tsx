@@ -1,4 +1,5 @@
 import { memo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Slider, type SliderProps } from "@heroui/react";
 
@@ -7,6 +8,7 @@ import { usePlayList } from "@/store/play-list";
 import { usePlayProgress } from "@/store/play-progress";
 
 const ProgressSlider = memo(({ isDisabled }: SliderProps) => {
+  const { t } = useTranslation();
   const [hovered, setHovered] = useState(false);
   const currentTime = usePlayProgress(s => s.currentTime);
   const duration = usePlayList(s => s.duration);
@@ -20,7 +22,7 @@ const ProgressSlider = memo(({ isDisabled }: SliderProps) => {
         {currentTime ? formatDuration(currentTime) : "-:--"}
       </div>
       <Slider
-        aria-label="播放进度"
+        aria-label={t("layout.playbar.center.progress.")}
         hideThumb={!showThumb}
         minValue={0}
         maxValue={duration}

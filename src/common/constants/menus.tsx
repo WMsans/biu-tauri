@@ -14,51 +14,52 @@ import {
   RiHistoryLine,
   RiHistoryFill,
 } from "@remixicon/react";
+import { t } from "i18next";
 
 import { type MenuItemProps } from "@/components/menu/menu-item";
 
 export const DefaultMenuList: (MenuItemProps & { needLogin?: boolean })[] = [
   {
-    title: "热歌精选",
+    title: t("pages.music-rank.index."),
     href: "/",
     icon: RiMvLine,
     activeIcon: RiMvFill,
   },
   {
-    title: "音乐大咖",
+    title: t("pages.artist-rank.index..1"),
     href: "/artist-rank",
     icon: RiGroupLine,
     activeIcon: RiGroupFill,
   },
   {
-    title: "推荐音乐",
+    title: t("common.constants.menus."),
     href: "/music-recommend",
     icon: RiDiscLine,
     activeIcon: RiDiscFill,
   },
   {
-    title: "我的关注",
+    title: t("pages.follow-list.index."),
     href: "/follow",
     needLogin: true,
     icon: RiUserFollowLine,
     activeIcon: RiUserFollowFill,
   },
   {
-    title: "稍后再看",
+    title: t("pages.later.index."),
     href: "/later",
     needLogin: true,
     icon: RiTimeLine,
     activeIcon: RiTimeFill,
   },
   {
-    title: "历史记录",
+    title: t("pages.history.index..1"),
     href: "/history",
     needLogin: true,
     icon: RiHistoryLine,
     activeIcon: RiHistoryFill,
   },
   {
-    title: "下载记录",
+    title: t("pages.download-list.index."),
     href: "/download-list",
     icon: RiFileDownloadLine,
     activeIcon: RiFileDownloadFill,

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 import {
   Button,
@@ -39,6 +40,7 @@ interface Props {
 }
 
 const FolderForm = ({ mid, isOpen, onOpenChange, afterSubmit }: Props) => {
+  const { t } = useTranslation();
   const updateOwnFolder = useUser(state => state.updateOwnFolder);
   const [isFetching, setIsFetching] = useState(false);
 
@@ -69,12 +71,20 @@ const FolderForm = ({ mid, isOpen, onOpenChange, afterSubmit }: Props) => {
               setValue("intro", res.data.intro ?? "");
               setValue("isPublic", !isPrivateFav(res.data.attr));
             } else {
-              addToast({ color: "danger", title: "加载失败", description: res?.message || "请稍后再试" });
+              addToast({
+                color: "danger",
+                title: t("pages.follow-list.index..2"),
+                description: res?.message || "请稍后再试",
+              });
             }
           }
         } catch (error: any) {
           if (!canceled) {
-            addToast({ color: "danger", title: "网络错误", description: error?.message || "请检查网络后重试" });
+            addToast({
+              color: "danger",
+              title: t("components.fav-folder.form..6"),
+              description: error?.message || "请检查网络后重试",
+            });
           }
         } finally {
           if (!canceled) setIsFetching(false);
@@ -107,7 +117,7 @@ const FolderForm = ({ mid, isOpen, onOpenChange, afterSubmit }: Props) => {
         } else {
           addToast({
             color: "danger",
-            title: "修改失败",
+            title: t("components.fav-folder.form..7"),
             description: res?.message || "请稍后再试",
           });
         }
@@ -119,13 +129,13 @@ const FolderForm = ({ mid, isOpen, onOpenChange, afterSubmit }: Props) => {
         });
         if (res?.code === 0) {
           updateOwnFolder();
-          addToast({ color: "success", title: "创建成功" });
+          addToast({ color: "success", title: t("components.fav-folder.form..8") });
           reset();
           onOpenChange(false);
         } else {
           addToast({
             color: "danger",
-            title: "创建失败",
+            title: t("components.fav-folder.form..9"),
             description: res?.message || "请稍后再试",
           });
         }
@@ -133,7 +143,7 @@ const FolderForm = ({ mid, isOpen, onOpenChange, afterSubmit }: Props) => {
     } catch (error: any) {
       addToast({
         color: "danger",
-        title: "网络错误",
+        title: t("components.fav-folder.form..6"),
         description: error?.message || "请检查网络后重试",
       });
     }
@@ -153,16 +163,16 @@ const FolderForm = ({ mid, isOpen, onOpenChange, afterSubmit }: Props) => {
           <ModalHeader className="border-b-1 border-b-zinc-800 py-3">{mid ? "修改收藏夹" : "新建收藏夹"}</ModalHeader>
           <ModalBody className="gap-4 py-4">
             <Controller
-              name="title"
+              name={t("components.fav-folder.form.title")}
               control={control}
               render={({ field, fieldState }) => (
                 <Input
-                  label="名称"
+                  label={t("components.fav-folder.form.")}
                   labelPlacement="outside"
                   value={field.value}
                   onValueChange={field.onChange}
                   onBlur={field.onBlur}
-                  placeholder="请输入收藏夹名称"
+                  placeholder={t("components.fav-folder.form..1")}
                   isRequired
                   isDisabled={isFetching || isSubmitting}
                   isInvalid={(touchedFields.title || isSubmitted) && !!fieldState.error}
@@ -172,13 +182,13 @@ const FolderForm = ({ mid, isOpen, onOpenChange, afterSubmit }: Props) => {
             />
 
             <Controller
-              name="intro"
+              name={t("components.fav-folder.form.intro")}
               control={control}
               render={({ field }) => (
                 <Textarea
-                  label="简介"
+                  label={t("components.fav-folder.form..2")}
                   labelPlacement="outside"
-                  placeholder="可选，简单介绍此收藏夹"
+                  placeholder={t("components.fav-folder.form..3")}
                   value={field.value}
                   onValueChange={field.onChange}
                   onBlur={field.onBlur}
@@ -189,7 +199,7 @@ const FolderForm = ({ mid, isOpen, onOpenChange, afterSubmit }: Props) => {
             />
 
             <Controller
-              name="isPublic"
+              name={t("components.fav-folder.form.ispublic")}
               control={control}
               render={({ field }) => (
                 <Switch
@@ -211,10 +221,10 @@ const FolderForm = ({ mid, isOpen, onOpenChange, afterSubmit }: Props) => {
               }}
               isDisabled={isSubmitting || isFetching}
             >
-              取消
+              {t("components.fav-folder.form..4")}
             </Button>
             <Button type="submit" color="primary" isLoading={isSubmitting} isDisabled={!isValid || isFetching}>
-              提交
+              {t("components.fav-folder.form..5")}
             </Button>
           </ModalFooter>
         </form>

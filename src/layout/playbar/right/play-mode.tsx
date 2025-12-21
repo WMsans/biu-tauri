@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "@heroui/react";
 
@@ -10,6 +11,7 @@ import { PlayBarIconSize } from "../constants";
 const PlayModeList = getPlayModeList(PlayBarIconSize.SideIconSize);
 
 const PlayModeSwitch = () => {
+  const { t } = useTranslation();
   const playMode = usePlayList(s => s.playMode);
   const togglePlayMode = usePlayList(s => s.togglePlayMode);
 
@@ -19,7 +21,7 @@ const PlayModeSwitch = () => {
       variant="light"
       size="sm"
       className="hover:text-primary min-w-fit text-[18px]"
-      aria-label="播放模式"
+      aria-label={t("layout.playbar.right.play-mode.")}
       onPress={togglePlayMode}
     >
       {PlayModeList.find(item => item.value === playMode)?.icon}

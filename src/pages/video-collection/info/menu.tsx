@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router";
 
 import { Dropdown, DropdownTrigger, Button, DropdownMenu, DropdownItem, useDisclosure } from "@heroui/react";
@@ -36,6 +37,7 @@ interface MenuProps {
 }
 
 const Menu = ({ type, isOwn, mediaCount, attr, onAddToPlayList, afterChangeInfo }: MenuProps) => {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
   const [outputFileType, setOutputFileType] = useState<MediaDownloadOutputFileType>("audio");
@@ -116,14 +118,14 @@ const Menu = ({ type, isOwn, mediaCount, attr, onAddToPlayList, afterChangeInfo 
       key: "add-to-playlist",
       show: Boolean(mediaCount),
       startContent: <RiPlayListAddLine size={18} />,
-      label: "添加到播放列表",
+      label: t("pages.video-collection.info.menu..2"),
       onPress: onAddToPlayList,
     },
     {
       key: "download-audio",
       show: Boolean(mediaCount),
       startContent: <AudioDownloadIcon className="relative top-px left-px h-[17px] w-[17px]" />,
-      label: "下载全部音频",
+      label: t("pages.video-collection.info.menu..3"),
       onPress: () => {
         setOutputFileType("audio");
         onDownloadSelectOpen();
@@ -133,7 +135,7 @@ const Menu = ({ type, isOwn, mediaCount, attr, onAddToPlayList, afterChangeInfo 
       key: "download-video",
       show: Boolean(mediaCount),
       startContent: <VideoDownloadIcon className="relative top-px left-px h-[17px] w-[17px]" />,
-      label: "下载全部视频",
+      label: t("pages.video-collection.info.menu..4"),
       onPress: () => {
         setOutputFileType("video");
         onDownloadSelectOpen();
@@ -152,14 +154,14 @@ const Menu = ({ type, isOwn, mediaCount, attr, onAddToPlayList, afterChangeInfo 
       key: "edit",
       show: isOwn && attr !== 0,
       startContent: <RiEditLine size={18} />,
-      label: "修改信息",
+      label: t("pages.video-collection.info.menu..5"),
       onPress: onEditOpen,
     },
     {
       key: "delete",
       show: isOwn && attr !== 0,
       startContent: <RiDeleteBinLine size={18} />,
-      label: "删除",
+      label: t("pages.download-list.actions..5"),
       className: "text-danger",
       color: "danger" as const,
       onPress: onDeleteConfirmOpen,
@@ -181,7 +183,7 @@ const Menu = ({ type, isOwn, mediaCount, attr, onAddToPlayList, afterChangeInfo 
             <RiMoreLine />
           </Button>
         </DropdownTrigger>
-        <DropdownMenu aria-label="收藏夹操作" items={menus.filter(item => item.show)}>
+        <DropdownMenu aria-label={t("pages.video-collection.info.menu.")} items={menus.filter(item => item.show)}>
           {item => (
             <DropdownItem
               key={item.key}
@@ -199,7 +201,7 @@ const Menu = ({ type, isOwn, mediaCount, attr, onAddToPlayList, afterChangeInfo 
         type="danger"
         isOpen={isDeleteConfirmOpen}
         onOpenChange={onDeleteConfirmChange}
-        title="确认删除当前收藏夹吗？"
+        title={t("pages.video-collection.info.menu..1")}
         onConfirm={async () => {
           const res = await postFavFolderDel({
             media_ids: id as string,
@@ -213,6 +215,7 @@ const Menu = ({ type, isOwn, mediaCount, attr, onAddToPlayList, afterChangeInfo 
           return res.code === 0;
         }}
       />
+
       <EditFavForm mid={Number(id)} isOpen={isEditOpen} onOpenChange={onEditChange} afterSubmit={afterChangeInfo} />
       <DownloadSelectModal
         outputFileType={outputFileType}

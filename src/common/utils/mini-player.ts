@@ -1,4 +1,5 @@
 import { addToast } from "@heroui/react";
+import { t } from "i18next";
 import { shallow } from "zustand/shallow";
 
 import type { PlayMode } from "@/common/constants/audio";
@@ -191,7 +192,7 @@ export async function toggleMiniMode() {
     await window.electron.toggleMiniPlayer();
   } catch {
     addToast({
-      title: "切换出错",
+      title: t("common.utils.mini-player."),
       color: "danger",
     });
   }

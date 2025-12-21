@@ -3,6 +3,7 @@ import log from "electron-log/renderer";
 import { shuffle } from "es-toolkit/array";
 import { remove } from "es-toolkit/array";
 import { uniqueId } from "es-toolkit/compat";
+import { t } from "i18next";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { immer } from "zustand/middleware/immer";
@@ -523,6 +524,7 @@ export const usePlayList = create<State & Action>()(
               ownerMid,
             },
           ];
+
           // 补充缺失信息
           if (!cover || !ownerName || !ownerMid) {
             if (type === "mv" && bvid) {
@@ -701,6 +703,7 @@ export const usePlayList = create<State & Action>()(
               ownerMid,
             },
           ];
+
           if (!cover || !ownerName || !ownerMid) {
             if (type === "mv" && bvid) {
               nextPlayItem = await getMVData(bvid);
@@ -866,7 +869,7 @@ export const usePlayList = create<State & Action>()(
       };
     }),
     {
-      name: "play-list-store",
+      name: t("store.play-list.play-list-store"),
       partialize: state => ({
         isMuted: state.isMuted,
         volume: state.volume,

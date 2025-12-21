@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 import { Button, useDisclosure } from "@heroui/react";
 import { RiDeleteBinLine } from "@remixicon/react";
 
@@ -11,6 +13,7 @@ interface Props {
 }
 
 const ActionMenu = ({ data, refresh }: Props) => {
+  const { t } = useTranslation();
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
   return (
@@ -29,7 +32,7 @@ const ActionMenu = ({ data, refresh }: Props) => {
         isOpen={isOpen}
         onOpenChange={onOpenChange}
         type="danger"
-        title="确认删除吗？"
+        title={t("pages.download-list.actions.")}
         confirmText="删除"
         onConfirm={async () => {
           const res = await postHistoryToViewDel({

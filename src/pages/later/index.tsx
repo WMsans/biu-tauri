@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { addToast, Button, Link, Pagination, useDisclosure } from "@heroui/react";
 import { RiDeleteBinLine, RiRefreshLine } from "@remixicon/react";
@@ -15,6 +16,7 @@ import { usePlayList } from "@/store/play-list";
 import { useSettings } from "@/store/settings";
 
 const Later = () => {
+  const { t } = useTranslation();
   const [initialLoading, setInitialLoading] = useState(true);
   const play = usePlayList(s => s.play);
   const displayMode = useSettings(state => state.displayMode);
@@ -80,7 +82,7 @@ const Later = () => {
         menus={[
           {
             key: "delete",
-            title: "删除",
+            title: t("pages.download-list.actions..5"),
             icon: <RiDeleteBinLine size={16} />,
             onPress: () => handleOpenDeleteModal(item),
           },
@@ -113,7 +115,7 @@ const Later = () => {
     <>
       <ScrollContainer className="h-full w-full p-4">
         <div className="mb-4 flex items-center space-x-1">
-          <h1>稍后再看</h1>
+          <h1>{t("pages.later.index.")}</h1>
           <Button isIconOnly variant="light" size="sm" onPress={refreshAsync}>
             <RiRefreshLine size={18} />
           </Button>
@@ -138,7 +140,7 @@ const Later = () => {
         isOpen={isOpenDelete}
         onOpenChange={onOpenChangeDelete}
         type="danger"
-        title="确认删除吗？"
+        title={t("pages.download-list.actions.")}
         confirmText="删除"
         onConfirm={async () => {
           if (!itemToDelete) return false;
@@ -149,7 +151,7 @@ const Later = () => {
 
           if (res.code === 0) {
             addToast({
-              title: "删除成功",
+              title: t("pages.later.index..1"),
               color: "success",
             });
             setTimeout(() => {

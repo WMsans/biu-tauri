@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 
 import { Avatar, Card, CardBody, addToast } from "@heroui/react";
@@ -15,13 +16,14 @@ interface Props {
 }
 
 const UserCard = ({ u, refresh }: Props) => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const handleUnfollow = async () => {
     const res = await postRelationModify({ fid: u.mid, act: UserRelationAction.Unfollow });
     if (res?.code !== 0) {
       addToast({
-        title: "取消关注失败",
+        title: t("pages.follow-list.user-card..1"),
         color: "danger",
       });
       return;
@@ -54,8 +56,8 @@ const UserCard = ({ u, refresh }: Props) => {
         variant="light"
         isIconOnly
         onPress={handleUnfollow}
-        aria-label="取消关注"
-        title="取消关注"
+        aria-label={t("pages.follow-list.user-card.")}
+        title={t("pages.follow-list.user-card.")}
         className="absolute top-2 right-2 opacity-0 transition-opacity duration-300 ease-in-out group-hover:opacity-100"
       >
         <RiDislikeLine />

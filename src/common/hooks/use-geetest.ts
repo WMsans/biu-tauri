@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 
 import { addToast } from "@heroui/react";
+import { t } from "i18next";
 
 import { getPassportLoginCaptcha } from "@/service/passport-login-captcha";
 
@@ -47,7 +48,7 @@ export const useGeetest = () => {
 
       return new Promise<GeetestResult | null>(resolve => {
         if (typeof window.initGeetest !== "function") {
-          addToast({ title: "极验组件加载失败", color: "danger" });
+          addToast({ title: t("common.hooks.use-geetest."), color: "danger" });
           resolve(null);
           return;
         }
@@ -81,7 +82,7 @@ export const useGeetest = () => {
             });
             captchaObj.onError(e => {
               console.error("Geetest Error:", e);
-              addToast({ title: "验证出错", color: "danger" });
+              addToast({ title: t("common.hooks.use-geetest..1"), color: "danger" });
               resolve(null);
             });
 

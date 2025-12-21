@@ -1,9 +1,12 @@
+import { useTranslation } from "react-i18next";
+
 import { Dropdown, DropdownTrigger, Button, DropdownMenu, DropdownItem, Switch } from "@heroui/react";
 import { RiSettings3Line } from "@remixicon/react";
 
 import { usePlayList } from "@/store/play-list";
 
 const Settings = () => {
+  const { t } = useTranslation();
   const shouldKeepPagesOrderInRandomPlayMode = usePlayList(s => s.shouldKeepPagesOrderInRandomPlayMode);
   const setShouldKeepPagesOrderInRandomPlayMode = usePlayList(s => s.setShouldKeepPagesOrderInRandomPlayMode);
 
@@ -14,14 +17,14 @@ const Settings = () => {
           <RiSettings3Line size={16} />
         </Button>
       </DropdownTrigger>
-      <DropdownMenu aria-label="播放列表设置">
+      <DropdownMenu aria-label={t("layout.playbar.right.play-list-drawer.settings.")}>
         <DropdownItem key="shouldKeepPagesOrderInRandomPlayMode">
           <Switch
             size="sm"
             isSelected={shouldKeepPagesOrderInRandomPlayMode}
             onValueChange={setShouldKeepPagesOrderInRandomPlayMode}
           >
-            随机播放时保持分集顺序
+            {t("layout.playbar.right.play-list-drawer.settings..1")}
           </Switch>
         </DropdownItem>
       </DropdownMenu>

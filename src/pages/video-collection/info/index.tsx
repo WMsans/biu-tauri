@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 import { Image, Link, Skeleton, User } from "@heroui/react";
 import { RiPlayFill } from "@remixicon/react";
 import { useRequest } from "ahooks";
@@ -42,6 +44,7 @@ const Info = ({
   onPlayAll,
   onAddToPlayList,
 }: Props) => {
+  const { t } = useTranslation();
   const user = useUser(s => s.user);
 
   const isOwn = upMid === user?.mid;
@@ -89,6 +92,7 @@ const Info = ({
           wrapper: "flex-none",
         }}
       />
+
       <div className="flex flex-col justify-between">
         <div className="flex flex-col items-start space-y-4">
           <h1 className="text-3xl">{title}</h1>
@@ -113,13 +117,16 @@ const Info = ({
                 : "视频合集"}
             </span>
             <span>•</span>
-            <span>{mediaCount} 条视频</span>
+            <span>
+              {mediaCount}
+              {t("pages.video-collection.info.index.")}
+            </span>
           </div>
         </div>
         <div className="flex items-center space-x-2">
           {(mediaCount ?? 0) > 0 && (
             <AsyncButton color="primary" startContent={<RiPlayFill className="text-inherit" />} onPress={onPlayAll}>
-              播放全部
+              {t("pages.video-collection.info.index..1")}
             </AsyncButton>
           )}
           <Menu

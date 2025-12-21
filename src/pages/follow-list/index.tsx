@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 import { Alert, Button, Pagination, Spinner } from "@heroui/react";
 import { usePagination } from "ahooks";
@@ -12,6 +13,7 @@ import UserCard from "./user-card";
 const PAGE_SIZE = 20;
 
 const FollowList = () => {
+  const { t } = useTranslation();
   const { user } = useUser();
 
   const {
@@ -44,21 +46,22 @@ const FollowList = () => {
   return (
     <ScrollContainer className="h-full w-full">
       <div className="w-full p-4">
-        <h1 className="mb-4">我的关注</h1>
+        <h1 className="mb-4">{t("pages.follow-list.index.")}</h1>
 
         {loading && !data?.list && (
           <div className="flex h-[40vh] items-center justify-center">
-            <Spinner label="加载中" />
+            <Spinner label={t("pages.follow-list.index..1")} />
           </div>
         )}
 
         {error && (
           <div className="flex flex-col items-center justify-center space-y-3 py-10">
-            <Alert color="danger" title="加载失败">
-              出错了：{String(error.message)}
+            <Alert color="danger" title={t("pages.follow-list.index..2")}>
+              {t("pages.follow-list.index..3")}
+              {String(error.message)}
             </Alert>
             <Button color="primary" onPress={refreshAsync} isLoading={loading}>
-              重试
+              {t("pages.follow-list.index..4")}
             </Button>
           </div>
         )}

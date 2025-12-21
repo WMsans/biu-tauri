@@ -1,3 +1,4 @@
+import { t } from "i18next";
 import moment from "moment";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
@@ -32,7 +33,7 @@ export const useToken = create<TokenState & Action>()(
       },
     }),
     {
-      name: "user-token",
+      name: t("store.token.user-token"),
       partialize: state => ({
         tokenData: state.tokenData,
         nextCheckRefreshTime: state.nextCheckRefreshTime,

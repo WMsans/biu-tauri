@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Alert, Button, Spinner, addToast } from "@heroui/react";
 
@@ -12,6 +13,7 @@ import { useSettings } from "@/store/settings";
 const PAGE_SIZE = 20;
 
 const MusicRecommend = () => {
+  const { t } = useTranslation();
   const scrollerRef = useRef<ScrollRefObject>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -137,16 +139,17 @@ const MusicRecommend = () => {
 
   return (
     <ScrollContainer ref={scrollerRef} className="h-full w-full p-4">
-      <h1 className="mb-4">音乐推荐</h1>
+      <h1 className="mb-4">{t("pages.music-recommend.index.")}</h1>
       <div className="w-full">
         {/* 错误提示（整页） */}
         {error && list.length === 0 && (
           <div className="flex h-[40vh] flex-col items-center justify-center space-y-3">
-            <Alert color="danger" title="加载失败">
-              出错了：{error}
+            <Alert color="danger" title={t("pages.follow-list.index..2")}>
+              {t("pages.follow-list.index..3")}
+              {error}
             </Alert>
             <Button color="primary" onPress={retryInitial}>
-              重试
+              {t("pages.follow-list.index..4")}
             </Button>
           </div>
         )}
@@ -174,7 +177,11 @@ const MusicRecommend = () => {
           ))}
 
         {/* 空数据 */}
-        {isEmpty && <div className="text-foreground-500 flex h-[40vh] items-center justify-center">暂无数据</div>}
+        {isEmpty && (
+          <div className="text-foreground-500 flex h-[40vh] items-center justify-center">
+            {t("pages.artist-rank.index..2")}
+          </div>
+        )}
 
         {/* 数据网格 */}
         {!initialLoading &&
@@ -192,10 +199,12 @@ const MusicRecommend = () => {
           {loadingMore && (
             <div className="text-default-500 flex items-center space-x-2 text-sm">
               <Spinner size="sm" />
-              <span>加载更多中...</span>
+              <span>{t("pages.music-recommend.index..1")}</span>
             </div>
           )}
-          {!hasMore && list.length > 0 && <div className="text-default-400 text-sm">没有更多了</div>}
+          {!hasMore && list.length > 0 && (
+            <div className="text-default-400 text-sm">{t("pages.music-recommend.index..2")}</div>
+          )}
         </div>
       </div>
     </ScrollContainer>

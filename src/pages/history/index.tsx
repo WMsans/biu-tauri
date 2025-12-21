@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { addToast, Button, Link } from "@heroui/react";
 import { RiRefreshLine } from "@remixicon/react";
@@ -19,6 +20,7 @@ import { useSettings } from "@/store/settings";
 const HISTORY_PAGE_SIZE = 30;
 
 const History = () => {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [list, setList] = useState<HistoryListItem[]>([]);
@@ -109,7 +111,7 @@ const History = () => {
       });
     } else {
       addToast({
-        title: "无法播放此类型内容",
+        title: t("pages.history.index..2"),
         color: "warning",
       });
     }
@@ -152,7 +154,8 @@ const History = () => {
                 <span>{moment.unix(item.view_at).format("YYYY-MM-DD HH:mm")}</span>
                 {item.progress !== undefined && item.duration && (
                   <span>
-                    观看进度: {formatDuration(item.progress)} / {formatDuration(item.duration)}
+                    {t("pages.history.index.")}
+                    {formatDuration(item.progress)} / {formatDuration(item.duration)}
                   </span>
                 )}
               </div>
@@ -170,7 +173,7 @@ const History = () => {
     <>
       <ScrollContainer className="h-full w-full p-4">
         <div className="mb-4 flex items-center justify-between">
-          <h1>历史记录</h1>
+          <h1>{t("pages.history.index..1")}</h1>
           <Button isIconOnly variant="light" size="sm" onPress={handleRefresh}>
             <RiRefreshLine size={18} />
           </Button>

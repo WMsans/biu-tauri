@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 import { addToast, Button, Dropdown, DropdownItem, DropdownMenu, DropdownTrigger } from "@heroui/react";
 import { RiDownload2Fill } from "@remixicon/react";
 
@@ -9,6 +11,7 @@ import { usePlayList } from "@/store/play-list";
 import { PlayBarIconSize } from "../constants";
 
 const Download = () => {
+  const { t } = useTranslation();
   const list = usePlayList(s => s.list);
   const playId = usePlayList(s => s.playId);
   const playItem = list.find(item => item.id === playId);
@@ -24,7 +27,7 @@ const Download = () => {
     });
 
     addToast({
-      title: "已添加下载任务",
+      title: t("layout.playbar.right.download..3"),
       color: "success",
     });
   };
@@ -39,7 +42,7 @@ const Download = () => {
     });
 
     addToast({
-      title: "已添加下载任务",
+      title: t("layout.playbar.right.download..3"),
       color: "success",
     });
   };
@@ -63,20 +66,20 @@ const Download = () => {
           <RiDownload2Fill size={PlayBarIconSize.SideIconSize} />
         </Button>
       </DropdownTrigger>
-      <DropdownMenu aria-label="选择下载视频或音频">
+      <DropdownMenu aria-label={t("layout.playbar.right.download.")}>
         <DropdownItem
           key="downloadAudio"
           startContent={<AudioDownloadIcon className="relative top-px left-px h-[15px] w-[15px]" />}
           onPress={downloadAudio}
         >
-          下载音频
+          {t("layout.playbar.right.download..1")}
         </DropdownItem>
         <DropdownItem
           key="downloadVideo"
           startContent={<VideoDownloadIcon className="relative top-px left-px h-[15px] w-[15px]" />}
           onPress={downloadVideo}
         >
-          下载视频
+          {t("layout.playbar.right.download..2")}
         </DropdownItem>
       </DropdownMenu>
     </Dropdown>

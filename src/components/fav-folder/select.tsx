@@ -1,4 +1,5 @@
 import React, { useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   addToast,
@@ -32,6 +33,7 @@ export interface FavFolderSelectProps {
 }
 
 const FavFolderSelect = ({ rid, isOpen, onOpenChange, title, afterSubmit }: FavFolderSelectProps) => {
+  const { t } = useTranslation();
   const user = useUser(s => s.user);
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -127,7 +129,7 @@ const FavFolderSelect = ({ rid, isOpen, onOpenChange, title, afterSubmit }: FavF
               <Spinner />
             </div>
           ) : data?.length === 0 ? (
-            <div className="py-10 text-center text-sm text-zinc-500">暂无收藏夹</div>
+            <div className="py-10 text-center text-sm text-zinc-500">{t("components.fav-folder.select.")}</div>
           ) : (
             <ScrollContainer style={{ height: "100%" }}>
               <div className="flex flex-col gap-1 overflow-auto px-4">
@@ -149,10 +151,14 @@ const FavFolderSelect = ({ rid, isOpen, onOpenChange, title, afterSubmit }: FavF
                         onClick={e => e.stopPropagation()}
                         aria-label={item.title}
                       />
+
                       <div className="flex min-w-0 flex-1 items-center justify-between">
                         <div className="min-w-0">
                           <div className="truncate text-sm font-medium">{item.title}</div>
-                          <div className="mt-0.5 text-xs text-zinc-500">{item.media_count ?? 0} 个内容</div>
+                          <div className="mt-0.5 text-xs text-zinc-500">
+                            {item.media_count ?? 0}
+                            {t("components.fav-folder.select..1")}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -164,14 +170,14 @@ const FavFolderSelect = ({ rid, isOpen, onOpenChange, title, afterSubmit }: FavF
         </ModalBody>
         <ModalFooter>
           <Button variant="light" onPress={handleCancel} isDisabled={submitting}>
-            取消
+            {t("components.fav-folder.form..4")}
           </Button>
           <AsyncButton
             color="primary"
             onPress={handleConfirm}
             isDisabled={isEqual(selectedIds, prevSelectedRef.current)}
           >
-            确认
+            {t("components.fav-folder.select..2")}
           </AsyncButton>
         </ModalFooter>
       </ModalContent>

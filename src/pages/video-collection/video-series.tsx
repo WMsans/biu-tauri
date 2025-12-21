@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useParams } from "react-router";
 
 import { Link, Pagination, Skeleton } from "@heroui/react";
@@ -18,6 +19,7 @@ import Info from "./info";
 
 /** 视频合集 */
 const VideoSeries = () => {
+  const { t } = useTranslation();
   const { id } = useParams();
   const collectedFolder = useUser(state => state.collectedFolder);
 
@@ -193,13 +195,13 @@ const VideoSeries = () => {
       <SearchFilter
         keyword={searchParams.keyword}
         order={searchParams.order}
-        placeholder="请输入关键词"
+        placeholder={t("pages.video-collection.favorites.")}
         searchIcon="search2"
         orderOptions={[
-          { value: "", label: "默认排序" },
-          { value: "play", label: "播放量" },
-          { value: "collect", label: "收藏数" },
-          { value: "time", label: "发布时间" },
+          { value: "", label: t("pages.video-collection.video-series.") },
+          { value: "play", label: t("pages.video-collection.favorites..6") },
+          { value: "collect", label: t("pages.video-collection.video-series..1") },
+          { value: "time", label: t("pages.video-collection.video-series..2") },
         ]}
         onKeywordChange={keyword => setSearchParams(prev => ({ ...prev, keyword }))}
         onOrderChange={order => setSearchParams(prev => ({ ...prev, order }))}

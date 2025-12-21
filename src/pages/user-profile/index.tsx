@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { useParams } from "react-router";
 
 import { addToast, Spinner, Tab, Tabs } from "@heroui/react";
@@ -21,6 +22,7 @@ import VideoSeries from "./video-series";
  * 用户个人中心
  */
 const UserProfile = () => {
+  const { t } = useTranslation();
   const { id } = useParams();
   const user = useUser(s => s.user);
   const isSelf = String(user?.mid) === id;
@@ -35,7 +37,7 @@ const UserProfile = () => {
         return res.data;
       } else {
         addToast({
-          title: "无法验证身份，请登录后操作",
+          title: t("pages.user-profile.index..1"),
           color: "danger",
         });
         return undefined;
@@ -92,18 +94,18 @@ const UserProfile = () => {
 
   const tabs = [
     {
-      label: "投稿",
+      label: t("pages.user-profile.index..2"),
       key: "video",
       content: <VideoPost />,
     },
     {
-      label: "收藏夹",
+      label: t("pages.user-profile.index..3"),
       key: "collection",
       hidden: !isSelf && !spacePrivacy?.fav_video,
       content: <Favorites />,
     },
     {
-      label: "合集",
+      label: t("pages.user-profile.index..4"),
       key: "union",
       content: <VideoSeries />,
     },
@@ -125,9 +127,15 @@ const UserProfile = () => {
         relationWithMe={relationWithMe}
         refreshRelation={refreshRelation}
       />
+
       {user?.isLogin && (isSelf || relationWithMe !== UserRelation.Blocked) && (
         <div className="px-3 py-4">
-          <Tabs radius="md" classNames={{ cursor: "rounded-medium" }} aria-label="个人资料栏目" variant="solid">
+          <Tabs
+            radius="md"
+            classNames={{ cursor: "rounded-medium" }}
+            aria-label={t("pages.user-profile.index.")}
+            variant="solid"
+          >
             {tabs.map(item => (
               <Tab key={item.key} title={item.label}>
                 {item.content}

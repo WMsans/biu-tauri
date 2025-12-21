@@ -1,3 +1,4 @@
+import { t } from "i18next";
 export enum SearchType {
   Video = "video",
   User = "bili_user",
@@ -5,11 +6,11 @@ export enum SearchType {
 
 export const SearchTypeOptions = [
   {
-    label: "视频",
+    label: t("pages.download-list.index..4"),
     value: SearchType.Video,
   },
   {
-    label: "用户",
+    label: t("pages.search.search-type."),
     value: SearchType.User,
   },
 ];

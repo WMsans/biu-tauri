@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Button, Drawer, DrawerBody, DrawerContent, DrawerHeader, Tooltip } from "@heroui/react";
 import { RiDeleteBinLine } from "@remixicon/react";
@@ -18,6 +19,7 @@ interface Props {
 }
 
 const PlayListDrawer = ({ isOpen, onOpenChange }: Props) => {
+  const { t } = useTranslation();
   const list = usePlayList(s => s.list);
   const playId = usePlayList(s => s.playId);
   const clear = usePlayList(s => s.clear);
@@ -48,7 +50,7 @@ const PlayListDrawer = ({ isOpen, onOpenChange }: Props) => {
     >
       <DrawerContent>
         <DrawerHeader className="border-b-content2 flex flex-row items-center justify-between space-x-2 border-b px-4 py-3">
-          <h3>播放列表</h3>
+          <h3>{t("layout.playbar.right.play-list-drawer.index.")}</h3>
           <div className="inline-flex items-center">
             <Settings />
             <If condition={Boolean(pureList?.length)}>

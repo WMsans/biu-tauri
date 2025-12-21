@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 import { Button, addToast, Skeleton } from "@heroui/react";
 import { RiRefreshLine } from "@remixicon/react";
 import { useRequest } from "ahooks";
@@ -15,6 +17,7 @@ type QrcodeLoginProps = {
 };
 
 const QrcodeLogin = ({ onClose }: QrcodeLoginProps) => {
+  const { t } = useTranslation();
   const updateUser = useUser(state => state.updateUser);
   const updateToken = useToken(state => state.updateToken);
 
@@ -53,7 +56,7 @@ const QrcodeLogin = ({ onClose }: QrcodeLoginProps) => {
             nextCheckRefreshTime: moment().add(2, "days").unix(),
           });
 
-          addToast({ title: "登录成功", color: "success" });
+          addToast({ title: t("layout.navbar.login.code-login..6"), color: "success" });
           onClose();
           cancelPoll();
         }
@@ -69,7 +72,7 @@ const QrcodeLogin = ({ onClose }: QrcodeLoginProps) => {
 
   return (
     <div className="flex flex-col items-center p-6">
-      <div className="mb-4 text-lg font-medium">扫码登录</div>
+      <div className="mb-4 text-lg font-medium">{t("layout.navbar.login.qrcode-login.")}</div>
       <div className="border-divider bg-content1 relative flex h-40 w-40 items-center justify-center overflow-hidden rounded-lg border">
         {genLoading || !qrcodeData?.url ? (
           <Skeleton className="rounded-lg">
@@ -90,10 +93,14 @@ const QrcodeLogin = ({ onClose }: QrcodeLoginProps) => {
           <Button isLoading={genLoading} isIconOnly color="primary" variant="solid" onPress={refreshCode}>
             <RiRefreshLine />
           </Button>
-          {isOvertime && <p className="mt-2 text-center text-sm font-bold text-white">二维码已失效，请刷新</p>}
+          {isOvertime && (
+            <p className="mt-2 text-center text-sm font-bold text-white">{t("layout.navbar.login.qrcode-login..1")}</p>
+          )}
         </div>
       </div>
-      <p className="text-default-500 mt-4 text-sm whitespace-nowrap">请使用bilibili手机客户端扫码登录</p>
+      <p className="text-default-500 mt-4 text-sm whitespace-nowrap">
+        {t("layout.navbar.login.qrcode-login.bilibili")}
+      </p>
     </div>
   );
 };

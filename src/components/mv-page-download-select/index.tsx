@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Modal, ModalContent, ModalHeader, ModalBody, ModalFooter, Checkbox, Spinner, addToast } from "@heroui/react";
 import { useRequest } from "ahooks";
@@ -18,6 +19,7 @@ interface Props {
 }
 
 const MvPageDownloadSelect = ({ outputFileType, title, cover, bvid, isOpen, onOpenChange }: Props) => {
+  const { t } = useTranslation();
   const [selectedCids, setSelectedCids] = useState<string[]>([]);
 
   const { data, loading } = useRequest(
@@ -39,7 +41,7 @@ const MvPageDownloadSelect = ({ outputFileType, title, cover, bvid, isOpen, onOp
         });
         onOpenChange(false);
         addToast({
-          title: "已添加到下载队列",
+          title: t("components.mv-action.index..5"),
           color: "success",
         });
       }
@@ -66,7 +68,7 @@ const MvPageDownloadSelect = ({ outputFileType, title, cover, bvid, isOpen, onOp
     );
     onOpenChange(false);
     addToast({
-      title: "已添加到下载队列",
+      title: t("components.mv-action.index..5"),
       color: "success",
     });
   };
@@ -74,11 +76,11 @@ const MvPageDownloadSelect = ({ outputFileType, title, cover, bvid, isOpen, onOp
   return (
     <Modal scrollBehavior="inside" isOpen={isOpen} onOpenChange={onOpenChange}>
       <ModalContent>
-        {Boolean(data?.length) && <ModalHeader>选择分集</ModalHeader>}
+        {Boolean(data?.length) && <ModalHeader>{t("components.mv-page-download-select.index.")}</ModalHeader>}
         <ModalBody className="p-0">
           {loading ? (
             <div className="flex h-60 items-center justify-center">
-              <Spinner label="获取分集信息中..." />
+              <Spinner label={t("components.mv-page-download-select.index..1")} />
             </div>
           ) : (
             <ScrollContainer>
@@ -101,7 +103,7 @@ const MvPageDownloadSelect = ({ outputFileType, title, cover, bvid, isOpen, onOp
                       }}
                       className="hover:bg-content2 m-0 flex w-full max-w-full truncate px-6 py-4"
                       classNames={{
-                        label: "truncate",
+                        label: t("components.mv-page-download-select.index.truncate"),
                       }}
                     >
                       {item.part}
@@ -115,7 +117,7 @@ const MvPageDownloadSelect = ({ outputFileType, title, cover, bvid, isOpen, onOp
         {Boolean(data?.length) && (
           <ModalFooter>
             <Checkbox
-              aria-label="全选"
+              aria-label={t("components.mv-page-download-select.index..2")}
               isSelected={selectedCids.length === data?.length}
               onValueChange={isSelected => {
                 if (isSelected) {
@@ -126,10 +128,10 @@ const MvPageDownloadSelect = ({ outputFileType, title, cover, bvid, isOpen, onOp
               }}
               className="px-4"
             >
-              全选
+              {t("components.mv-page-download-select.index..2")}
             </Checkbox>
             <AsyncButton color="primary" isDisabled={!selectedCids.length} onPress={downloadSelected}>
-              下载
+              {t("settings.system.download.title")}
             </AsyncButton>
           </ModalFooter>
         )}

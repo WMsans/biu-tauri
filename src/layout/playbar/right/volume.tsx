@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Button, Tooltip, Slider } from "@heroui/react";
 import { RiVolumeDownLine, RiVolumeMuteLine, RiVolumeUpLine } from "@remixicon/react";
@@ -8,6 +9,7 @@ import { usePlayList } from "@/store/play-list";
 import { PlayBarIconSize } from "../constants";
 
 const Volume = () => {
+  const { t } = useTranslation();
   const volume = usePlayList(s => s.volume);
   const isMuted = usePlayList(s => s.isMuted);
   const toggleMute = usePlayList(s => s.toggleMute);
@@ -124,7 +126,7 @@ const Volume = () => {
         <div ref={setSliderRef} className="flex items-center justify-center p-3">
           <Slider
             disableAnimation
-            aria-label="音量"
+            aria-label={t("layout.playbar.right.volume.")}
             color="primary"
             radius="full"
             size="sm"

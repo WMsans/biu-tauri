@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 import { addToast, useDisclosure } from "@heroui/react";
 
 import { useAppUpdateStore } from "@/store/app-update";
@@ -6,6 +8,7 @@ import AsyncButton from "../async-button";
 import ReleaseNoteModal from "../release-note-modal";
 
 const UpdateCheckButton = () => {
+  const { t } = useTranslation();
   const isUpdateAvailable = useAppUpdateStore(s => s.isUpdateAvailable);
 
   const {
@@ -25,7 +28,7 @@ const UpdateCheckButton = () => {
 
     if (res?.error) {
       addToast({
-        title: "检查更新失败",
+        title: t("components.update-check-button.index."),
         description: res.error,
         color: "danger",
       });
@@ -33,7 +36,7 @@ const UpdateCheckButton = () => {
       onReleaseNoteModalOpen();
     } else {
       addToast({
-        title: "当前版本为最新版本",
+        title: t("components.update-check-button.index..1"),
       });
     }
   };

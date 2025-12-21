@@ -1,3 +1,4 @@
+import { t } from "i18next";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -36,7 +37,7 @@ export const useSearchHistory = create<SearchHistoryState & SearchHistoryAction>
       clear: () => set({ keyword: "", items: [] }),
     }),
     {
-      name: "search-history",
+      name: t("store.search-history.search-history"),
       partialize: state => ({ keyword: state.keyword, items: state.items }),
     },
   ),

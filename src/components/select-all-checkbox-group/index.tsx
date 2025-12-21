@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 import { Checkbox, CheckboxGroup } from "@heroui/react";
 
@@ -19,6 +20,7 @@ const SelectAllCheckboxGroup: React.FC<SelectAllCheckboxGroupProps> = ({
   disabled = false,
   items,
 }) => {
+  const { t } = useTranslation();
   const isSelectAll = groupKeys.length > 0 && selectedKeys.length === groupKeys.length;
 
   const handleSelectAllChange = (checked: boolean) => {
@@ -39,7 +41,7 @@ const SelectAllCheckboxGroup: React.FC<SelectAllCheckboxGroupProps> = ({
           isDisabled={disabled || !groupKeys.length}
           color="primary"
         >
-          全选
+          {t("components.mv-page-download-select.index..2")}
         </Checkbox>
       </div>
       <CheckboxGroup

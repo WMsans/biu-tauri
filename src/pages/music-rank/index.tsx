@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 import { useRequest } from "ahooks";
 
 import GridList from "@/components/grid-list";
@@ -8,6 +10,7 @@ import { usePlayList } from "@/store/play-list";
 import { useSettings } from "@/store/settings";
 
 const MusicRank = () => {
+  const { t } = useTranslation();
   const play = usePlayList(s => s.play);
   const displayMode = useSettings(state => state.displayMode);
 
@@ -46,7 +49,7 @@ const MusicRank = () => {
 
   return (
     <ScrollContainer className="h-full p-4">
-      <h1 className="mb-4">热歌精选</h1>
+      <h1 className="mb-4">{t("pages.music-rank.index.")}</h1>
       {displayMode === "card" ? (
         <GridList
           data={data}

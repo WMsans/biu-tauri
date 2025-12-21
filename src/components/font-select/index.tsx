@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Select, SelectItem } from "@heroui/react";
 
@@ -17,11 +18,12 @@ export default function FontSelect({
   onChange,
   className,
 }: FontSelectProps) {
+  const { t } = useTranslation();
   const [fonts, setFonts] = useState<Partial<IFontInfo>[]>([]);
 
   const getFonts = async () => {
     const fonts = await window.electron.getFonts();
-    setFonts([{ name: "系统默认", familyName: defaultAppSettings.fontFamily }, ...fonts]);
+    setFonts([{ name: t("components.font-select.index..1"), familyName: defaultAppSettings.fontFamily }, ...fonts]);
   };
 
   useEffect(() => {
@@ -33,8 +35,8 @@ export default function FontSelect({
   return (
     <Select
       color={color}
-      aria-label="选择字体"
-      placeholder="选择字体"
+      aria-label={t("components.font-select.index.")}
+      placeholder={t("components.font-select.index.")}
       selectedKeys={new Set([selectedValue])}
       onChange={e => onChange?.(e.target.value)}
       items={fonts}

@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 import { Badge, Tooltip, useDisclosure } from "@heroui/react";
 import { twMerge } from "tailwind-merge";
 
@@ -8,6 +10,7 @@ import { useAppUpdateStore } from "@/store/app-update";
 const isMac = window.electron?.getPlatform() === "macos";
 
 const Logo = () => {
+  const { t } = useTranslation();
   const { isOpen, onOpen, onOpenChange } = useDisclosure();
   const isUpdateAvailable = useAppUpdateStore(s => s.isUpdateAvailable);
 
@@ -30,14 +33,14 @@ const Logo = () => {
             }}
             onClick={onOpen}
           >
-            <Tooltip title="新版本更新">
+            <Tooltip title={t("layout.side.logo.index.")}>
               <div className="window-no-drag cursor-pointer text-2xl leading-none font-bold" onClick={onOpen}>
-                Biu
+                {t("layout.side.logo.index.biu")}
               </div>
             </Tooltip>
           </Badge>
         ) : (
-          <span className="text-2xl leading-none font-bold">Biu</span>
+          <span className="text-2xl leading-none font-bold">{t("layout.side.logo.index.biu")}</span>
         )}
       </div>
       <ReleaseNoteModal isOpen={isOpen} onOpenChange={onOpenChange} />

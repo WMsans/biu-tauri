@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useParams } from "react-router";
 
 import { addToast, Link, Pagination } from "@heroui/react";
@@ -19,6 +20,7 @@ import { getAllFavMedia } from "./utils";
 
 /** 收藏夹详情 */
 const Favorites: React.FC = () => {
+  const { t } = useTranslation();
   const { id: favFolderId } = useParams();
   const ownFolder = useUser(state => state.ownFolder);
   const collectedFolder = useUser(state => state.collectedFolder);
@@ -125,7 +127,7 @@ const Favorites: React.FC = () => {
         }
       } catch (error) {
         console.error("获取列表数据失败:", error);
-        addToast({ title: "获取数据失败", color: "danger" });
+        addToast({ title: t("pages.video-collection.favorites..1"), color: "danger" });
       } finally {
         setListModeLoading(false);
       }
@@ -192,13 +194,13 @@ const Favorites: React.FC = () => {
 
   const onPlayAll = async () => {
     if (!favFolderId) {
-      addToast({ title: "收藏夹 ID 无效", color: "danger" });
+      addToast({ title: t("pages.video-collection.favorites.id"), color: "danger" });
       return;
     }
 
     const totalCount = currentData?.info?.media_count ?? 0;
     if (!totalCount) {
-      addToast({ title: "收藏夹为空", color: "warning" });
+      addToast({ title: t("pages.video-collection.favorites..2"), color: "warning" });
       return;
     }
 
@@ -211,21 +213,21 @@ const Favorites: React.FC = () => {
       if (allMedias.length) {
         playList(allMedias);
       } else {
-        addToast({ title: "无法获取收藏夹全部歌曲", color: "danger" });
+        addToast({ title: t("pages.video-collection.favorites..3"), color: "danger" });
       }
     } catch {
-      addToast({ title: "获取收藏夹全部歌曲失败", color: "danger" });
+      addToast({ title: t("pages.video-collection.favorites..4"), color: "danger" });
     }
   };
   const addAllMedia = async () => {
     if (!favFolderId) {
-      addToast({ title: "收藏夹 ID 无效", color: "danger" });
+      addToast({ title: t("pages.video-collection.favorites.id"), color: "danger" });
       return;
     }
 
     const totalCount = currentData?.info?.media_count ?? 0;
     if (!totalCount) {
-      addToast({ title: "收藏夹为空", color: "warning" });
+      addToast({ title: t("pages.video-collection.favorites..2"), color: "warning" });
       return;
     }
 
@@ -238,10 +240,10 @@ const Favorites: React.FC = () => {
       if (allMedias.length) {
         addToPlayList(allMedias);
       } else {
-        addToast({ title: "无法获取收藏夹全部歌曲", color: "danger" });
+        addToast({ title: t("pages.video-collection.favorites..3"), color: "danger" });
       }
     } catch {
-      addToast({ title: "获取收藏夹全部歌曲失败", color: "danger" });
+      addToast({ title: t("pages.video-collection.favorites..4"), color: "danger" });
     }
   };
   const renderMediaItem = useCallback(
@@ -295,6 +297,7 @@ const Favorites: React.FC = () => {
         onChangeFavSuccess={handleRefresh}
       />
     ),
+
     [displayMode, handleRefresh, isCollected, isOwn, play],
   );
 
@@ -319,12 +322,12 @@ const Favorites: React.FC = () => {
       <SearchFilter
         keyword={searchParams.keyword}
         order={searchParams.order}
-        placeholder="请输入关键词"
+        placeholder={t("pages.video-collection.favorites.")}
         searchIcon="search2"
         orderOptions={[
-          { value: "mtime", label: "收藏时间" },
-          { value: "view", label: "播放量" },
-          { value: "pubtime", label: "投稿时间" },
+          { value: "mtime", label: t("pages.video-collection.favorites..5") },
+          { value: "view", label: t("pages.video-collection.favorites..6") },
+          { value: "pubtime", label: t("pages.video-collection.favorites..7") },
         ]}
         onKeywordChange={keyword => setSearchParams(prev => ({ ...prev, keyword }))}
         onOrderChange={order => setSearchParams(prev => ({ ...prev, order }))}
@@ -349,9 +352,11 @@ const Favorites: React.FC = () => {
         <div>
           {(listModeData?.list ?? []).map(renderMediaItem)}
           <div ref={loadMoreRef} className="h-2" />
-          {listModeLoading && <div className="text-foreground-500 py-2 text-center text-sm">加载中...</div>}
+          {listModeLoading && (
+            <div className="text-foreground-500 py-2 text-center text-sm">{t("pages.user-profile.video-series.")}</div>
+          )}
           {!listModeHasMore && !listModeLoading && (
-            <div className="text-foreground-500 py-2 text-center text-sm">没有更多了</div>
+            <div className="text-foreground-500 py-2 text-center text-sm">{t("pages.music-recommend.index..2")}</div>
           )}
         </div>
       )}

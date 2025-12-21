@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { addToast, Tooltip, useDisclosure } from "@heroui/react";
 import {
@@ -20,6 +21,7 @@ interface Props {
 type ActionKey = "open" | "pause" | "resume" | "retry" | "delete";
 
 const DownloadActions = ({ data }: Props) => {
+  const { t } = useTranslation();
   const {
     isOpen: isConfirmCancelOpen,
     onOpen: onConfirmCancelOpen,
@@ -75,12 +77,12 @@ const DownloadActions = ({ data }: Props) => {
   const actions = [
     {
       key: "open",
-      label: "打开文件",
+      label: t("pages.download-list.actions..1"),
       icon: data.outputFileType === "audio" ? <RiFileMusicLine size={18} /> : <RiFileVideoLine size={18} />,
       show: data.status === "completed",
       onPress: async () => {
         if (!data.savePath) {
-          addToast({ title: "文件路径不存在", color: "danger" });
+          addToast({ title: t("pages.download-list.actions..2"), color: "danger" });
           return;
         }
 
@@ -93,7 +95,7 @@ const DownloadActions = ({ data }: Props) => {
     },
     {
       key: "pause",
-      label: "暂停",
+      label: t("pages.download-list.actions..3"),
       icon: <RiPauseLine size={18} />,
       tooltipColor: "warning" as const,
       className: "hover:text-warning",
@@ -106,7 +108,7 @@ const DownloadActions = ({ data }: Props) => {
     },
     {
       key: "resume",
-      label: "继续",
+      label: t("pages.download-list.actions..4"),
       icon: <RiPlayLine size={18} />,
       tooltipColor: "success" as const,
       className: "hover:text-success",
@@ -119,7 +121,7 @@ const DownloadActions = ({ data }: Props) => {
     },
     {
       key: "retry",
-      label: "重试",
+      label: t("pages.follow-list.index..4"),
       icon: <RiRefreshLine size={16} />,
       show: data.status === "failed",
       onPress: async () => {
@@ -130,7 +132,7 @@ const DownloadActions = ({ data }: Props) => {
     },
     {
       key: "delete",
-      label: "删除",
+      label: t("pages.download-list.actions..5"),
       icon: <RiDeleteBinLine size={16} />,
       show: true,
       tooltipColor: "danger" as const,
@@ -178,7 +180,7 @@ const DownloadActions = ({ data }: Props) => {
       <ConfirmModal
         isOpen={isConfirmCancelOpen}
         onOpenChange={onConfirmCancelOpenChange}
-        title="确认删除吗？"
+        title={t("pages.download-list.actions.")}
         description="当前任务未下载完成，确认删除后将无法恢复"
         confirmText="删除"
         onConfirm={async () => {

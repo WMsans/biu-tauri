@@ -1,3 +1,4 @@
+import { t } from "i18next";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -121,7 +122,7 @@ export const useUser = create<UserState & Action>()(
       },
     }),
     {
-      name: "user",
+      name: t("store.user.user"),
       partialize: state => state.user,
       storage: {
         getItem: async () => {

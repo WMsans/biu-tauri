@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 
 import { Card, CardBody, Skeleton } from "@heroui/react";
@@ -11,6 +12,7 @@ import { getMusicianList, type Musician } from "@/service/musician-list";
 const gridClass = "grid grid-cols-1 gap-4 lg:grid-cols-3 xl:grid-cols-4";
 
 const ArtistRank = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   const { loading, data, error } = useRequest(async () => {
@@ -24,12 +26,16 @@ const ArtistRank = () => {
   const totalCount = allMusicians.length;
 
   if (error) {
-    return <div className="flex h-[40vh] w-full items-center justify-center text-red-500">加载失败，请稍后重试</div>;
+    return (
+      <div className="flex h-[40vh] w-full items-center justify-center text-red-500">
+        {t("pages.artist-rank.index.")}
+      </div>
+    );
   }
 
   return (
     <ScrollContainer className="h-full p-4">
-      <h1 className="mb-4">音乐大咖</h1>
+      <h1 className="mb-4">{t("pages.artist-rank.index..1")}</h1>
       <div className="w-full">
         {/* 加载骨架屏 */}
         {loading ? (
@@ -48,7 +54,9 @@ const ArtistRank = () => {
             ))}
           </div>
         ) : totalCount === 0 ? (
-          <div className="text-foreground-500 flex h-[40vh] items-center justify-center">暂无数据</div>
+          <div className="text-foreground-500 flex h-[40vh] items-center justify-center">
+            {t("pages.artist-rank.index..2")}
+          </div>
         ) : (
           <div className={gridClass}>
             {allMusicians.map(m => {
@@ -69,6 +77,7 @@ const ArtistRank = () => {
                       className="h-40 w-full object-cover md:h-48"
                       loading="lazy"
                     />
+
                     {m.title ? (
                       <div className="absolute top-2 left-2 max-w-[85%] rounded bg-black/60 px-2 py-1 text-xs text-white">
                         <Ellipsis className="text-left text-sm leading-4" tooltipClassName="max-w-[200px]">
@@ -87,6 +96,7 @@ const ArtistRank = () => {
                         className="h-12 w-12 rounded-full object-cover"
                         loading="lazy"
                       />
+
                       <div className="min-w-0 space-y-1">
                         <div className="text-foreground text-base font-medium">
                           <span>{m.username}</span>

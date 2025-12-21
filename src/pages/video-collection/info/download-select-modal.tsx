@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useParams } from "react-router";
 
 import {
@@ -38,6 +39,7 @@ interface MediaData {
 }
 
 const DownloadSelectModal = ({ type, outputFileType, mediaCount, isOpen, onOpenChange }: DownloadSelectModalProps) => {
+  const { t } = useTranslation();
   const { id } = useParams();
   const [list, setList] = useState<MediaData[]>([]);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -99,7 +101,7 @@ const DownloadSelectModal = ({ type, outputFileType, mediaCount, isOpen, onOpenC
 
       onOpenChange(false);
       addToast({
-        title: "下载任务已添加",
+        title: t("pages.video-collection.info.download-select-modal..1"),
         color: "success",
       });
     }
@@ -114,7 +116,10 @@ const DownloadSelectModal = ({ type, outputFileType, mediaCount, isOpen, onOpenC
   return (
     <Modal disableAnimation scrollBehavior="inside" isOpen={isOpen} onOpenChange={onOpenChange}>
       <ModalContent>
-        <ModalHeader>选择要下载的{outputFileType === "audio" ? "音频" : "视频"}</ModalHeader>
+        <ModalHeader>
+          {t("pages.video-collection.info.download-select-modal.")}
+          {outputFileType === "audio" ? "音频" : "视频"}
+        </ModalHeader>
         <ModalBody className="px-0">
           <ScrollContainer className="px-4">
             {list.map(item => {
@@ -161,10 +166,10 @@ const DownloadSelectModal = ({ type, outputFileType, mediaCount, isOpen, onOpenC
             }}
             className="mr-2"
           >
-            全选
+            {t("components.mv-page-download-select.index..2")}
           </Checkbox>
           <Button color="primary" onPress={handleDownload}>
-            下载
+            {t("settings.system.download.title")}
           </Button>
         </ModalFooter>
       </ModalContent>

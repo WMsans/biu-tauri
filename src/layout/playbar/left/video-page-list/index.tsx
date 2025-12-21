@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Button, Input, Popover, PopoverContent, PopoverTrigger, useDisclosure } from "@heroui/react";
 import { RiListRadio, RiSearchLine } from "@remixicon/react";
@@ -10,6 +11,7 @@ import { usePlayList } from "@/store/play-list";
 import ListItem from "./list-item";
 
 const VideoPageListDrawer = () => {
+  const { t } = useTranslation();
   const playId = usePlayList(s => s.playId);
   const list = usePlayList(s => s.list);
   const [searchKeyword, setSearchKeyword] = useState("");
@@ -42,7 +44,7 @@ const VideoPageListDrawer = () => {
         style={{ maxWidth: "min(500px, 90vw)" }}
       >
         <div className="border-b-content2 flex w-full flex-row items-center justify-between space-x-2 border-b px-4 py-3">
-          <h3>分集</h3>
+          <h3>{t("layout.playbar.left.video-page-list.index.")}</h3>
           <Input
             classNames={{
               base: "max-w-48 h-8",
@@ -50,7 +52,7 @@ const VideoPageListDrawer = () => {
               input: "text-small",
               inputWrapper: "h-full font-normal text-default-500 bg-default-400/20 dark:bg-default-500/20",
             }}
-            placeholder="搜索分集"
+            placeholder={t("layout.playbar.left.video-page-list.index..1")}
             size="sm"
             startContent={<RiSearchLine size={14} />}
             type="search"
@@ -66,7 +68,9 @@ const VideoPageListDrawer = () => {
           empty={
             <div className="flex flex-col items-center justify-center px-4">
               <Empty className="min-h-[180px]" />
-              <div className="text-foreground-500 py-3 text-sm">暂无匹配结果</div>
+              <div className="text-foreground-500 py-3 text-sm">
+                {t("layout.playbar.left.video-page-list.index..2")}
+              </div>
             </div>
           }
           renderItem={item => {

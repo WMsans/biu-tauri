@@ -1,4 +1,5 @@
 import React, { useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Button, addToast } from "@heroui/react";
 import { RiExportFill, RiImportFill } from "@remixicon/react";
@@ -9,6 +10,7 @@ import { defaultAppSettings } from "@shared/settings/app-settings";
 import { StoreNameMap } from "@shared/store";
 
 const ImportExport = () => {
+  const { t } = useTranslation();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const updateSettings = useSettings(s => s.update);
   const getSettings = useSettings(s => s.getSettings);
@@ -27,9 +29,9 @@ const ImportExport = () => {
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
-      addToast({ title: "已导出配置", description: "JSON 文件已下载", color: "success" });
+      addToast({ title: t("pages.settings.export-import..2"), description: "JSON 文件已下载", color: "success" });
     } catch (e) {
-      addToast({ title: "导出失败", description: String(e), color: "danger" });
+      addToast({ title: t("pages.settings.export-import..3"), description: String(e), color: "danger" });
     }
   };
 
@@ -53,10 +55,14 @@ const ImportExport = () => {
       const merged = merge(getSettings(), patch);
 
       updateSettings(merged);
-      addToast({ title: "已导入配置", description: "设置已应用", color: "success" });
+      addToast({ title: t("pages.settings.export-import..4"), description: "设置已应用", color: "success" });
       window.location.reload();
     } catch {
-      addToast({ title: "导入失败", description: "文件解析错误或格式不正确", color: "danger" });
+      addToast({
+        title: t("pages.settings.export-import..5"),
+        description: "文件解析错误或格式不正确",
+        color: "danger",
+      });
     }
   };
 
@@ -64,10 +70,10 @@ const ImportExport = () => {
     <div className="flex items-center space-x-2">
       <input ref={fileInputRef} type="file" accept="application/json" hidden onChange={handleImportFileChange} />
       <Button size="sm" radius="md" startContent={<RiExportFill size={16} />} onPress={handleExport}>
-        导出配置
+        {t("pages.settings.export-import.")}
       </Button>
       <Button size="sm" radius="md" startContent={<RiImportFill size={16} />} onPress={handleImportClick}>
-        导入配置
+        {t("pages.settings.export-import..1")}
       </Button>
     </div>
   );

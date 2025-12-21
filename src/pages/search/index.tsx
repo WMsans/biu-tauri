@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Spinner, Pagination, Tabs, Tab, Switch } from "@heroui/react";
 import { usePagination } from "ahooks";
@@ -16,6 +17,7 @@ import UserList from "./user-list";
 import VideoList from "./video-list";
 
 const Search = () => {
+  const { t } = useTranslation();
   const [searchType, setSearchType] = useState(SearchType.Video);
   const [musicOnly, setMusicOnly] = useState(true); // 默认只搜索音乐
   const keyword = useSearchHistory(s => s.keyword);
@@ -64,7 +66,11 @@ const Search = () => {
   return (
     <ScrollContainer className="h-full w-full">
       <div className="p-4">
-        <h1 className="mb-4">搜索【{keyword}】的结果</h1>
+        <h1 className="mb-4">
+          {t("pages.search.index.")}
+          {keyword}
+          {t("pages.search.index..1")}
+        </h1>
         <div className="flex items-center justify-between">
           <Tabs
             variant="solid"
@@ -86,7 +92,7 @@ const Search = () => {
           </Tabs>
           {searchType === SearchType.Video && (
             <Switch isSelected={musicOnly} onValueChange={setMusicOnly} size="sm">
-              仅音乐
+              {t("pages.search.index..2")}
             </Switch>
           )}
         </div>
@@ -94,7 +100,7 @@ const Search = () => {
       <>
         {loading && (
           <div className="flex min-h-[280px] items-center justify-center">
-            <Spinner label="加载中" />
+            <Spinner label={t("pages.follow-list.index..1")} />
           </div>
         )}
         {!loading && !error && (

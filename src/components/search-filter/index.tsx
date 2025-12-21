@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 import { Input, Select, SelectItem } from "@heroui/react";
 import { RiSearch2Line, RiSearchLine } from "@remixicon/react";
@@ -54,6 +55,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
   selectMinWidth = 8, // 默认排序选择器最小宽度
   selectWidth = 8, // 默认排序选择器宽度
 }) => {
+  const { t } = useTranslation();
   const handleKeywordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onKeywordChange?.(e.target.value);
   };
@@ -85,7 +87,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
                 onClick={handleClearKeyword}
                 className="bg-content2 hover:bg-content3 flex h-6 w-6 cursor-pointer items-center justify-center rounded-md transition-colors"
                 type="button"
-                aria-label="清除搜索"
+                aria-label={t("components.search-filter.index.")}
               >
                 <svg
                   width="16"
@@ -119,7 +121,7 @@ const SearchFilter: React.FC<SearchFilterProps> = ({
             }}
             className="w-full"
             style={{ minWidth: `${selectMinWidth}rem`, width: `${selectWidth}rem` }}
-            placeholder="选择排序方式"
+            placeholder={t("components.search-filter.index..1")}
           >
             {orderOptions.map(option => (
               <SelectItem key={option.value}>{option.label}</SelectItem>

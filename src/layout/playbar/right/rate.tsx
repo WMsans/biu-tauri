@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Button, Tooltip } from "@heroui/react";
 
@@ -7,6 +8,7 @@ import { usePlayList } from "@/store/play-list";
 import { PlayRate } from "../constants";
 
 const Rate = () => {
+  const { t } = useTranslation();
   const rate = usePlayList(s => s.rate);
   const setRate = usePlayList(s => s.setRate);
   const [isTooltipOpen, setIsTooltipOpen] = useState(false);
@@ -65,7 +67,7 @@ const Rate = () => {
         variant="light"
         size="sm"
         className="hover:text-primary min-w-fit text-[16px]"
-        aria-label="播放速率"
+        aria-label={t("layout.playbar.right.rate.")}
         aria-describedby={tooltipId}
         onPress={handleClick}
         onMouseEnter={handleMouseEnter}

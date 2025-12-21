@@ -1,5 +1,6 @@
 import React from "react";
 import { type Control, Controller } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 import { DefaultMenuList } from "@/common/constants/menus";
 import SelectAllCheckboxGroup from "@/components/select-all-checkbox-group";
@@ -10,20 +11,21 @@ interface MenuSettingsProps {
 }
 
 const MenuSettings: React.FC<MenuSettingsProps> = ({ control }) => {
+  const { t } = useTranslation();
   const user = useUser(state => state.user);
   const ownFolder = useUser(state => state.ownFolder);
   const collectedFolder = useUser(state => state.collectedFolder);
 
   return (
     <div className="space-y-6">
-      <h2>设置侧边菜单项显示和隐藏</h2>
+      <h2>{t("pages.settings.menu-settings.")}</h2>
       <div className="w-full space-y-8">
         <div className="flex w-full items-start space-x-[100px]">
-          <div className="text-medium font-medium">系统默认菜单</div>
+          <div className="text-medium font-medium">{t("pages.settings.menu-settings..1")}</div>
           <div className="max-w-[480px]">
             <Controller
               control={control}
-              name="hiddenMenuKeys"
+              name={t("pages.settings.menu-settings.hiddenmenukeys")}
               render={({ field }) => {
                 const groupKeys = DefaultMenuList.map(i => i.href);
                 const selectedKeys = groupKeys.filter(k => !field.value.includes(k));
@@ -57,11 +59,11 @@ const MenuSettings: React.FC<MenuSettingsProps> = ({ control }) => {
         {user?.isLogin && (
           <>
             <div className="flex w-full items-start space-x-[100px]">
-              <div className="text-medium font-medium">个人创建菜单</div>
+              <div className="text-medium font-medium">{t("pages.settings.menu-settings..2")}</div>
               <div className="max-w-[480px]">
                 <Controller
                   control={control}
-                  name="hiddenMenuKeys"
+                  name={t("pages.settings.menu-settings.hiddenmenukeys")}
                   render={({ field }) => {
                     const groupKeys = (ownFolder ?? []).map(i => String(i.id));
                     const selectedKeys = groupKeys.filter(k => !field.value.includes(k));
@@ -94,11 +96,11 @@ const MenuSettings: React.FC<MenuSettingsProps> = ({ control }) => {
               </div>
             </div>
             <div className="flex w-full items-start space-x-[100px]">
-              <div className="text-medium font-medium">个人收藏菜单</div>
+              <div className="text-medium font-medium">{t("pages.settings.menu-settings..3")}</div>
               <div className="max-w-[480px]">
                 <Controller
                   control={control}
-                  name="hiddenMenuKeys"
+                  name={t("pages.settings.menu-settings.hiddenmenukeys")}
                   render={({ field }) => {
                     const groupKeys = (collectedFolder ?? []).map(i => String(i.id));
                     const selectedKeys = groupKeys.filter(k => !field.value.includes(k));

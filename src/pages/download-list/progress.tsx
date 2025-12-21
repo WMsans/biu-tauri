@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Progress } from "@heroui/react";
 import { RiCheckboxCircleLine } from "@remixicon/react";
@@ -10,15 +11,16 @@ interface Props {
 }
 
 const StageProgress = ({ data }: Props) => {
+  const { t } = useTranslation();
   if (data.status === "waiting") {
-    return <span className="text-xs">等待下载...</span>;
+    return <span className="text-xs">{t("pages.download-list.progress.")}</span>;
   }
 
   if (data.status === "completed") {
     return (
       <div className="text-success flex items-center space-x-1">
         <RiCheckboxCircleLine size={16} />
-        <span>下载完成</span>
+        <span>{t("pages.download-list.progress..1")}</span>
       </div>
     );
   }
@@ -49,6 +51,7 @@ const StageProgress = ({ data }: Props) => {
           indicator: data.status === "failed" ? "bg-danger" : "bg-blue-500",
         }}
       />
+
       <div className="flex justify-between space-x-2 text-xs">
         {data.status === "failed" ? (
           <p title={data.error} className="text-danger line-clamp-2 break-all">

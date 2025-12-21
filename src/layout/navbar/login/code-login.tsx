@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 import { Button, Input, Select, SelectItem, addToast } from "@heroui/react";
 import { useRequest } from "ahooks";
@@ -25,6 +26,7 @@ interface Props {
 }
 
 const CodeLogin = ({ onClose }: Props) => {
+  const { t } = useTranslation();
   const [countryId, setCountryId] = useState<string>("1");
   const codeRef = useRef<HTMLInputElement>(null);
   const phoneRef = useRef<HTMLInputElement>(null);
@@ -115,7 +117,7 @@ const CodeLogin = ({ onClose }: Props) => {
 
       if (res.code === 0) {
         setCaptchaKey(res.data?.captcha_key || "");
-        addToast({ title: "验证码已发送", color: "success" });
+        addToast({ title: t("layout.navbar.login.code-login..4"), color: "success" });
         setCountdown(60);
         setTimeout(() => {
           codeRef.current?.focus();
@@ -136,7 +138,7 @@ const CodeLogin = ({ onClose }: Props) => {
       const code = Number(values.code.replace(/\D/g, ""));
 
       if (!captchaKey) {
-        addToast({ title: "请先获取验证码", color: "warning" });
+        addToast({ title: t("layout.navbar.login.code-login..5"), color: "warning" });
         return;
       }
 
@@ -151,7 +153,7 @@ const CodeLogin = ({ onClose }: Props) => {
       });
 
       if (resp.code === 0) {
-        addToast({ title: "登录成功", color: "success" });
+        addToast({ title: t("layout.navbar.login.code-login..6"), color: "success" });
         updateToken({
           tokenData: { refresh_token: resp.data?.refresh_token },
           nextCheckRefreshTime: moment().add(2, "days").unix(),
@@ -170,7 +172,7 @@ const CodeLogin = ({ onClose }: Props) => {
     <form className="flex w-full flex-col gap-4" onSubmit={handleSubmit(onSubmitCodeLogin)}>
       <Controller
         control={control}
-        name="phone"
+        name={t("layout.navbar.login.code-login.phone")}
         rules={{
           required: "请输入手机号",
           validate: value => {
@@ -187,9 +189,9 @@ const CodeLogin = ({ onClose }: Props) => {
               field.ref(e);
               phoneRef.current = e;
             }}
-            name="phone"
+            name={t("layout.navbar.login.code-login.phone")}
             type="tel"
-            placeholder="请输入手机号"
+            placeholder={t("layout.navbar.login.code-login.")}
             variant="bordered"
             isClearable
             autoComplete="tel"
@@ -221,7 +223,7 @@ const CodeLogin = ({ onClose }: Props) => {
                 onChange={e => {
                   setCountryId(e.target.value);
                 }}
-                aria-label="选择国家/地区"
+                aria-label={t("layout.navbar.login.code-login..1")}
               >
                 {country => (
                   <SelectItem key={country.id} textValue={`+${country.country_id}`}>
@@ -237,7 +239,7 @@ const CodeLogin = ({ onClose }: Props) => {
       <div className="flex items-start gap-2">
         <Controller
           control={control}
-          name="code"
+          name={t("layout.navbar.login.code-login.code")}
           rules={{
             required: "请输入验证码",
             pattern: { value: /^\d{6}$/, message: "验证码必须为6位数字" },
@@ -251,13 +253,14 @@ const CodeLogin = ({ onClose }: Props) => {
               }}
               className="flex-1"
               type="text"
-              placeholder="验证码"
+              placeholder={t("layout.navbar.login.code-login..2")}
               variant="bordered"
               isInvalid={!!errors.code}
               errorMessage={errors.code?.message}
             />
           )}
         />
+
         <Button
           type="button"
           variant="flat"
@@ -270,7 +273,7 @@ const CodeLogin = ({ onClose }: Props) => {
       </div>
 
       <Button color="primary" className="w-full" type="submit" isDisabled={isSubmitting} isLoading={isSubmitting}>
-        登录
+        {t("layout.navbar.login.code-login..3")}
       </Button>
     </form>
   );

@@ -1,3 +1,4 @@
+import { t } from "i18next";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -33,7 +34,7 @@ export const useSettings = create<AppSettings & SettingsActions>()(
       },
     }),
     {
-      name: "settings",
+      name: t("store.settings.settings"),
       storage: {
         getItem: async () => {
           const store = await window.electron.getStore(StoreNameMap.AppSettings);

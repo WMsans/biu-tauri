@@ -46,10 +46,10 @@ export const SystemSettingsTab = ({
         <div className="w-[140px]">
           <Controller
             control={control}
-            name="language"
+            name={t("pages.settings.system-settings.language")}
             render={({ field }) => (
               <Select
-                aria-label="Language"
+                aria-label={t("settings.system.appearance.language.label")}
                 selectedKeys={[field.value]}
                 onSelectionChange={keys => {
                   const value = Array.from(keys)[0] as (typeof LANGUAGE_VALUE_LIST)[number];
@@ -74,7 +74,7 @@ export const SystemSettingsTab = ({
         </div>
         <Controller
           control={control}
-          name="displayMode"
+          name={t("pages.settings.system-settings.displaymode")}
           render={({ field }) => (
             <RadioGroup orientation="horizontal" value={field.value} onValueChange={field.onChange}>
               <Radio value="card">{t("settings.system.appearance.displayMode.card")}</Radio>
@@ -92,7 +92,7 @@ export const SystemSettingsTab = ({
         <div className="w-[360px]">
           <Controller
             control={control}
-            name="fontFamily"
+            name={t("pages.settings.system-settings.fontfamily")}
             render={({ field }) => <FontSelect value={field.value} onChange={field.onChange} />}
           />
         </div>
@@ -108,7 +108,7 @@ export const SystemSettingsTab = ({
         <div className="flex w-[360px] justify-end">
           <Controller
             control={control}
-            name="contentBackgroundColor"
+            name={t("pages.settings.system-settings.contentbackgroundcol")}
             render={({ field }) => (
               <ColorPicker
                 presets={[defaultAppSettings.contentBackgroundColor]}
@@ -128,7 +128,7 @@ export const SystemSettingsTab = ({
         <div className="flex w-[360px] justify-end">
           <Controller
             control={control}
-            name="backgroundColor"
+            name={t("pages.settings.system-settings.backgroundcolor")}
             render={({ field }) => (
               <ColorPicker
                 presets={[defaultAppSettings.backgroundColor]}
@@ -148,7 +148,7 @@ export const SystemSettingsTab = ({
         <div className="flex w-[360px] justify-end">
           <Controller
             control={control}
-            name="primaryColor"
+            name={t("pages.settings.system-settings.primarycolor")}
             render={({ field }) => (
               <ColorPicker
                 presets={[defaultAppSettings.primaryColor, "#66cc8a", "#9353d3", "#ffffff", "#db924b"]}
@@ -169,12 +169,17 @@ export const SystemSettingsTab = ({
         <div className="w-[360px]">
           <Controller
             control={control}
-            name="borderRadius"
+            name={t("pages.settings.system-settings.borderradius")}
             render={({ field }) => (
               <Slider
                 showTooltip={false}
                 size="sm"
-                endContent={<span>{field.value}px</span>}
+                endContent={
+                  <span>
+                    {field.value}
+                    {t("pages.settings.system-settings.px")}
+                  </span>
+                }
                 aria-label={t("settings.system.appearance.borderRadius.label")}
                 value={field.value}
                 onChange={v => field.onChange(Number(v))}
@@ -206,7 +211,7 @@ export const SystemSettingsTab = ({
         <div className="w-[140px]">
           <Controller
             control={control}
-            name="audioQuality"
+            name={t("pages.settings.system-settings.audioquality")}
             render={({ field }) => (
               <Select
                 aria-label={t("settings.system.playback.audioQuality.label")}
@@ -237,7 +242,7 @@ export const SystemSettingsTab = ({
         <div className="w-[360px]">
           <Controller
             control={control}
-            name="downloadPath"
+            name={t("pages.settings.system-settings.downloadpath")}
             render={({ field }) => (
               <div className="flex items-center space-x-1">
                 <Input
@@ -246,6 +251,7 @@ export const SystemSettingsTab = ({
                   value={field.value}
                   onValueChange={field.onChange}
                 />
+
                 <Button
                   variant="flat"
                   onPress={async () => {
@@ -270,7 +276,7 @@ export const SystemSettingsTab = ({
         <div className="w-[360px]">
           <Controller
             control={control}
-            name="ffmpegPath"
+            name={t("pages.settings.system-settings.ffmpegpath")}
             render={({ field }) => (
               <div className="flex items-center space-x-1">
                 <Input
@@ -279,6 +285,7 @@ export const SystemSettingsTab = ({
                   value={field.value}
                   onValueChange={field.onChange}
                 />
+
                 <Button
                   variant="flat"
                   onPress={async () => {
@@ -303,7 +310,7 @@ export const SystemSettingsTab = ({
         </div>
         <Controller
           control={control}
-          name="closeWindowOption"
+          name={t("pages.settings.system-settings.closewindowoption")}
           render={({ field }) => (
             <RadioGroup orientation="horizontal" value={field.value} onValueChange={field.onChange}>
               <Radio value="hide">{t("settings.system.system.closeWindowOption.hide")}</Radio>
@@ -322,7 +329,7 @@ export const SystemSettingsTab = ({
         <div className="flex w-[360px] justify-end">
           <Controller
             control={control}
-            name="autoStart"
+            name={t("pages.settings.system-settings.autostart")}
             render={({ field }) => <Switch isSelected={field.value} onValueChange={field.onChange} />}
           />
         </div>

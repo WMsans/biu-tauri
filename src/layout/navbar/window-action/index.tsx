@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "@heroui/react";
 import {
@@ -12,6 +13,7 @@ import {
 import { toggleMiniMode } from "@/common/utils/mini-player";
 
 const WindowAction = () => {
+  const { t } = useTranslation();
   const [isMaximized, setIsMaximized] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
 
@@ -43,7 +45,13 @@ const WindowAction = () => {
     <div className="flex items-center justify-center">
       {!isFullScreen && (
         <>
-          <Button title="切换到迷你播放器" isIconOnly size="sm" variant="light" onPress={toggleMiniMode}>
+          <Button
+            title={t("layout.navbar.window-action.index.")}
+            isIconOnly
+            size="sm"
+            variant="light"
+            onPress={toggleMiniMode}
+          >
             <RiPictureInPicture2Line size={16} />
           </Button>
           <Button variant="light" size="sm" isIconOnly onPress={handleMinimize}>

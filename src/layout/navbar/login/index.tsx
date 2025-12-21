@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 import { Divider, Modal, ModalBody, ModalContent, Tab, Tabs } from "@heroui/react";
 
@@ -12,6 +13,7 @@ interface Props {
 }
 
 const Login = ({ isOpen, onOpenChange }: Props) => {
+  const { t } = useTranslation();
   const onClose = () => onOpenChange(false);
 
   return (
@@ -22,16 +24,16 @@ const Login = ({ isOpen, onOpenChange }: Props) => {
           <Divider className="h-42" orientation="vertical" />
           <div className="w-[320px]">
             <Tabs
-              aria-label="登录方式"
+              aria-label={t("layout.navbar.login.index.")}
               classNames={{ tabContent: "text-lg font-medium mb-4" }}
               fullWidth
               size="lg"
               variant="underlined"
             >
-              <Tab key="code" title="短信登录">
+              <Tab key="code" title={t("layout.navbar.login.index..1")}>
                 <CodeLogin onClose={onClose} />
               </Tab>
-              <Tab key="password" title="密码登录">
+              <Tab key="password" title={t("layout.navbar.login.index..2")}>
                 <PasswordLogin onClose={onClose} />
               </Tab>
             </Tabs>

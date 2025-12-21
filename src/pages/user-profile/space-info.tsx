@@ -1,4 +1,5 @@
 import { Fragment } from "react";
+import { useTranslation } from "react-i18next";
 import { useParams } from "react-router";
 
 import { Avatar, Divider, Image, Tooltip } from "@heroui/react";
@@ -19,6 +20,7 @@ interface Props {
 }
 
 const SpaceInfo = ({ spaceInfo, relationStats, relationWithMe, refreshRelation }: Props) => {
+  const { t } = useTranslation();
   const user = useUser(s => s.user);
   const { id } = useParams();
   const isSelf = user?.mid === Number(id);
@@ -27,16 +29,16 @@ const SpaceInfo = ({ spaceInfo, relationStats, relationWithMe, refreshRelation }
 
   const stats = [
     {
-      title: "关注数",
+      title: t("pages.user-profile.space-info..1"),
       value: relationStats?.following,
       hidden: !isSelf,
     },
     {
-      title: "粉丝数",
+      title: t("pages.user-profile.space-info..2"),
       value: relationStats?.follower,
     },
     {
-      title: "等  级",
+      title: t("pages.user-profile.space-info..3"),
       value: `Lv${spaceInfo?.level ?? 0}`,
     },
   ].filter(item => !item.hidden);
@@ -66,7 +68,7 @@ const SpaceInfo = ({ spaceInfo, relationStats, relationWithMe, refreshRelation }
     return (
       <div className="flex h-[480px] w-full flex-col items-center justify-center space-y-6">
         <Avatar src={spaceInfo?.face} alt={spaceInfo?.name} className="h-[120px] w-[120px] shadow-lg" />
-        <p className="text-lg">已拉黑</p>
+        <p className="text-lg">{t("pages.user-profile.space-info.")}</p>
       </div>
     );
   }

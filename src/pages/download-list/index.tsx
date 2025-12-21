@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   Button,
@@ -29,6 +30,7 @@ import DownloadActions from "./actions";
 import DownloadProgress from "./progress";
 
 const DownloadList = () => {
+  const { t } = useTranslation();
   const downloadPath = useSettings(s => s.downloadPath);
   const [downloadList, setDownloadList] = useState<MediaDownloadTask[]>([]);
   const [fileType, setFileType] = useState<string>("all");
@@ -96,7 +98,7 @@ const DownloadList = () => {
     <ScrollContainer className="h-full w-full p-4">
       <div className="mb-4 flex items-center justify-between">
         <h1 className="flex items-center space-x-1">
-          <span>下载记录</span>
+          <span>{t("pages.download-list.index.")}</span>
           <Tooltip closeDelay={0} content="下载功能需要 ffmpeg，请自行下载安装">
             <RiInformationLine />
           </Tooltip>
@@ -115,7 +117,7 @@ const DownloadList = () => {
             <Table
               fullWidth
               radius="md"
-              aria-label="下载列表"
+              aria-label={t("pages.download-list.index..1")}
               removeWrapper
               topContent={
                 <div className="flex justify-between">
@@ -127,9 +129,9 @@ const DownloadList = () => {
                       wrapper: "gap-4",
                     }}
                   >
-                    <Radio value="all">全部</Radio>
-                    <Radio value="audio">音频</Radio>
-                    <Radio value="video">视频</Radio>
+                    <Radio value="all">{t("pages.download-list.index..2")}</Radio>
+                    <Radio value="audio">{t("pages.download-list.index..3")}</Radio>
+                    <Radio value="video">{t("pages.download-list.index..4")}</Radio>
                   </RadioGroup>
                   {Boolean(downloadList.length) && (
                     <Tooltip content="清空记录" closeDelay={0}>
@@ -145,16 +147,16 @@ const DownloadList = () => {
               }}
             >
               <TableHeader className="rounded-medium">
-                <TableColumn width={350}>文件</TableColumn>
-                <TableColumn>状态</TableColumn>
+                <TableColumn width={350}>{t("pages.download-list.index..5")}</TableColumn>
+                <TableColumn>{t("pages.download-list.index..6")}</TableColumn>
                 <TableColumn width={120} align="center">
-                  大小
+                  {t("pages.download-list.index..7")}
                 </TableColumn>
                 <TableColumn width={120} align="center">
-                  下载时间
+                  {t("pages.download-list.index..8")}
                 </TableColumn>
                 <TableColumn width={120} align="center">
-                  操作
+                  {t("pages.download-list.index..9")}
                 </TableColumn>
               </TableHeader>
               <TableBody

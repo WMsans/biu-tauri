@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useParams } from "react-router";
 
 import { Pagination } from "@heroui/react";
@@ -14,6 +15,7 @@ import { useSettings } from "@/store/settings";
 
 /** 个人投稿视频 */
 const VideoPost = () => {
+  const { t } = useTranslation();
   const { id } = useParams();
   const play = usePlayList(s => s.play);
   const displayMode = useSettings(state => state.displayMode);
@@ -93,17 +95,18 @@ const VideoPost = () => {
       <SearchFilter
         keyword={keyword}
         order={order}
-        placeholder="搜索视频标题..."
+        placeholder={t("pages.user-profile.video-post.")}
         searchIcon="search"
         orderOptions={[
-          { value: "pubdate", label: "最新发布" },
-          { value: "click", label: "最多播放" },
-          { value: "stow", label: "最多收藏" },
+          { value: "pubdate", label: t("pages.user-profile.video-post..1") },
+          { value: "click", label: t("pages.user-profile.video-post..2") },
+          { value: "stow", label: t("pages.user-profile.video-post..3") },
         ]}
         onKeywordChange={setKeyword}
         onOrderChange={setOrder}
         containerClassName="mb-4 flex flex-col items-start gap-4 md:flex-row md:items-center"
       />
+
       {displayMode === "card" ? (
         <GridList data={data?.list ?? []} loading={loading} itemKey="bvid" renderItem={renderMediaItem} />
       ) : (

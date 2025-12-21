@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router";
 
 import {
@@ -70,6 +71,7 @@ const MVAction = ({
   className,
   buttonClassName,
 }: ActionProps) => {
+  const { t } = useTranslation();
   const user = useUser(s => s.user);
   const addToNext = usePlayList(s => s.addToNext);
   const location = useLocation();
@@ -93,7 +95,7 @@ const MVAction = ({
     });
 
     addToast({
-      title: "已添加到稍后再看",
+      title: t("components.mv-action.index..1"),
       color: "success",
     });
   };
@@ -102,7 +104,7 @@ const MVAction = ({
     {
       key: "nextPlay",
       icon: <RiPlayListAddLine size={16} />,
-      title: "下一首播放",
+      title: t("components.mv-action.index..2"),
       hidden: !type,
       onPress: () => {
         addToNext({
@@ -126,14 +128,14 @@ const MVAction = ({
     {
       key: "addToLater",
       icon: <RiTimeLine size={16} />,
-      title: "添加到稍后再看",
+      title: t("components.mv-action.index..3"),
       hidden: !user?.isLogin || location.pathname === "/later",
       onPress: addToLater,
     },
     {
       key: "downloadAudio",
       icon: <AudioDownloadIcon className="relative top-px left-px h-[15px] w-[15px]" />,
-      title: "下载音乐",
+      title: t("components.mv-action.index..4"),
       hidden: type !== "audio",
       onPress: async () => {
         await window.electron.addMediaDownloadTask({
@@ -144,7 +146,7 @@ const MVAction = ({
         });
 
         addToast({
-          title: "已添加到下载队列",
+          title: t("components.mv-action.index..5"),
           color: "success",
         });
       },
@@ -152,7 +154,7 @@ const MVAction = ({
     {
       key: "downloadAudio",
       icon: <AudioDownloadIcon className="relative top-px left-px h-[15px] w-[15px]" />,
-      title: "下载音频",
+      title: t("layout.playbar.right.download..1"),
       hidden: type === "audio",
       onPress: () => {
         setOutputFileType("audio");
@@ -163,7 +165,7 @@ const MVAction = ({
       key: "downloadVideo",
       hidden: type === "audio",
       icon: <VideoDownloadIcon className="relative top-px left-px h-[15px] w-[15px]" />,
-      title: "下载视频",
+      title: t("layout.playbar.right.download..2"),
       onPress: () => {
         setOutputFileType("video");
         onOpenMediaDownloadSelectModal();
@@ -205,12 +207,13 @@ const MVAction = ({
         </Dropdown>
       </div>
       <FavFolderSelect
-        title="收藏"
+        title={t("components.mv-action.index.")}
         rid={type === "mv" ? (aid as string) : String(sid)}
         isOpen={isOpenFavSelectModal}
         onOpenChange={onOpenChangeFavSelectModal}
         afterSubmit={onChangeFavSuccess}
       />
+
       <MediaDownloadSelect
         outputFileType={outputFileType}
         title={title}

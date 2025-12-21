@@ -1,4 +1,5 @@
 import React, { useRef, useState, useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 
 import { Chip, Image } from "@heroui/react";
@@ -13,6 +14,7 @@ import { useSettings } from "@/store/settings";
 import VideoPageList from "./video-page-list";
 
 const LeftControl = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [showWaveform, setShowWaveform] = useState(false);
   const [waveformWidth, setWaveformWidth] = useState(0);
@@ -68,6 +70,7 @@ const LeftControl = () => {
               }}
               className="object-cover"
             />
+
             <div className="text-primary absolute top-0 left-0 z-10 flex h-full w-full items-center justify-center overflow-hidden bg-[rgba(0,0,0,0.5)] opacity-0 group-hover:opacity-100">
               <RiPulseLine size={20} />
             </div>
@@ -77,8 +80,10 @@ const LeftControl = () => {
               <Ellipsis className="cursor-pointer hover:underline" onClick={() => openBiliVideoLink(playItem!)}>
                 {playItem?.pageTitle || playItem?.title}
               </Ellipsis>
-              {Boolean(playItem?.isLossless) && <Chip size="sm">无损</Chip>}
-              {Boolean(playItem?.isDolby) && <Chip size="sm">杜比音频</Chip>}
+              {Boolean(playItem?.isLossless) && (
+                <Chip size="sm">{t("settings.system.playback.audioQuality.lossless")}</Chip>
+              )}
+              {Boolean(playItem?.isDolby) && <Chip size="sm">{t("layout.playbar.left.index.")}</Chip>}
             </span>
             {Boolean(playItem?.ownerName) && (
               <span

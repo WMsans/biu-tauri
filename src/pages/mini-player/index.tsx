@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Button, Image, Slider } from "@heroui/react";
 import {
@@ -21,6 +22,7 @@ import { useStyle } from "./use-style";
 const PlayModeList = getPlayModeList(16);
 
 const MiniPlayer = () => {
+  const { t } = useTranslation();
   const { isSingle, isPlaying, title, cover, duration, playMode } = usePlayState(
     useShallow(state => ({
       isSingle: state.isSingle,
@@ -109,12 +111,12 @@ const MiniPlayer = () => {
             {title ? (
               <span className="truncate text-center text-sm font-medium">{title}</span>
             ) : (
-              <span className="text-center text-sm text-zinc-500">暂无播放内容</span>
+              <span className="text-center text-sm text-zinc-500">{t("pages.mini-player.index.")}</span>
             )}
           </div>
           <div className="window-no-drag mt-1 flex items-center">
             <Slider
-              aria-label="播放进度"
+              aria-label={t("layout.playbar.center.progress.")}
               minValue={0}
               maxValue={duration}
               value={currentTime}
@@ -140,7 +142,7 @@ const MiniPlayer = () => {
               variant="light"
               onPress={togglePlayMode}
               className="hover:text-primary window-no-drag"
-              aria-label="播放模式"
+              aria-label={t("layout.playbar.right.play-mode.")}
             >
               {playModeIcon}
             </Button>

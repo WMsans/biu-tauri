@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import { addToast, Button, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Progress } from "@heroui/react";
 import { RiInformationLine } from "@remixicon/react";
@@ -14,6 +15,7 @@ interface Props {
 }
 
 const ReleaseNoteModal = ({ isOpen, onOpenChange }: Props) => {
+  const { t } = useTranslation();
   const releaseNotes = useAppUpdateStore(state => state.releaseNotes);
   const [status, setStatus] = useState<DownloadAppUpdateStatus>();
   const [downloadProgress, setDownloadProgress] = useState<DownloadAppProgressInfo>();
@@ -36,7 +38,7 @@ const ReleaseNoteModal = ({ isOpen, onOpenChange }: Props) => {
         const ok = await window.electron.showFileInFolder(downloadInfo.filePath);
         if (!ok) {
           addToast({
-            title: "无法打开安装包文件夹",
+            title: t("components.release-note-modal.index..5"),
             color: "danger",
           });
         }
@@ -85,12 +87,14 @@ const ReleaseNoteModal = ({ isOpen, onOpenChange }: Props) => {
         disableAnimation
       >
         <ModalContent>
-          <ModalHeader>✨ 有新版本更新</ModalHeader>
+          <ModalHeader>{t("components.release-note-modal.index.")}</ModalHeader>
           <ModalBody className="px-0">
             {releaseNotes?.trim() ? (
               <Typography content={releaseNotes} />
             ) : (
-              <div className="text-center text-sm text-zinc-500 dark:text-zinc-400">暂无更新日志</div>
+              <div className="text-center text-sm text-zinc-500 dark:text-zinc-400">
+                {t("components.release-note-modal.index..1")}
+              </div>
             )}
           </ModalBody>
           {status === "downloading" && Boolean(downloadProgress?.percent) && (
@@ -99,7 +103,10 @@ const ReleaseNoteModal = ({ isOpen, onOpenChange }: Props) => {
           <ModalFooter className="items-center justify-between">
             <div className="min-w-0 flex-auto">
               {status === "downloading" && (
-                <div className="items-center">{filesize(downloadProgress?.bytesPerSecond || 0)}/s</div>
+                <div className="items-center">
+                  {filesize(downloadProgress?.bytesPerSecond || 0)}
+                  {t("components.release-note-modal.index.s")}
+                </div>
               )}
               {status === "error" && <span className="text-danger block truncate">{error}</span>}
             </div>
@@ -107,15 +114,17 @@ const ReleaseNoteModal = ({ isOpen, onOpenChange }: Props) => {
               <div className="inline-flex items-center space-x-2">
                 <span className="inline-flex items-center space-x-1">
                   <RiInformationLine size={16} />
-                  <span className="text-sm text-zinc-500 dark:text-zinc-400">安装包已下载完成</span>
+                  <span className="text-sm text-zinc-500 dark:text-zinc-400">
+                    {t("components.release-note-modal.index..2")}
+                  </span>
                 </span>
                 {window.electron.isSupportAutoUpdate() ? (
                   <Button color="primary" onPress={window.electron.quitAndInstall}>
-                    退出并安装更新
+                    {t("components.release-note-modal.index..3")}
                   </Button>
                 ) : (
                   <Button color="primary" onPress={handleOpenInstaller}>
-                    打开安装包文件夹
+                    {t("components.release-note-modal.index..4")}
                   </Button>
                 )}
               </div>

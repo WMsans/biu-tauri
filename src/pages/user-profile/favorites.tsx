@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useNavigate, useParams } from "react-router";
 
 import { Pagination } from "@heroui/react";
@@ -11,6 +12,7 @@ import { getFavFolderCreatedList } from "@/service/fav-folder-created-list";
 
 /** 收藏夹 */
 const Favorites = () => {
+  const { t } = useTranslation();
   const { id } = useParams();
   const navigate = useNavigate();
 
@@ -52,13 +54,17 @@ const Favorites = () => {
             footer={
               <div className="flex w-full justify-between text-sm text-zinc-500">
                 <span>{formatSecondsToDate(item.ctime)}</span>
-                <span>{item.media_count}个视频</span>
+                <span>
+                  {item.media_count}
+                  {t("pages.user-profile.favorites.")}
+                </span>
               </div>
             }
             onPress={() => navigate(`/collection/${item.id}?type=${CollectionType.Favorite}`)}
           />
         )}
       />
+
       {pagination.totalPage > 1 && (
         <div className="flex w-full items-center justify-center py-4">
           <Pagination

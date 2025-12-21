@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useTranslation } from "react-i18next";
 
 import { Tab, Tabs } from "@heroui/react";
 import { useShallow } from "zustand/react/shallow";
@@ -91,21 +92,22 @@ const useSystemSettingsForm = () => {
 };
 
 const SettingsPage = () => {
+  const { t } = useTranslation();
   const system = useSystemSettingsForm();
 
   return (
     <ScrollContainer className="h-full w-full">
       <div className="m-auto mb-6 max-w-[900px] px-8 py-4">
         <div className="space-y-6">
-          <h1>设置</h1>
-          <Tabs aria-label="设置选项" classNames={{ panel: "px-1 py-0", cursor: "rounded-medium" }}>
-            <Tab key="system" title="系统设置">
+          <h1>{t("pages.settings.index.")}</h1>
+          <Tabs aria-label={t("pages.settings.index..1")} classNames={{ panel: "px-1 py-0", cursor: "rounded-medium" }}>
+            <Tab key="system" title={t("pages.settings.index..2")}>
               <SystemSettingsTab {...system} />
             </Tab>
-            <Tab key="menu" title="菜单设置">
+            <Tab key="menu" title={t("pages.settings.index..3")}>
               <MenuSettings control={system.control} />
             </Tab>
-            <Tab key="shortcut" title="快捷键设置">
+            <Tab key="shortcut" title={t("pages.settings.index..4")}>
               <ShortcutSettingsPage />
             </Tab>
           </Tabs>

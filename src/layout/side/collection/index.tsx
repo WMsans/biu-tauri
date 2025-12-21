@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 import { Button, Tooltip, useDisclosure } from "@heroui/react";
 import { RiAddLine, RiFolderLine, RiFolderOpenLine } from "@remixicon/react";
 
@@ -7,6 +9,7 @@ import { useSettings } from "@/store/settings";
 import { useUser } from "@/store/user";
 
 const Collection = () => {
+  const { t } = useTranslation();
   const user = useUser(state => state.user);
   const ownFolder = useUser(state => state.ownFolder);
   const collectedFolder = useUser(state => state.collectedFolder);
@@ -23,7 +26,7 @@ const Collection = () => {
     <>
       {Boolean(user?.isLogin) && (
         <MenuGroup
-          title="我创建的"
+          title={t("layout.side.collection.index.")}
           titleExtra={
             <Tooltip closeDelay={0} content="新建收藏夹">
               <Button isIconOnly variant="light" size="sm" className="h-auto w-auto min-w-auto p-1" onPress={onOpen}>
@@ -44,7 +47,7 @@ const Collection = () => {
       {Boolean(filteredCollectedFolder?.length) && (
         <>
           <MenuGroup
-            title="我收藏的"
+            title={t("layout.side.collection.index..1")}
             items={filteredCollectedFolder.map(item => ({
               title: item.title,
               href: `/collection/${item.id}?type=${item.type}&mid=${item?.mid}`,
@@ -54,12 +57,16 @@ const Collection = () => {
             }))}
             itemClassName="pl-3"
           />
+
           {collectedFolderHasMore && (
             <div
               className="cursor-pointer p-2 text-center text-sm text-zinc-500 transition-colors hover:text-zinc-700"
               onClick={loadMoreCollectedFolder}
             >
-              显示剩余{collectedFolderTotal - collectedFolder.length}个
+              {t("layout.side.collection.index..2")}
+
+              {collectedFolderTotal - collectedFolder.length}
+              {t("layout.side.collection.index..3")}
             </div>
           )}
         </>

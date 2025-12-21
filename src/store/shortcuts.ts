@@ -1,3 +1,4 @@
+import { t } from "i18next";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
@@ -28,7 +29,7 @@ export const useShortcutSettings = create<ShortcutSettings & ShortcutActions>()(
       },
     }),
     {
-      name: "shortcut-settings",
+      name: t("store.shortcuts.shortcut-settings"),
       storage: {
         getItem: async () => {
           const store = await window.electron.getStore(StoreNameMap.ShortcutSettings);
