@@ -202,7 +202,24 @@ async function replaceStringsInFile(filePath: string, stringToKey: Map<string, s
   }
 }
 
+async function ensureLocaleFiles() {
+  const localesDir = path.join(process.cwd(), "shared", "locales");
+  for (const lang of LANGUAGES) {
+    const langDir = path.join(localesDir, lang.value);
+    if (!fs.existsSync(langDir)) {
+      await fs.promises.mkdir(langDir, { recursive: true });
+    }
+    const translationFile = path.join(langDir, "translation.json");
+    if (!fs.existsSync(translationFile)) {
+      await fs.promises.writeFile(translationFile, JSON.stringify({}, null, 2) + "\n");
+      console.log(`Created translation file for ${lang.label}`);
+    }
+  }
+}
+
 async function main() {
+  await ensureLocaleFiles();
+
   const replace = process.argv.includes("--replace");
 
   console.log("Starting i18n extraction...");
