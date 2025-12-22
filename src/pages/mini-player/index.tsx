@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 import { Button, Image, Slider } from "@heroui/react";
 import {
@@ -11,8 +11,9 @@ import {
 import clx from "classnames";
 import { useShallow } from "zustand/react/shallow";
 
-import { createBroadcastChannel } from "@/common/broadcast/mini-player-sync";
 import { getPlayModeList } from "@/common/constants/audio";
+import { createBroadcastChannel, toggleMiniMode } from "@/common/utils/mini-player";
+import { usePlayProgress } from "@/store/play-progress";
 
 import { usePlayState } from "./play-state";
 import { useStyle } from "./use-style";
@@ -20,19 +21,19 @@ import { useStyle } from "./use-style";
 const PlayModeList = getPlayModeList(16);
 
 const MiniPlayer = () => {
-  const { isSingle, isPlaying, title, cover, currentTime, duration, playMode } = usePlayState(
+  const { isSingle, isPlaying, title, cover, duration, playMode } = usePlayState(
     useShallow(state => ({
       isSingle: state.isSingle,
       isPlaying: state.isPlaying,
       title: state.title,
       cover: state.cover,
-      currentTime: state.currentTime,
       duration: state.duration,
       playMode: state.playMode,
     })),
   );
+  const currentTime = usePlayProgress(s => s.currentTime);
+  const setCurrentTime = usePlayProgress(s => s.setCurrentTime);
   const updatePlayState = usePlayState(state => state.update);
-
   const bcRef = useRef<BroadcastChannel>(null);
 
   const postMessage = (type: string, state?: any) => {
@@ -63,6 +64,9 @@ const MiniPlayer = () => {
         if (from !== "main" || !state) return;
 
         updatePlayState(state);
+        if (typeof state.currentTime === "number") {
+          setCurrentTime(state.currentTime);
+        }
       } catch (err) {
         console.error("[mini] failed to handle message from main", err);
       }
@@ -72,10 +76,6 @@ const MiniPlayer = () => {
       if (!bcRef.current) return;
       bcRef.current.close();
     };
-  }, []);
-
-  const handleSwitchToMain = useCallback(() => {
-    window.electron.switchToMainWindow();
   }, []);
 
   const handleSeek = (v: number) => {
@@ -184,7 +184,7 @@ const MiniPlayer = () => {
               isIconOnly
               size="sm"
               variant="light"
-              onPress={handleSwitchToMain}
+              onPress={toggleMiniMode}
               className="hover:text-primary window-no-drag"
             >
               <RiExpandDiagonalLine size={16} />
