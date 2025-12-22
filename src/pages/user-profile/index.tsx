@@ -1,17 +1,18 @@
-import React from "react";
+import React, { useRef, useState } from "react";
 import { useParams } from "react-router";
 
-import { addToast, Spinner, Tab, Tabs } from "@heroui/react";
-import { useRequest } from "ahooks";
+import { Spinner, Tab, Tabs } from "@heroui/react";
+import { useMount, useRequest } from "ahooks";
 
 import { UserRelation } from "@/common/constants/relation";
-import ScrollContainer from "@/components/scroll-container";
+import ScrollContainer, { type ScrollRefObject } from "@/components/scroll-container";
 import { getRelationStat } from "@/service/relation-stat";
 import { getXSpaceSettings } from "@/service/space-setting";
 import { getSpaceWbiAccInfo } from "@/service/space-wbi-acc-info";
 import { getSpaceWbiAccRelation } from "@/service/space-wbi-acc-relation";
 import { useUser } from "@/store/user";
 
+import DynamicList from "./dynamic-list";
 import Favorites from "./favorites";
 import SpaceInfo from "./space-info";
 import VideoPost from "./video-post";
@@ -24,6 +25,14 @@ const UserProfile = () => {
   const { id } = useParams();
   const user = useUser(s => s.user);
   const isSelf = String(user?.mid) === id;
+  const scrollRef = useRef<ScrollRefObject>(null);
+  const [scrollElement, setScrollElement] = useState<HTMLElement | null>(null);
+
+  useMount(() => {
+    if (scrollRef.current) {
+      setScrollElement(scrollRef.current.osInstance()?.elements().viewport || null);
+    }
+  });
 
   const { data: userInfo, loading } = useRequest(
     async () => {
@@ -33,12 +42,6 @@ const UserProfile = () => {
 
       if (res.code === 0) {
         return res.data;
-      } else {
-        addToast({
-          title: "无法验证身份，请登录后操作",
-          color: "danger",
-        });
-        return undefined;
       }
     },
     {
@@ -92,6 +95,11 @@ const UserProfile = () => {
 
   const tabs = [
     {
+      label: "动态",
+      key: "dynamic",
+      content: <DynamicList mid={Number(id)} scrollElement={scrollElement} />,
+    },
+    {
       label: "投稿",
       key: "video",
       content: <VideoPost />,
@@ -125,7 +133,7 @@ const UserProfile = () => {
         relationWithMe={relationWithMe}
         refreshRelation={refreshRelation}
       />
-      {user?.isLogin && (isSelf || relationWithMe !== UserRelation.Blocked) && (
+      {relationWithMe !== UserRelation.Blocked && (
         <div className="px-3 py-4">
           <Tabs radius="md" classNames={{ cursor: "rounded-medium" }} aria-label="个人资料栏目" variant="solid">
             {tabs.map(item => (

@@ -1,6 +1,7 @@
 import axios, { type CreateAxiosDefaults } from "axios";
 
 import { requestInterceptors } from "./request-interceptors";
+import { geetestInterceptors } from "./response-interceptors";
 import { tauriAxiosAdapter } from "./tauri-axios-adapter";
 
 // Always use the Tauri adapter
@@ -41,6 +42,8 @@ export const passportRequest = axios.create({
 apiRequest.interceptors.request.use(requestInterceptors);
 passportRequest.interceptors.request.use(requestInterceptors);
 searchRequest.interceptors.request.use(requestInterceptors);
+
+apiRequest.interceptors.response.use(geetestInterceptors);
 
 biliRequest.interceptors.response.use(res => res.data);
 apiRequest.interceptors.response.use(res => res.data);

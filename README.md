@@ -110,7 +110,7 @@ pnpm test
 - 快速选择：
   - <img alt="Windows" src="https://img.shields.io/badge/Windows-0078D6?logo=windows&logoColor=white" /> 优先选安装包 `win-setup`；需要免安装/无管理员权限选 `win-portable`
   - <img alt="macOS" src="https://img.shields.io/badge/macOS-000000?logo=apple&logoColor=white" /> 优先选 `dmg`；需要脚本/自动化分发可选 `zip`
-  - <img alt="Linux" src="https://img.shields.io/badge/Linux-FCC624?logo=linux&logoColor=000000" /> 优先选 `AppImage`；偏好包管理器可选 `deb`/`rpm`
+  - <img alt="Linux" src="https://img.shields.io/badge/Linux-FCC624?logo=linux&logoColor=000000" /> 优先选 `AppImage`；偏好包管理器可选 `deb`/`rpm`；Arch Linux 用户可选 AUR
 - 常见产物对比如下（`<version>` 为版本号，`<arch>` 常见为 `x64`/`arm64`）：
 
 <table>
@@ -262,6 +262,26 @@ pnpm test
         <code>Biu-&lt;version&gt;-linux-arm64.deb</code> / <code>.rpm</code>
       </td>
     </tr>
+    <tr>
+      <td>
+        <img alt="Arch Linux" src="https://img.shields.io/badge/Arch%20Linux-1793D1?logo=arch-linux&logoColor=white" />
+      </td>
+      <td>
+        AUR (由<a href="https://github.com/cjlworld">@cjlworld</a>提供)
+        <br />
+        <a href="https://aur.archlinux.org/packages/biu-bin"><code>biu-bin</code></a>
+      </td>
+      <td>
+        通过 AUR 助手安装更新方便<br />
+        符合 Arch 用户习惯
+      </td>
+      <td>
+        依赖社区更新
+      </td>
+      <td>
+        <code>paru -S biu-bin</code>
+      </td>
+    </tr>
   </tbody>
 </table>
 
@@ -281,19 +301,6 @@ pnpm test
   - 部分音频清晰度与解析可能需要登录或大会员权限。
   - 请遵循 Bilibili 使用条款，合理合规使用。
 
-## 🤝 贡献指南
-非常欢迎社区贡献！你可以按以下流程参与：
-
-1. Fork 本仓库并创建分支：`feature/your-feature` / `fix/your-fix`
-2. 开发并通过本地构建与基本自测（如：`pnpm dev`、`pnpm build`）
-3. 提交 PR，详述改动点与影响范围
-4. 通过 CI 的构建与审查后合入主分支
-
-建议：
-- 保持代码风格一致（ESLint/Prettier 已配置）
-- 提交信息简洁规范（推荐使用 `feat: ...`、`fix: ...` 等约定式格式）
-- PR 中附上必要的截图或说明
-
 ## 📄 许可证
 本项目以 PolyForm Noncommercial License 1.0.0（非商业许可）发布，禁止任何商业用途。详情参见 [`LICENSE`](LICENSE)（SPDX：`PolyForm-Noncommercial-1.0.0`）。
 
@@ -303,6 +310,7 @@ pnpm test
 
 ## 🙏 鸣谢
 - 特别感谢 [SocialSisterYi/bilibili-API-collect](https://github.com/SocialSisterYi/bilibili-API-collect) 对哔哩哔哩 API 的长期收集与整理，为本项目相关接口的使用提供了重要参考。
+- 感谢 [@cjlworld](https://github.com/cjlworld) 为 Arch Linux 用户创建并维护了 [AUR 软件包](https://aur.archlinux.org/packages/biu-bin)，方便 Arch 用户通过 `paru -S biu-bin` 命令安装与更新。
 - 在引用与使用相关资料时，我们遵循其许可条款（`CC-BY-NC 4.0`），仅用于学习与研究，不涉及任何商业用途。
 
 ## ⚖️ 法律声明与使用限制

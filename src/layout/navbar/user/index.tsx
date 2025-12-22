@@ -21,6 +21,7 @@ import {
 
 import ConfirmModal from "@/components/confirm-modal";
 import { postPassportLoginExit } from "@/service/passport-login-exit";
+import { usePlayList } from "@/store/play-list";
 import { useSettings } from "@/store/settings";
 import { useToken } from "@/store/token";
 import { useUser } from "@/store/user";
@@ -62,6 +63,7 @@ const UserCard = () => {
       updateSettings({
         hiddenMenuKeys: [],
       });
+      usePlayList.getState().clear();
       navigate("/");
       return true;
     } else {
