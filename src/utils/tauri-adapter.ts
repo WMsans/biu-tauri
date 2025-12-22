@@ -89,6 +89,9 @@ export const tauriAdapter: any = {
     return invoke("get_cookie", { key });
   },
 
+  setCookie: (name: string, value: string, expirationDate?: number) =>
+    invoke("set_cookie", { name, value, expirationDate }),
+
   // Router / Navigation
   navigate: (cb: any) => {
     return syncListen("router:navigate", path => cb(path));

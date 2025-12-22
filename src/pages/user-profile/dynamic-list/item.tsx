@@ -10,6 +10,7 @@ import { formatNumber } from "@/common/utils/number";
 import { openBiliVideoLink } from "@/common/utils/url";
 import { postDynamicFeedThumb } from "@/service/web-dynamic-feed-thumb";
 import { usePlayList } from "@/store/play-list";
+import { tauriAdapter } from "@/utils/tauri-adapter";
 
 interface DynamicItemProps {
   item: WebDynamicItem;
@@ -124,7 +125,7 @@ const DynamicItem = ({ item }: DynamicItemProps) => {
             size="sm"
             className="text-default-500 data-[hover=true]:bg-default-100 flex-1 gap-1"
             onPress={() => {
-              window.electron.addMediaDownloadTask({
+              tauriAdapter.addMediaDownloadTask({
                 outputFileType: "video",
                 title: archive.title,
                 cover: archive.cover,

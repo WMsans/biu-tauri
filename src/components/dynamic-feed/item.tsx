@@ -5,6 +5,7 @@ import { Image, Card, CardHeader, CardBody, addToast, User } from "@heroui/react
 import moment from "moment";
 
 import { usePlayList } from "@/store/play-list";
+import { tauriAdapter } from "@/utils/tauri-adapter";
 
 import type { WebDynamicItem } from "../../service/web-dynamic";
 
@@ -30,7 +31,7 @@ const DynamicItem: React.FC<DynamicItemProps> = ({ item, onClose }) => {
   const textContent = dynamic.desc?.text || dynamic.major?.opus?.summary?.text || "";
 
   const handleDownload = async (type: "audio" | "video") => {
-    await window.electron.addMediaDownloadTask({
+    await tauriAdapter.addMediaDownloadTask({
       outputFileType: type,
       title: archive?.title as string,
       cover: archive?.cover,

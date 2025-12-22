@@ -1,3 +1,5 @@
+import { tauriAdapter } from "@/utils/tauri-adapter";
+
 import { apiRequest } from "./request";
 
 export interface PostDynamicFeedThumbParams {
@@ -14,7 +16,7 @@ export interface PostDynamicFeedThumbResposne {
 }
 
 export const postDynamicFeedThumb = async (data: PostDynamicFeedThumbParams) => {
-  const csrfToken = await window.electron.getCookie("bili_jct");
+  const csrfToken = await tauriAdapter.getCookie("bili_jct");
 
   return apiRequest.post<PostDynamicFeedThumbResposne>("/x/dynamic/feed/dyn/thumb", data, {
     params: {

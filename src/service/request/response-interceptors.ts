@@ -2,13 +2,15 @@ import type { AxiosResponse } from "axios";
 
 import axios from "axios";
 
+import { tauriAdapter } from "@/utils/tauri-adapter";
+
 export const geetestInterceptors = async (response: AxiosResponse) => {
   if (response?.data?.data?.v_voucher) {
     const { verifyGeetest } = await import("@/common/utils/geetest");
     const { postGaiaVGateRegister, postGaiaVGateValidate } = await import("@/service/gaia-vgate");
 
     // 获取 csrf token (bili_jct)
-    const csrf = await window.electron.getCookie("bili_jct");
+    const csrf = await tauriAdapter.getCookie("bili_jct");
 
     const v_voucher = response.data.data.v_voucher;
 
@@ -36,7 +38,7 @@ export const geetestInterceptors = async (response: AxiosResponse) => {
         config.params = { ...config.params, gaia_vtoken };
 
         // 5. Cookie 加入 x-bili-gaia-vtoken
-        await window.electron.setCookie("x-bili-gaia-vtoken", gaia_vtoken);
+        await tauriAdapter.setCookie("x-bili-gaia-vtoken", gaia_vtoken);
 
         return axios(config);
       }

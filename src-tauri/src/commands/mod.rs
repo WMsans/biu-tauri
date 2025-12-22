@@ -26,6 +26,7 @@ pub fn get_handlers() -> impl Fn(Invoke) -> bool {
         download::clear_media_download_task_list,
         network::http_request,
         network::get_cookie,
+        network::set_cookie,
         network::http_get,
         network::http_post,
         network::get_proxy_port,
