@@ -19,8 +19,8 @@ import {
   RiSettings3Line,
 } from "@remixicon/react";
 
-import ConfirmModal from "@/components/confirm-modal";
 import { postPassportLoginExit } from "@/service/passport-login-exit";
+import { useModalStore } from "@/store/modal";
 import { usePlayList } from "@/store/play-list";
 import { useSettings } from "@/store/settings";
 import { useToken } from "@/store/token";
@@ -38,11 +38,7 @@ const UserCard = () => {
 
   const { isOpen: isLoginModalOpen, onOpen: openLoginModal, onOpenChange: onLoginModalOpenChange } = useDisclosure();
 
-  const {
-    isOpen: isConfirmLogoutModalOpen,
-    onOpen: openConfirmLogoutModal,
-    onOpenChange: onConfirmLogoutModalOpenChange,
-  } = useDisclosure();
+  const onOpenConfirmModal = useModalStore(s => s.onOpenConfirmModal);
 
   const logout = async () => {
     const csrfToken = await tauriAdapter.getCookie("bili_jct");
@@ -98,7 +94,7 @@ const UserCard = () => {
     },
     {
       key: "feedback",
-      label: "反馈",
+      label: "问题反馈",
       startContent: <RiFeedbackLine size={18} />,
       endContent: <RiExternalLinkLine size={18} />,
       onPress: () => tauriAdapter.openExternal("https://github.com/wood3n/biu/issues"),
@@ -110,7 +106,16 @@ const UserCard = () => {
       color: "danger" as const,
       className: "text-danger",
       hidden: !user?.isLogin,
-      onPress: openConfirmLogoutModal,
+      onPress: () => {
+        onOpenConfirmModal({
+          title: "确认退出登录？",
+          type: "danger",
+          onConfirm: async () => {
+            await logout();
+            return true;
+          },
+        });
+      },
     },
   ].filter(item => !item.hidden);
 
@@ -141,13 +146,7 @@ const UserCard = () => {
           )}
         </DropdownMenu>
       </Dropdown>
-      <ConfirmModal
-        type="danger"
-        title="确认退出登录？"
-        isOpen={isConfirmLogoutModalOpen}
-        onOpenChange={onConfirmLogoutModalOpenChange}
-        onConfirm={logout}
-      />
+
       <Login isOpen={isLoginModalOpen} onOpenChange={onLoginModalOpenChange} />
     </>
   );

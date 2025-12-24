@@ -1,23 +1,18 @@
-import { addToast, useDisclosure } from "@heroui/react";
+import { addToast } from "@heroui/react";
 
 import { useAppUpdateStore } from "@/store/app-update";
+import { useModalStore } from "@/store/modal";
 import { tauriAdapter } from "@/utils/tauri-adapter";
 
 import AsyncButton from "../async-button";
-import ReleaseNoteModal from "../release-note-modal";
 
 const UpdateCheckButton = () => {
   const isUpdateAvailable = useAppUpdateStore(s => s.isUpdateAvailable);
-
-  const {
-    isOpen: isReleaseNoteModalOpen,
-    onOpen: onReleaseNoteModalOpen,
-    onOpenChange: onReleaseNoteModalOpenChange,
-  } = useDisclosure();
+  const onOpenReleaseNoteModal = useModalStore(s => s.onOpenReleaseNoteModal);
 
   const checkUpdate = async () => {
     if (isUpdateAvailable) {
-      onReleaseNoteModalOpen();
+      onOpenReleaseNoteModal();
 
       return;
     }
@@ -31,7 +26,7 @@ const UpdateCheckButton = () => {
         color: "danger",
       });
     } else if (res?.isUpdateAvailable) {
-      onReleaseNoteModalOpen();
+      onOpenReleaseNoteModal();
     } else {
       addToast({
         title: "当前版本为最新版本",
@@ -39,12 +34,7 @@ const UpdateCheckButton = () => {
     }
   };
 
-  return (
-    <>
-      <AsyncButton onPress={checkUpdate}>{isUpdateAvailable ? "查看更新内容" : "检查更新"}</AsyncButton>
-      <ReleaseNoteModal isOpen={isReleaseNoteModalOpen} onOpenChange={onReleaseNoteModalOpenChange} />
-    </>
-  );
+  return <AsyncButton onPress={checkUpdate}>{isUpdateAvailable ? "查看更新内容" : "检查更新"}</AsyncButton>;
 };
 
 export default UpdateCheckButton;
