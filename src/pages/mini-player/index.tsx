@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 
 import { Button, Image, Slider } from "@heroui/react";
 import {
@@ -36,7 +36,7 @@ const MiniPlayer = () => {
   const updatePlayState = usePlayState(state => state.update);
   const bcRef = useRef<BroadcastChannel>(null);
 
-  const postMessage = (type: string, state?: any) => {
+  const postMessage = useCallback((type: string, state?: any) => {
     if (!bcRef.current) return;
     bcRef.current.postMessage({
       from: "mini",
@@ -46,13 +46,30 @@ const MiniPlayer = () => {
       },
       ts: Date.now(),
     });
-  };
+  }, []);
 
   useStyle();
 
   const playModeIcon = useMemo(() => {
     return PlayModeList.find(item => item.value === playMode)?.icon;
   }, [playMode]);
+
+  // Dead reckoning: Increment progress locally to reduce IPC frequency
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+
+    if (isPlaying) {
+      interval = setInterval(() => {
+        const { currentTime, setCurrentTime } = usePlayProgress.getState();
+        // Only increment if we have a valid duration and we haven't exceeded it
+        if (duration > 0 && currentTime < duration) {
+          setCurrentTime(currentTime + 0.25);
+        }
+      }, 250);
+    }
+
+    return () => clearInterval(interval);
+  }, [isPlaying, duration]);
 
   useEffect(() => {
     bcRef.current = createBroadcastChannel();
@@ -76,7 +93,7 @@ const MiniPlayer = () => {
       if (!bcRef.current) return;
       bcRef.current.close();
     };
-  }, []);
+  }, [postMessage, setCurrentTime, updatePlayState]);
 
   const handleSeek = (v: number) => {
     postMessage("seek", { currentTime: v });
