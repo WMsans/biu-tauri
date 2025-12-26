@@ -92,11 +92,12 @@ const AudioWaveform = ({
       canvas.width = width;
       canvas.height = height;
 
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
       const draw = () => {
         if (!analyser || !ctx) return;
 
-        const bufferLength = analyser.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
         analyser.getByteFrequencyData(dataArray);
 
         ctx.clearRect(0, 0, width, height);
