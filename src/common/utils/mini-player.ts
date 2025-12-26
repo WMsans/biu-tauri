@@ -1,5 +1,4 @@
 import { addToast } from "@heroui/react";
-import { shallow } from "zustand/shallow";
 
 import type { PlayMode } from "@/common/constants/audio";
 
@@ -31,7 +30,7 @@ export interface MiniPlayerMessageFromMini {
 
 export interface MiniPlayerMessageFromMain {
   from: "main";
-  state: MiniPlayerMainStateSnapshot;
+  state: Partial<MiniPlayerMainStateSnapshot>;
   ts: number;
 }
 
@@ -43,6 +42,9 @@ let bc: BroadcastChannel | null = null;
 let unsubscribePlayList: VoidFunction | null = null;
 let unsubscribePlayProgress: VoidFunction | null = null;
 let isBroadcasting = false;
+
+// Track the last sent state to avoid redundant messages and calculate diffs
+let lastSentState: Partial<MiniPlayerMainStateSnapshot> = {};
 
 export function createBroadcastChannel() {
   return new BroadcastChannel("play-list-store-sync-channel");
@@ -65,10 +67,16 @@ function getMainStateSnapshot(): MiniPlayerMainStateSnapshot {
   };
 }
 
-function postMainState(channel: BroadcastChannel) {
+function postMainState(channel: BroadcastChannel, partialState?: Partial<MiniPlayerMainStateSnapshot>) {
+  const fullState = getMainStateSnapshot();
+  const stateToSend = partialState || fullState;
+
+  // Update local tracker
+  lastSentState = { ...lastSentState, ...stateToSend };
+
   const message: MiniPlayerMessageFromMain = {
     from: "main",
-    state: getMainStateSnapshot(),
+    state: stateToSend,
     ts: Date.now(),
   };
   channel.postMessage(message);
@@ -81,6 +89,7 @@ function handleMessageFromMini(message: MiniPlayerMessageFromMini, channel: Broa
   const type = data.type;
   switch (type) {
     case "init": {
+      // Send full state on init
       postMainState(channel);
       break;
     }
@@ -124,8 +133,8 @@ export function startMiniPlayerMainSync() {
   if (isBroadcasting) return;
 
   bc = createBroadcastChannel();
-
   isBroadcasting = true;
+  lastSentState = getMainStateSnapshot(); // Initialize with current state
 
   bc.onmessage = ev => {
     const data = ev.data as MiniPlayerMessageFromMini;
@@ -133,30 +142,44 @@ export function startMiniPlayerMainSync() {
     handleMessageFromMini(data, bc as BroadcastChannel);
   };
 
-  unsubscribePlayList = usePlayList.subscribe((state, prevState) => {
-    if (
-      !shallow(
-        {
-          playId: state.playId,
-          isPlaying: state.isPlaying,
-          playMode: state.playMode,
-          duration: state.duration,
-        },
-        {
-          playId: prevState.playId,
-          isPlaying: prevState.isPlaying,
-          playMode: prevState.playMode,
-          duration: prevState.duration,
-        },
-      )
-    ) {
-      postMainState(bc as BroadcastChannel);
+  unsubscribePlayList = usePlayList.subscribe(() => {
+    // "title" and "cover" are derived from playId/getPlayItem, so playId change usually covers them.
+    // However, we should check the actual snapshot values to be safe or re-derive.
+    // Simpler: Compare the new snapshot with lastSentState.
+
+    const currentSnapshot = getMainStateSnapshot();
+    const diff: Partial<MiniPlayerMainStateSnapshot> = {};
+    let hasChanges = false;
+
+    // We only check fields managed by PlayList store (everything except currentTime)
+    // currentTime is handled by unsubscribePlayProgress
+    for (const key in currentSnapshot) {
+      const k = key as keyof MiniPlayerMainStateSnapshot;
+      if (k === "currentTime") continue;
+
+      if (currentSnapshot[k] !== lastSentState[k]) {
+        diff[k] = currentSnapshot[k] as any;
+        hasChanges = true;
+      }
+    }
+
+    if (hasChanges) {
+      postMainState(bc as BroadcastChannel, diff);
     }
   });
 
-  unsubscribePlayProgress = usePlayProgress.subscribe((state, prevState) => {
-    if (state.currentTime !== prevState.currentTime) {
-      postMainState(bc as BroadcastChannel);
+  unsubscribePlayProgress = usePlayProgress.subscribe(state => {
+    const currentTime = state.currentTime;
+    const lastTime = lastSentState.currentTime ?? -1;
+    const isPlaying = usePlayList.getState().isPlaying;
+
+    // Throttle:
+    // 1. If not playing (scrubbing), sync immediately (or at higher rate).
+    // 2. If playing, sync only if diff > 1s (Dead Reckoning correction).
+    const shouldSync = !isPlaying || Math.abs(currentTime - lastTime) >= 1;
+
+    if (shouldSync) {
+      postMainState(bc as BroadcastChannel, { currentTime });
     }
   });
 }
