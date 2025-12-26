@@ -147,7 +147,7 @@ const DownloadActions = ({ data }: Props) => {
             onConfirm: async () => {
               if (pendingAction) return false;
               lockAction("delete");
-              await window.electron.cancelMediaDownloadTask(data.id);
+              await tauriAdapter.cancelMediaDownloadTask(data.id);
               return true;
             },
           });

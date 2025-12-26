@@ -18,8 +18,8 @@ const Logo = () => {
   useEffect(() => {
     if (!isMac) return;
 
-    window.electron?.isFullScreen().then(setIsFullScreen);
-    const unlisten = window.electron?.onWindowFullScreenChange(setIsFullScreen);
+    tauriAdapter?.isFullScreen().then(setIsFullScreen);
+    const unlisten = tauriAdapter?.onWindowFullScreenChange(setIsFullScreen);
 
     return () => {
       unlisten?.();
