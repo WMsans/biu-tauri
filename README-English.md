@@ -1,10 +1,55 @@
 # Fork: Biu Music Player
+https://github.com/WMsans/biu-tauri/tree/master
 
 ## ⚠️ Warning
 This project is a fork of the original Biu Music Player. Please note that this fork is not affiliated with Bilibili or any other entity. All rights to the Bilibili brand and trademarks belong to their respective owners.
 
 ## 📌 About This Fork
 This project is a fork of the original Biu Music Player. The fork aims to provide a more stable and feature-rich experience while maintaining the core functionality of the original project. The fork is not affiliated with Bilibili or any other entity. All rights to the Bilibili brand and trademarks belong to their respective owners.
+
+<p align="center">
+  <img src="./screenshots/logo.svg" alt="Biu logo" width="120" />
+</p>
+<p align="center">
+  A music player based on Bilibili's API.
+</p>
+<p align="center">
+  Not affiliated with Bilibili or any other entity.
+</p>
+<p align="center">
+  <a href="https://github.com/WMsans/biu-tauri/releases">
+    <img src="https://badgen.net/github/tag/wood3n/biu?label=最新版本&color=blueviolet" alt="Latest Version" />
+  </a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-PolyForm%20Noncommercial%201.0.0-orange.svg" alt="License" /></a>
+</p>
+
+<table>
+  <tr>
+    <td width="50%" align="center">
+      <img src="./screenshots/home.png" alt="home" width="100%" />
+    </td>
+    <td width="50%" align="center">
+      <img src="./screenshots/main.png" alt="main" width="100%" />
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <img src="./screenshots/download.png" alt="download" width="100%" />
+    </td>
+    <td width="50%" align="center">
+      <img src="./screenshots/settings.png" alt="settings" width="100%" />
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <img src="./screenshots/playlist.png" alt="playlist" width="100%" />
+    </td>
+    <td width="50%" align="center">
+      <p> mini player</p>
+      <img src="./screenshots/mini.png" alt="mini" width="100%" />
+    </td>
+  </tr>
+</table>
 
 ## 📌 Features
 - A modern and intuitive user interface
