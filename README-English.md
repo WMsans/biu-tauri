@@ -26,9 +26,7 @@ To install this fork, you can use the following methods:
 2. Install the file using your package manager (e.g., `sudo dpkg -i biu-music-player.deb` for DEB files or `sudo rpm -i biu-music-player.rpm` for RPM files).
 
 ### 🍎 macOS
-1. Download the DMG file from the [Releases](https://github.com/yourusername/yourproject/releases) page.
-2. Mount the DMG file and drag the application to your Applications folder.
-3. Launch the application from your Applications folder.
+fxxk mac.
 
 ### 🐍 Windows
 1. Download the installer from the [Releases](https://github.com/yourusername/yourproject/releases) page.
@@ -36,12 +34,10 @@ To install this fork, you can use the following methods:
 
 ## 📌 System Requirements
 - **Windows**: Windows 10 / 11 (x64 / arm64)
-- **macOS**: macOS 12+ (x64 / arm64)
 - **Linux**: Mainstream Linux distributions (x64 / arm64)
 
 ## 📌 Architecture Selection
 - **Windows**: Go to Settings → System → About → "System type" (ARM devices select arm64, others are typically x64)
-- **macOS**: Apple chips select arm64, Intel chips select x64
 - **Linux**: Run `uname -m`, common x86_64 corresponds to x64, aarch64 corresponds to arm64
 
 ## 📌 Auto-Update
