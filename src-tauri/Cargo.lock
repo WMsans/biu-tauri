@@ -76,36 +76,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a23eb6b1614318a8071c9b2521f36b424b2c83db5eb3a0fead4a6c0809af6e61"
 
 [[package]]
-name = "app"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "font-kit",
- "futures-util",
- "log",
- "md5",
- "mimalloc",
- "open",
- "reqwest",
- "reqwest_cookie_store",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-dialog",
- "tauri-plugin-global-shortcut",
- "tauri-plugin-http",
- "tauri-plugin-log",
- "tauri-plugin-shell",
- "tauri-plugin-single-instance",
- "thiserror 2.0.17",
- "tokio",
- "url",
- "urlencoding",
- "uuid",
-]
-
-[[package]]
 name = "arrayvec"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -335,6 +305,36 @@ dependencies = [
  "radium",
  "tap",
  "wyz",
+]
+
+[[package]]
+name = "biu-tauri"
+version = "1.7.1"
+dependencies = [
+ "anyhow",
+ "font-kit",
+ "futures-util",
+ "log",
+ "md5",
+ "mimalloc",
+ "open",
+ "reqwest",
+ "reqwest_cookie_store",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-dialog",
+ "tauri-plugin-global-shortcut",
+ "tauri-plugin-http",
+ "tauri-plugin-log",
+ "tauri-plugin-shell",
+ "tauri-plugin-single-instance",
+ "thiserror 2.0.17",
+ "tokio",
+ "url",
+ "urlencoding",
+ "uuid",
 ]
 
 [[package]]

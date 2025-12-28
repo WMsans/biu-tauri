@@ -1,11 +1,21 @@
 [package]
-name = "app"
-version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
-license = ""
-repository = ""
+name = "biu-tauri"
+version = "1.7.1"
+description = "music application based on bilibili api"
+authors = ["wood3n", "wmsans"]
+license = "PolyForm-Noncommercial-1.0.0"
+repository = "https://github.com/wood3n/biu.git"
+homepage = "https://github.com/wood3n/biu#readme"
 edition = "2021"
+keywords = [
+  "music",
+  "music desktop application",
+  "bilibili music application",
+  "frontend",
+  "react",
+  "typescript",
+  "tauri"
+]
 rust-version = "1.77.2"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
