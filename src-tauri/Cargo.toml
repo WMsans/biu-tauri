@@ -1,6 +1,6 @@
 [package]
 name = "biu-tauri"
-version = "1.7.1"
+version = "1.8.0"
 description = "music application based on bilibili api"
 authors = ["wood3n", "wmsans"]
 license = "PolyForm-Noncommercial-1.0.0"
