@@ -1,151 +1,151 @@
 import { useEffect, useRef } from "react";
 
+import { audio as audioElement } from "@/store/play-list";
+
 interface AudioWaveformProps {
-  audioElement: HTMLAudioElement;
   width?: number;
   height?: number;
   barCount?: number;
   barColor?: string;
 }
 
-// 1. Use a SINGLE global AudioContext instance (Lazy initialized)
-let globalAudioContext: AudioContext | null = null;
-
-const getAudioContext = () => {
-  if (!globalAudioContext) {
-    globalAudioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-  }
-  return globalAudioContext;
-};
-
-// Store source nodes to avoid "MediaElementAudioSourceNode can only be created once" errors
-const audioSourceMap = new WeakMap<HTMLAudioElement, MediaElementAudioSourceNode>();
+// Global AudioContext singleton to prevent multiple MediaElementSourceNode creation
+let audioContext: AudioContext | null = null;
+let analyser: AnalyserNode | null = null;
+let source: MediaElementAudioSourceNode | null = null;
 
 /**
- * Audio Waveform Visualization Component
+ * 音频波形可视化组件
+ * 使用 Web Audio API 实现动态频谱效果
  */
-const AudioWaveform = ({
-  audioElement,
-  width = 56,
-  height = 56,
-  barCount = 40,
-  barColor = "currentColor",
-}: AudioWaveformProps) => {
+const AudioWaveform = ({ width = 56, height = 56, barCount = 40, barColor = "currentColor" }: AudioWaveformProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const animationFrameRef = useRef<number | undefined>(undefined);
-  const analyserRef = useRef<AnalyserNode | null>(null);
-  const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
+  const animationIdRef = useRef<number>(0);
 
   useEffect(() => {
-    if (!audioElement || !canvasRef.current) return;
-
     const canvas = canvasRef.current;
+    if (!canvas || !audioElement) return;
+
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const wasPlaying = !audioElement.paused;
-    const currentTime = audioElement.currentTime;
-    const volume = audioElement.volume;
+    // Initialize AudioContext and Analyser if not already done
+    const initAudio = () => {
+      if (!audioContext) {
+        audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
+        analyser = audioContext.createAnalyser();
+        analyser.fftSize = 512; // Increased for better resolution
 
-    // 2. Retrieve the global singleton context
-    const audioContext = getAudioContext();
-    let source = audioSourceMap.get(audioElement);
-
-    try {
-      if (!source) {
-        // Create source and connect to destination (speakers) only once per element
-        source = audioContext.createMediaElementSource(audioElement);
-        audioSourceMap.set(audioElement, source);
-        source.connect(audioContext.destination);
+        try {
+          // Connect the global audio element to the analyser
+          source = audioContext.createMediaElementSource(audioElement);
+          source.connect(analyser);
+          analyser.connect(audioContext.destination);
+        } catch (error) {
+          console.warn("MediaElementSourceNode already connected or creation failed:", error);
+        }
       }
-
-      // Create a new analyser for this visualization instance
-      const analyser = audioContext.createAnalyser();
-      analyser.fftSize = 256;
-      analyser.smoothingTimeConstant = 0.8;
-
-      // Connect source -> analyser
-      source.connect(analyser);
-
-      if (audioContext.state === "suspended") {
-        audioContext.resume().catch(err => {
-          console.warn("Failed to resume audio context:", err);
-        });
+      if (audioContext?.state === "suspended") {
+        audioContext.resume();
       }
+    };
 
-      // Restore audio state if messed up by connection
-      audioElement.volume = volume;
-      // Only set currentTime if significantly different to avoid glitches
-      if (Math.abs(audioElement.currentTime - currentTime) > 0.1) {
-        audioElement.currentTime = currentTime;
+    // Initialize on mount
+    initAudio();
+
+    // Ensure context resumes on play
+    const handlePlay = () => {
+      if (audioContext?.state === "suspended") {
+        audioContext.resume();
       }
-
-      if (wasPlaying) {
-        timeoutRef.current = setTimeout(() => {
-          audioElement.play().catch(err => {
-            console.warn("Failed to resume playback:", err);
-          });
-        }, 0);
+      if (!animationIdRef.current) {
+        render();
       }
+    };
 
-      analyserRef.current = analyser;
-      canvas.width = width;
-      canvas.height = height;
+    const handlePause = () => {
+      if (animationIdRef.current) {
+        cancelAnimationFrame(animationIdRef.current);
+        animationIdRef.current = 0;
+      }
+    };
+
+    const draw = () => {
+      if (!analyser || !ctx) return;
 
       const bufferLength = analyser.frequencyBinCount;
       const dataArray = new Uint8Array(bufferLength);
+      analyser.getByteFrequencyData(dataArray);
 
-      const draw = () => {
-        if (!analyser || !ctx) return;
+      ctx.clearRect(0, 0, width, height);
 
-        analyser.getByteFrequencyData(dataArray);
+      const computedBarWidth = width / barCount;
+      const barGap = computedBarWidth * 0.2;
+      const barWidth = computedBarWidth - barGap;
 
-        ctx.clearRect(0, 0, width, height);
+      // Focus on the lower 60% of the frequency spectrum (most music energy)
+      // With fftSize=512, bufferLength=256.
+      // 0.6 * 256 * (44100/512) ≈ 13kHz coverage
+      const usefulBufferLength = Math.floor(bufferLength * 0.6);
 
-        const WAVEFORM_HEIGHT_SCALE_FACTOR = 0.8;
-        const barWidth = width / barCount;
-        const barGap = barWidth * 0.2;
-        const actualBarWidth = barWidth - barGap;
+      // Draw bars
+      for (let i = 0; i < barCount; i++) {
+        // Map bar index to frequency data index
+        const dataIndex = Math.floor((i / barCount) * usefulBufferLength);
+        let value = dataArray[dataIndex];
 
-        for (let i = 0; i < barCount; i++) {
-          const dataIndex = Math.floor((i / barCount) * bufferLength);
-          const barHeight = (dataArray[dataIndex] / 255) * height * WAVEFORM_HEIGHT_SCALE_FACTOR;
+        // Boost high frequencies (right side) as they are naturally quieter
+        // Linear boost from 1x to 2x
+        const boost = 1 + i / barCount;
+        value = Math.min(255, value * boost);
 
-          const x = i * barWidth + barGap / 2;
-          const y = height - barHeight;
+        // Calculate bar height based on value (0-255)
+        // Ensure a minimum height (e.g., 2px) to show a "base" row like PotPlayer
+        const barHeight = Math.max((value / 255) * height, 2);
 
-          ctx.fillStyle = barColor;
-          ctx.fillRect(x, y, actualBarWidth, barHeight);
+        const x = i * computedBarWidth;
+        const y = height - barHeight;
+
+        // Set color
+        ctx.fillStyle = barColor === "currentColor" ? "#666" : barColor;
+
+        // Draw rounded bar (simulated)
+        ctx.beginPath();
+        // Use rect for simplicity, or roundRect if supported
+        if (ctx.roundRect) {
+          ctx.roundRect(x, y, barWidth, barHeight, 2);
+        } else {
+          ctx.fillRect(x, y, barWidth, barHeight);
         }
+        ctx.fill();
+      }
+    };
 
-        animationFrameRef.current = requestAnimationFrame(draw);
-      };
-
+    const render = () => {
       draw();
-    } catch (error) {
-      console.error("Failed to create audio setup:", error);
+      animationIdRef.current = requestAnimationFrame(render);
+    };
+
+    audioElement.addEventListener("play", handlePlay);
+    audioElement.addEventListener("pause", handlePause);
+
+    // Initialize state
+    if (!audioElement.paused) {
+      render();
+    } else {
+      draw();
     }
 
     return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
+      if (animationIdRef.current) {
+        cancelAnimationFrame(animationIdRef.current);
       }
-      if (timeoutRef.current) {
-        clearTimeout(timeoutRef.current);
-      }
-      // 3. Only disconnect the analyser. Do NOT close the context or disconnect the source from destination.
-      if (analyserRef.current && source) {
-        try {
-          source.disconnect(analyserRef.current);
-        } catch (error) {
-          console.warn("Failed to disconnect analyser:", error);
-        }
-      }
-      analyserRef.current = null;
+      audioElement.removeEventListener("play", handlePlay);
+      audioElement.removeEventListener("pause", handlePause);
     };
-  }, [audioElement, width, height, barCount, barColor]);
+  }, [width, height, barCount, barColor]);
 
-  return <canvas ref={canvasRef} className="rounded-md" style={{ width, height }} />;
+  return <canvas ref={canvasRef} width={width} height={height} />;
 };
 
 export default AudioWaveform;

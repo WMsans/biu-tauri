@@ -85,7 +85,7 @@ interface State {
   proxyPort: number;
 }
 
-interface PlayItem {
+export interface PlayItem {
   type: PlayDataType;
   title: string;
   bvid?: string;
@@ -199,19 +199,15 @@ const createAudio = (): HTMLAudioElement => {
   return audio;
 };
 
-const audio = createAudio();
+export const audio = createAudio();
 
 const updatePlaybackState = () => {
   if ("mediaSession" in navigator) {
     navigator.mediaSession.playbackState = audio.paused ? "paused" : "playing";
   }
-  try {
-    if (tauriAdapter && tauriAdapter.updatePlaybackState) {
-      tauriAdapter.updatePlaybackState(!audio.paused);
-    }
-  } catch (err) {
-    // 渲染端上报失败不影响本地状态；仅记录日志便于定位
-    console.warn("[renderer] updatePlaybackState IPC failed:", err);
+
+  if (tauriAdapter && tauriAdapter.updatePlaybackState) {
+    tauriAdapter.updatePlaybackState(!audio.paused);
   }
 };
 
@@ -228,7 +224,7 @@ const updatePositionState = () => {
   }
 };
 
-const isSame = (
+export const isSame = (
   item1?: { type: "mv" | "audio"; sid?: number; bvid?: string },
   item2?: { type: "mv" | "audio"; sid?: number; bvid?: string },
 ) => {
@@ -939,6 +935,10 @@ function resetAudioAndPlay(url: string, referer: string) {
 // 切换歌曲时，更新当前播放的歌曲信息
 usePlayList.subscribe(async (state, prevState) => {
   if (state.playId !== prevState.playId) {
+    if (audio && !audio.paused) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
     // 切换歌曲
     if (state.playId) {
       const playItem = state.list.find(item => item.id === state.playId);

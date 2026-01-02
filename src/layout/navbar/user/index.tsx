@@ -103,16 +103,13 @@ const UserCard = () => {
       key: "logout",
       label: "退出登录",
       startContent: <RiLogoutCircleLine size={18} />,
-      color: "primary" as const,
-      className: "text-primary",
-      classNames: {
-        base: "hover:bg-primary/10",
-      },
+      color: "danger" as const,
+      className: "text-danger",
       hidden: !user?.isLogin,
       onPress: () => {
         onOpenConfirmModal({
           title: "确认退出登录？",
-          type: "primary",
+          type: "danger",
           onConfirm: async () => {
             await logout();
             return true;

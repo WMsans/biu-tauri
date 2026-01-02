@@ -10,6 +10,7 @@ import { useSettings } from "@/store/settings";
 import { tauriAdapter } from "@/utils/tauri-adapter";
 
 import MenuSettings from "./menu-settings";
+import ProxySettings from "./proxy-settings";
 import ShortcutSettingsPage from "./shortcut-settings";
 import { SystemSettingsTab } from "./system-settings";
 
@@ -28,8 +29,8 @@ const useSystemSettingsForm = () => {
     ffmpegPath,
     themeMode,
     pageTransition,
-    searchMusicOnly,
     showSearchHistory,
+    proxySettings,
   } = useSettings(
     useShallow(s => ({
       fontFamily: s.fontFamily,
@@ -44,8 +45,8 @@ const useSystemSettingsForm = () => {
       ffmpegPath: s.ffmpegPath,
       themeMode: s.themeMode,
       pageTransition: s.pageTransition,
-      searchMusicOnly: s.searchMusicOnly,
       showSearchHistory: s.showSearchHistory,
+      proxySettings: s.proxySettings,
     })),
   );
   const updateSettings = useSettings(s => s.update);
@@ -70,8 +71,14 @@ const useSystemSettingsForm = () => {
       ffmpegPath,
       themeMode,
       pageTransition,
-      searchMusicOnly,
       showSearchHistory,
+      proxySettings: proxySettings ?? {
+        type: "none",
+        host: "",
+        port: undefined,
+        username: "",
+        password: "",
+      },
     },
   });
 
@@ -79,6 +86,9 @@ const useSystemSettingsForm = () => {
     const subscription = watch(values => {
       // @ts-ignore hiddenMenuKeys类型错误，但是实际运行时没有问题
       updateSettings(values);
+      if (values.proxySettings && tauriAdapter?.setProxySettings) {
+        tauriAdapter.setProxySettings(values.proxySettings as ProxySettings);
+      }
     });
     return () => subscription.unsubscribe();
   }, [watch, updateSettings]);
@@ -114,6 +124,9 @@ const SettingsPage = () => {
             </Tab>
             <Tab key="shortcut" title="快捷键设置">
               <ShortcutSettingsPage />
+            </Tab>
+            <Tab key="proxy" title="代理设置">
+              <ProxySettings control={system.control} />
             </Tab>
           </Tabs>
         </div>
