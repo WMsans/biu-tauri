@@ -13,6 +13,7 @@ interface AudioWaveformProps {
 let audioContext: AudioContext | null = null;
 let analyser: AnalyserNode | null = null;
 let source: MediaElementAudioSourceNode | null = null;
+let gainNode: GainNode | null = null;
 
 /**
  * 音频波形可视化组件
@@ -35,12 +36,26 @@ const AudioWaveform = ({ width = 56, height = 56, barCount = 40, barColor = "cur
         audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
         analyser = audioContext.createAnalyser();
         analyser.fftSize = 512; // Increased for better resolution
+        gainNode = audioContext.createGain();
 
         try {
           // Connect the global audio element to the analyser
           source = audioContext.createMediaElementSource(audioElement);
+          // Connect source -> analyser -> gainNode -> destination
+          // This allows visualization (analyser) and volume control (gainNode)
+          // Note: MediaElementSourceNode ignores the element's volume attribute, so we use a GainNode.
           source.connect(analyser);
-          analyser.connect(audioContext.destination);
+          analyser.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+
+          // Sync volume initially and on change
+          const syncVolume = () => {
+            if (gainNode) {
+              gainNode.gain.value = audioElement.muted ? 0 : audioElement.volume;
+            }
+          };
+          syncVolume();
+          audioElement.addEventListener("volumechange", syncVolume);
         } catch (error) {
           console.warn("MediaElementSourceNode already connected or creation failed:", error);
         }
