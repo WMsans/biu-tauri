@@ -1,4 +1,4 @@
-# Maintainer: Jeremy Zhao <ggajy123@gmail.com>
+# Maintainer: Jeremy Zhao <--. --. .- .--- -.-- .---- ..--- ...--@gmail.com>
 
 pkgname=biu-tauri-bin
 _pkgname=biu
