@@ -18,7 +18,7 @@ source=(
 )
 
 # You can generate this with 'updpkgsums' or 'sha256sum Biu_1.8.0_amd64.deb'
-sha256sums=('b5f8ca05e87227fa065be651299c415b8c5fd2ddae8261a5556de29daa565c7d')
+sha256sums=('869ca0c318c76b8279af5e6e5b66e6c1d13cc77b8004a5a6b836b1f3b7725489')
 
 package() {
     bsdtar -xf "${pkgname}-${pkgver}.deb" -C "$srcdir"
