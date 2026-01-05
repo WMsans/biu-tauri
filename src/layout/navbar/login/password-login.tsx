@@ -4,17 +4,15 @@ import { Controller, useForm } from "react-hook-form";
 import { Button, Form, Input, Tooltip, addToast } from "@heroui/react";
 import { RiEyeLine, RiEyeOffLine, RiQuestionLine } from "@remixicon/react";
 import { JSEncrypt } from "jsencrypt";
-import moment from "moment";
 
 import { useGeetest } from "@/common/hooks/use-geetest";
 import { getPassportLoginWebKey } from "@/service/passport-login-web-key";
 import { postPassportLoginWebLoginPassword } from "@/service/passport-login-web-login-passport";
-import { useToken } from "@/store/token";
-import { useUser } from "@/store/user";
 import { tauriAdapter } from "@/utils/tauri-adapter";
 
 export interface PasswordLoginProps {
   onClose: () => void;
+  updateUserData: (refreshToken?: string) => Promise<void>;
 }
 
 interface PasswordLoginForm {
@@ -22,7 +20,7 @@ interface PasswordLoginForm {
   password: string;
 }
 
-const PasswordLogin = ({ onClose }: PasswordLoginProps) => {
+const PasswordLogin = ({ onClose, updateUserData }: PasswordLoginProps) => {
   const { verify, loading: geetestLoading } = useGeetest();
   const [isPwdVisible, setPwdVisible] = useState<boolean>(false);
   const usernameRef = useRef<HTMLInputElement>(null);
@@ -35,9 +33,6 @@ const PasswordLogin = ({ onClose }: PasswordLoginProps) => {
 
     return () => clearTimeout(timer);
   }, []);
-
-  const updateUser = useUser(state => state.updateUser);
-  const updateToken = useToken(state => state.updateToken);
 
   const {
     control,
@@ -94,11 +89,7 @@ const PasswordLogin = ({ onClose }: PasswordLoginProps) => {
 
       if (resp.code === 0) {
         addToast({ title: "登录成功", color: "success" });
-        updateToken({
-          tokenData: { refresh_token: resp.data?.refresh_token },
-          nextCheckRefreshTime: moment().add(2, "days").unix(),
-        });
-        await updateUser();
+        await updateUserData(resp.data?.refresh_token);
         onClose?.();
       } else {
         addToast({ title: resp.message || "登录失败", color: "danger" });

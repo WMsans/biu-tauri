@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router";
 
 import { addToast } from "@heroui/react";
@@ -9,6 +9,7 @@ import ScrollContainer, { type ScrollRefObject } from "@/components/scroll-conta
 import { postFavSeasonFav } from "@/service/fav-season-fav";
 import { postFavSeasonUnfav } from "@/service/fav-season-unfav";
 import { getUserVideoArchivesList, type Media } from "@/service/user-video-archives-list";
+import { useFavoritesStore } from "@/store/favorite";
 import { useModalStore } from "@/store/modal";
 import { usePlayList } from "@/store/play-list";
 import { useSettings } from "@/store/settings";
@@ -24,25 +25,31 @@ import SeriesList from "./list";
 const VideoSeries = () => {
   const { id } = useParams();
   const user = useUser(state => state.user);
-  const collectedFolder = useUser(state => state.collectedFolder);
+  const collectedFavorites = useFavoritesStore(state => state.collectedFavorites);
+  const addCollectedFavorite = useFavoritesStore(state => state.addCollectedFavorite);
+  const rmCollectedFavorite = useFavoritesStore(state => state.rmCollectedFavorite);
   const displayMode = useSettings(state => state.displayMode);
   const playList = usePlayList(state => state.playList);
   const addList = usePlayList(state => state.addList);
+  const isFavorite = collectedFavorites?.some(item => item.id === Number(id));
 
   const [keyword, setKeyword] = useState<string>();
   const [order, setOrder] = useState("pubtime");
 
   const scrollRef = useRef<ScrollRefObject>(null);
 
-  const { data, loading, refreshAsync } = useRequest(
+  const { data, loading } = useRequest(
     async () => {
+      if (!id) {
+        return;
+      }
+
       const res = await getUserVideoArchivesList({
         season_id: Number(id),
       });
       return res?.data;
     },
     {
-      ready: Boolean(id),
       refreshDeps: [id],
     },
   );
@@ -121,7 +128,7 @@ const VideoSeries = () => {
       });
 
       if (res.code === 0) {
-        await useUser.getState().updateCollectedFolder();
+        rmCollectedFavorite(Number(id));
       }
     } else {
       // 收藏
@@ -131,7 +138,13 @@ const VideoSeries = () => {
       });
 
       if (res.code === 0) {
-        await useUser.getState().updateCollectedFolder();
+        addCollectedFavorite({
+          id: Number(id),
+          title: data?.info?.title || "未命名合集",
+          cover: data?.info?.cover,
+          type: CollectionType.VideoSeries,
+          mid: data?.info?.upper?.mid,
+        });
       }
     }
   };
@@ -196,24 +209,26 @@ const VideoSeries = () => {
     }
   };
 
-  const isFavorite = collectedFolder?.some(item => item.id === Number(id));
   const isCreatedBySelf = data?.info?.upper?.mid === user?.mid;
 
+  const getScrollElement = useCallback(() => {
+    return scrollRef.current?.osInstance()?.elements().viewport as HTMLElement | null;
+  }, []);
+
   return (
-    <ScrollContainer ref={scrollRef} resetOnChange={id} className="scroll-container h-full w-full px-4 pb-6">
+    <ScrollContainer ref={scrollRef} className="h-full w-full px-4 pb-6">
       <Header
         type={CollectionType.VideoSeries}
-        isCreatedBySelf={isCreatedBySelf}
         cover={data?.info?.cover}
         title={data?.info?.title}
         desc={data?.info?.intro}
         upMid={data?.info?.upper?.mid}
         upName={data?.info?.upper?.name}
         mediaCount={data?.info?.media_count}
-        onRefresh={refreshAsync}
       />
 
       <Operations
+        loading={loading}
         type={CollectionType.VideoSeries}
         order={order}
         onKeywordSearch={setKeyword}
@@ -236,7 +251,7 @@ const VideoSeries = () => {
           className="min-h-0 flex-1"
           data={filteredMedias}
           loading={loading}
-          getScrollElement={() => scrollRef.current?.osInstance()?.elements().viewport as HTMLElement | null}
+          getScrollElement={getScrollElement}
           onMenuAction={handleMenuAction}
         />
       ) : (
@@ -244,7 +259,7 @@ const VideoSeries = () => {
           className="min-h-0 flex-1"
           data={filteredMedias}
           loading={loading}
-          getScrollElement={() => scrollRef.current?.osInstance()?.elements().viewport as HTMLElement | null}
+          getScrollElement={getScrollElement}
           onMenuAction={handleMenuAction}
         />
       )}

@@ -2,7 +2,7 @@
 
 pkgname=biu-tauri-bin
 _pkgname=biu
-pkgver=1.8.0
+pkgver=1.9.0
 pkgrel=1
 pkgdesc="A cross-platform desktop music player based on Bilibili API (Tauri Version)"
 arch=('x86_64')

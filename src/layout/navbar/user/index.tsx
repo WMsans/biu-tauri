@@ -20,8 +20,10 @@ import {
 } from "@remixicon/react";
 
 import { postPassportLoginExit } from "@/service/passport-login-exit";
+import { useFavoritesStore } from "@/store/favorite";
 import { useModalStore } from "@/store/modal";
 import { usePlayList } from "@/store/play-list";
+import { usePlayProgress } from "@/store/play-progress";
 import { useSettings } from "@/store/settings";
 import { useToken } from "@/store/token";
 import { useUser } from "@/store/user";
@@ -29,7 +31,11 @@ import { tauriAdapter } from "@/utils/tauri-adapter";
 
 import Login from "../login";
 
-const UserCard = () => {
+interface UserCardProps {
+  onDropdownOpenChange?: (open: boolean) => void;
+}
+
+const UserCard = ({ onDropdownOpenChange }: UserCardProps) => {
   const user = useUser(s => s.user);
   const clearUser = useUser(s => s.clear);
   const clearToken = useToken(s => s.clear);
@@ -60,6 +66,13 @@ const UserCard = () => {
         hiddenMenuKeys: [],
       });
       usePlayList.getState().clear();
+      useFavoritesStore.setState({
+        createdFavorites: [],
+        collectedFavorites: [],
+      });
+      usePlayProgress.setState({
+        currentTime: 0,
+      });
       navigate("/");
       return true;
     } else {
@@ -123,9 +136,11 @@ const UserCard = () => {
     <>
       <Dropdown
         shouldBlockScroll={false}
+        triggerScaleOnOpen={false}
         classNames={{
           content: "min-w-[140px]",
         }}
+        onOpenChange={onDropdownOpenChange}
       >
         <DropdownTrigger>
           <Avatar

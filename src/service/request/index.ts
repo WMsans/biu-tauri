@@ -29,6 +29,11 @@ export const biliRequest = axios.create({
   baseURL: "https://www.bilibili.com",
 });
 
+export const memberRequest = axios.create({
+  ...axiosConfig,
+  baseURL: "https://member.bilibili.com",
+});
+
 export const apiRequest = axios.create({
   ...axiosConfig,
   baseURL: "https://api.bilibili.com",
@@ -42,6 +47,7 @@ export const passportRequest = axios.create({
 apiRequest.interceptors.request.use(requestInterceptors);
 passportRequest.interceptors.request.use(requestInterceptors);
 searchRequest.interceptors.request.use(requestInterceptors);
+memberRequest.interceptors.request.use(requestInterceptors);
 
 apiRequest.interceptors.response.use(geetestInterceptors);
 
@@ -49,3 +55,4 @@ biliRequest.interceptors.response.use(res => res.data);
 apiRequest.interceptors.response.use(res => res.data);
 passportRequest.interceptors.response.use(res => res.data);
 searchRequest.interceptors.response.use(res => res.data);
+memberRequest.interceptors.response.use(res => res.data);

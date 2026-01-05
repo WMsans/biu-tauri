@@ -480,10 +480,10 @@ export const usePlayList = create<State & Action>()(
           });
         },
         seek: s => {
+          usePlayProgress.getState().setCurrentTime(s);
           if (audio) {
             audio.currentTime = s;
           }
-          usePlayProgress.getState().setCurrentTime(s);
         },
         togglePlay: async () => {
           if (!get().list?.length) {
