@@ -43,7 +43,7 @@ const Layout = () => {
             </div>
           </div>
         </div>
-        <div className="relative z-50 h-[88px] w-full flex-none">
+        <div className="relative z-50 h-[88px] w-full flex-none shadow-2xl">
           <PlayBar />
         </div>
       </div>

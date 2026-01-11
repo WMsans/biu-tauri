@@ -73,6 +73,7 @@ export const useSettings = create<AppSettings & SettingsActions>()(
           showSearchHistory: state.showSearchHistory,
           proxySettings: state.proxySettings,
           sideMenuCollapsed: state.sideMenuCollapsed,
+          sideMenuWidth: state.sideMenuWidth,
         };
       },
     },

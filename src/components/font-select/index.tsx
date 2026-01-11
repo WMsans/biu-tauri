@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 
-import { Select, SelectItem } from "@heroui/react";
+import { Autocomplete, AutocompleteItem } from "@heroui/react";
 
 import { tauriAdapter } from "@/utils/tauri-adapter";
 import { defaultAppSettings } from "@shared/settings/app-settings";
@@ -26,12 +26,14 @@ export default function FontSelect({ value = defaultAppSettings.fontFamily, onCh
   const selectedValue = value === "system-default" ? "system-ui" : value;
 
   return (
-    <Select
+    <Autocomplete
       aria-label="选择字体"
       placeholder="选择字体"
-      selectedKeys={new Set([selectedValue])}
-      onChange={e => onChange?.(e.target.value)}
-      items={fonts}
+      selectedKey={selectedValue}
+      onSelectionChange={key => {
+        if (key) onChange(String(key));
+      }}
+      defaultItems={fonts}
       className={className}
       listboxProps={{
         color: "primary",
@@ -39,10 +41,10 @@ export default function FontSelect({ value = defaultAppSettings.fontFamily, onCh
       }}
     >
       {font => (
-        <SelectItem key={font.familyName} style={{ fontFamily: font.familyName }}>
+        <AutocompleteItem key={font.familyName ?? "system-ui"} style={{ fontFamily: font.familyName }}>
           {font.name}
-        </SelectItem>
+        </AutocompleteItem>
       )}
-    </Select>
+    </Autocomplete>
   );
 }

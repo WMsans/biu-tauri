@@ -9,6 +9,7 @@ import { immer } from "zustand/middleware/immer";
 
 import { getPlayModeList, PlayMode } from "@/common/constants/audio";
 import { getAudioUrl, getDashUrl, isUrlValid } from "@/common/utils/audio";
+import { beginPlayReport, endPlayReport, reportHeartbeat } from "@/common/utils/play-report";
 import { formatUrlProtocal } from "@/common/utils/url";
 import { getAudioSongInfo } from "@/service/audio-song-info";
 import { getWebInterfaceView } from "@/service/web-interface-view";
@@ -211,6 +212,27 @@ const updatePlaybackState = () => {
   }
 };
 
+const playAudioSafely = async () => {
+  try {
+    await audio.play();
+  } catch (error) {
+    if ((error as DOMException)?.name === "NotSupportedError") {
+      const refreshed = await refreshCurrentAudioSource();
+      if (refreshed) {
+        try {
+          await audio.play();
+          return;
+        } catch (retryError) {
+          handlePlayError(retryError);
+          return;
+        }
+      }
+      return;
+    }
+    handlePlayError(error);
+  }
+};
+
 const updatePositionState = () => {
   if ("mediaSession" in navigator) {
     const dur = audio.duration;
@@ -244,6 +266,7 @@ const getProxyUrl = (url: string, referer: string, port: number) => {
   if (!url || !port) return url;
   return `http://127.0.0.1:${port}/?url=${encodeURIComponent(url)}&referer=${encodeURIComponent(referer)}`;
 };
+const isMvItem = (item?: { type: PlayDataType }) => item?.type === "mv";
 
 export const usePlayList = create<State & Action>()(
   persist(
@@ -356,6 +379,10 @@ export const usePlayList = create<State & Action>()(
             audio.ontimeupdate = () => {
               const currentTime = Math.round(audio.currentTime * 100) / 100;
               usePlayProgress.getState().setCurrentTime(currentTime);
+              const playItem = get().getPlayItem?.();
+              if (isMvItem(playItem)) {
+                void reportHeartbeat(playItem, currentTime, audio.duration, 0);
+              }
             };
 
             audio.onseeked = () => {
@@ -370,17 +397,31 @@ export const usePlayList = create<State & Action>()(
               set({ isPlaying: true });
               updatePlaybackState();
               updatePositionState();
+              const playItem = get().getPlayItem?.();
+              if (isMvItem(playItem)) {
+                void reportHeartbeat(playItem, audio.currentTime, audio.duration, 1);
+              }
             };
 
             audio.onpause = () => {
               set({ isPlaying: false });
               updatePlaybackState();
               updatePositionState();
+              const playItem = get().getPlayItem?.();
+              if (isMvItem(playItem)) {
+                void reportHeartbeat(playItem, audio.currentTime, audio.duration, 2);
+              }
             };
 
             audio.onended = () => {
               if (get().playMode === PlayMode.Single) {
                 return;
+              }
+
+              const playItem = get().getPlayItem?.();
+              if (isMvItem(playItem)) {
+                void reportHeartbeat(playItem, audio.duration, audio.duration, 4);
+                endPlayReport();
               }
 
               const currentIndex = get().list.findIndex(item => item.id === get().playId);
@@ -499,7 +540,7 @@ export const usePlayList = create<State & Action>()(
               state.isPlaying = true;
             });
             await ensureAudioSrcValid();
-            await audio.play();
+            await playAudioSafely();
           } else {
             audio.pause();
             set(state => {
@@ -518,7 +559,7 @@ export const usePlayList = create<State & Action>()(
           if (isSame(currentItem, { type, bvid, sid })) {
             if (audio.paused) {
               await ensureAudioSrcValid();
-              await audio.play();
+              await playAudioSafely();
             }
             return;
           }
@@ -615,7 +656,7 @@ export const usePlayList = create<State & Action>()(
             case PlayMode.Loop: {
               if (list.length === 1) {
                 audio.currentTime = 0;
-                audio.play();
+                await playAudioSafely();
                 break;
               }
 
@@ -629,7 +670,7 @@ export const usePlayList = create<State & Action>()(
 
               if (list.length === 1) {
                 audio.currentTime = 0;
-                audio.play();
+                await playAudioSafely();
                 break;
               }
 
@@ -862,6 +903,10 @@ export const usePlayList = create<State & Action>()(
           });
         },
         clear: () => {
+          const currentPlayItem = get().getPlayItem?.();
+          if (isMvItem(currentPlayItem)) {
+            endPlayReport();
+          }
           if (audio) {
             audio.src = "";
             if (!audio.paused) {
@@ -902,7 +947,64 @@ export const usePlayList = create<State & Action>()(
   ),
 );
 
-// Helper for resetting audio, using proxy logic
+async function refreshCurrentAudioSource(): Promise<boolean> {
+  const { getPlayItem, proxyPort } = usePlayList.getState?.() ?? {};
+  const playItem = getPlayItem?.();
+
+  if (!playItem) {
+    return false;
+  }
+
+  const referer = playItem.bvid ? `https://www.bilibili.com/video/${playItem.bvid}` : "https://www.bilibili.com/";
+
+  try {
+    if (playItem.type === "mv" && playItem.bvid && playItem.cid) {
+      const mvPlayData = await getDashUrl(playItem.bvid, playItem.cid);
+      if (mvPlayData?.audioUrl) {
+        // Fix: Use proxy URL
+        audio.src = getProxyUrl(mvPlayData.audioUrl, referer, proxyPort);
+
+        usePlayList.setState(state => {
+          const listItem = state.list.find(item => item.id === state.playId);
+          if (listItem) {
+            listItem.audioUrl = mvPlayData.audioUrl;
+            listItem.videoUrl = mvPlayData.videoUrl;
+            listItem.isLossless = mvPlayData.isLossless;
+            listItem.isDolby = mvPlayData.isDolby;
+          }
+        });
+        return true;
+      }
+    }
+
+    if (playItem.type === "audio" && playItem.sid) {
+      const musicPlayData = await getAudioUrl(playItem.sid);
+      if (musicPlayData?.audioUrl) {
+        // Fix: Use proxy URL
+        audio.src = getProxyUrl(musicPlayData.audioUrl, referer, proxyPort);
+
+        usePlayList.setState(state => {
+          const listItem = state.list.find(item => item.id === state.playId);
+          if (listItem) {
+            listItem.audioUrl = musicPlayData.audioUrl;
+            listItem.isLossless = musicPlayData.isLossless;
+          }
+        });
+        return true;
+      }
+    }
+  } catch (refreshError) {
+    console.error("刷新播放链接失败", {
+      playItem,
+      refreshError,
+    });
+    handlePlayError(refreshError);
+  }
+
+  return false;
+}
+
+// Fix: Restore proxy logic and accept referer
 function resetAudioAndPlay(url: string, referer: string) {
   const { proxyPort } = usePlayList.getState();
   const proxyUrl = getProxyUrl(url, referer, proxyPort);
@@ -910,31 +1012,19 @@ function resetAudioAndPlay(url: string, referer: string) {
   audio.src = proxyUrl;
   audio.currentTime = 0;
   audio.load();
-  audio.play().catch(error => {
-    // Specify the issue based on the error name
-    let message = "播放出错";
-
-    switch (error.name) {
-      case "NotAllowedError":
-        message = "播放失败：浏览器阻止了自动播放 (NotAllowedError)";
-        break;
-      case "NotSupportedError":
-        message = "播放失败：不支持的音频格式或无效的播放源 (NotSupportedError)";
-        break;
-      case "AbortError":
-        // Interrupted by a new load request, usually safe to ignore
-        return;
-      default:
-        message = `播放失败：${error.message || "未知错误"}`;
-    }
-
-    toastError(message);
-  });
+  void playAudioSafely();
 }
 
 // 切换歌曲时，更新当前播放的歌曲信息
 usePlayList.subscribe(async (state, prevState) => {
   if (state.playId !== prevState.playId) {
+    if (!state.playId) {
+      const prevPlayItem = prevState.list.find(item => item.id === prevState.playId);
+      if (isMvItem(prevPlayItem)) {
+        endPlayReport();
+      }
+    }
+
     if (audio && !audio.paused) {
       audio.pause();
       audio.currentTime = 0;
@@ -942,9 +1032,17 @@ usePlayList.subscribe(async (state, prevState) => {
     // 切换歌曲
     if (state.playId) {
       const playItem = state.list.find(item => item.id === state.playId);
+      if (playItem) {
+        if (isMvItem(playItem)) {
+          void beginPlayReport(playItem);
+        }
+      }
+
+      // Fix: Calculate referer for the current item
       const referer = playItem?.bvid ? `https://www.bilibili.com/video/${playItem.bvid}` : "https://www.bilibili.com/";
 
       if (isUrlValid(playItem?.audioUrl) && audio.paused && !state.isPlaying) {
+        // Fix: Pass referer
         resetAudioAndPlay(playItem.audioUrl!, referer);
         return;
       }
@@ -953,6 +1051,7 @@ usePlayList.subscribe(async (state, prevState) => {
         if (playItem?.bvid && playItem?.cid) {
           const mvPlayData = await getDashUrl(playItem.bvid, playItem.cid);
           if (mvPlayData?.audioUrl) {
+            // Fix: Pass referer
             resetAudioAndPlay(mvPlayData?.audioUrl, referer);
 
             updateMediaSession({
@@ -986,6 +1085,7 @@ usePlayList.subscribe(async (state, prevState) => {
           if (firstMV?.cid) {
             const mvPlayData = await getDashUrl(playItem.bvid, firstMV.cid);
             if (mvPlayData?.audioUrl) {
+              // Fix: Pass referer
               resetAudioAndPlay(mvPlayData?.audioUrl, referer);
 
               updateMediaSession({
@@ -1037,6 +1137,7 @@ usePlayList.subscribe(async (state, prevState) => {
       if (playItem?.type === "audio" && playItem?.sid) {
         const musicPlayData = await getAudioUrl(playItem.sid);
         if (musicPlayData?.audioUrl) {
+          // Fix: Pass referer
           resetAudioAndPlay(musicPlayData?.audioUrl, referer);
 
           updateMediaSession({

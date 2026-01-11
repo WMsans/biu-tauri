@@ -3,12 +3,15 @@ import { useLocation, useParams } from "react-router";
 
 import { Avatar, Button, Link as HeroLink, Tooltip } from "@heroui/react";
 import clx from "classnames";
+import { twMerge } from "tailwind-merge";
 
 export interface MenuItemProps {
   /** 菜单项标签 */
   title: string;
   /** 菜单项链接 */
   href?: string;
+  /** 唯一标识，用于排序等场景 */
+  id?: number | string;
   /** 菜单项图标 */
   icon?: React.ComponentType<{ size?: number | string; className?: string }>;
   /** 封面 */
@@ -18,6 +21,9 @@ export interface MenuItemProps {
   className?: string;
   onPress?: VoidFunction;
   collapsed?: boolean;
+  /** 用于 dnd-kit 等场景，把拖拽监听器绑定到可交互元素上 */
+  dndProps?: ({ className?: string } & Record<string, unknown>) | undefined;
+  [key: string]: unknown;
 }
 
 const MenuItem: React.FC<MenuItemProps> = ({
@@ -29,6 +35,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
   className,
   onPress,
   collapsed,
+  dndProps,
 }) => {
   const location = useLocation();
   const { id } = useParams();
@@ -61,27 +68,28 @@ const MenuItem: React.FC<MenuItemProps> = ({
     );
   }, [cover, isActive, Icon, ActiveIcon, title, collapsed]);
 
-  if (collapsed) {
-    const collapsedButton = (
-      <Button
-        as={href ? HeroLink : "button"}
-        href={href}
-        fullWidth
-        variant={isActive ? "flat" : "light"}
-        color="default"
-        onPress={onPress}
-        className={clx("justify-center rounded-md px-0 py-1", className, {
-          "h-auto": collapsed,
-          "text-primary": isActive,
-        })}
-      >
-        {iconContent}
-      </Button>
-    );
+  const { className: dndClassName, ...dndRest } = (dndProps ?? {}) as {
+    className?: string;
+  } & Record<string, unknown>;
 
+  if (collapsed) {
     return (
       <Tooltip closeDelay={0} content={title} placement="right" offset={-3}>
-        {collapsedButton}
+        <Button
+          as={href ? HeroLink : "button"}
+          href={href}
+          fullWidth
+          variant={isActive ? "flat" : "light"}
+          color={isActive ? "primary" : "default"}
+          onPress={onPress}
+          className={clx("w-full min-w-0 justify-center rounded-md px-0 py-1", className, dndClassName, {
+            "h-auto": collapsed,
+            "text-primary": isActive,
+          })}
+          {...(dndRest as any)}
+        >
+          {iconContent}
+        </Button>
       </Tooltip>
     );
   }
@@ -91,16 +99,16 @@ const MenuItem: React.FC<MenuItemProps> = ({
       as={href ? HeroLink : "button"}
       href={href}
       fullWidth
+      disableRipple
       radius="md"
       variant={isActive ? "flat" : "light"}
-      color="default"
+      color={isActive ? "primary" : "default"}
       onPress={onPress}
       startContent={iconContent}
-      className={clx("justify-start rounded-md px-2", className, {
-        "text-primary": isActive,
-      })}
+      className={twMerge("justify-start rounded-md px-2", className, dndClassName)}
+      {...(dndRest as any)}
     >
-      <span className="truncate">{title}</span>
+      <span className="pointer-events-none truncate">{title}</span>
     </Button>
   );
 };

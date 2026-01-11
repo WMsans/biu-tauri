@@ -5,6 +5,8 @@ import { addToast, useDisclosure } from "@heroui/react";
 import { useRequest } from "ahooks";
 
 import { CollectionType } from "@/common/constants/collection";
+import { getAllFavMedia } from "@/common/utils/fav";
+import { openBiliVideoLink } from "@/common/utils/url";
 import FavoritesEditModal from "@/components/favorites-edit-modal";
 import ScrollContainer, { type ScrollRefObject } from "@/components/scroll-container";
 import { postFavFolderFav } from "@/service/fav-folder-fav";
@@ -24,7 +26,6 @@ import { tauriAdapter } from "@/utils/tauri-adapter";
 
 import Header from "../header";
 import Operations from "../operation";
-import { getAllFavMedia } from "../utils";
 import FavoriteGridList from "./grid-list";
 import FavoriteList from "./list";
 
@@ -86,7 +87,11 @@ const Favorites = () => {
   const isFavorite = favInfo?.fav_state === 1;
 
   const fetchPageData = useCallback(
-    async (targetPage: number): Promise<{ medias: FavMedia[]; hasMore: boolean } | null> => {
+    async (
+      targetPage: number,
+      keywordValue: string,
+      orderValue: string,
+    ): Promise<{ medias: FavMedia[]; hasMore: boolean } | null> => {
       if (!favFolderId) {
         return null;
       }
@@ -96,8 +101,8 @@ const Favorites = () => {
         ps: 20,
         pn: targetPage,
         platform: "web",
-        keyword: keyword || undefined,
-        order,
+        keyword: keywordValue || undefined,
+        order: orderValue,
         tid: 0,
         type: 0,
       });
@@ -111,14 +116,14 @@ const Favorites = () => {
         hasMore: res.data.has_more ?? false,
       };
     },
-    [favFolderId, keyword, order],
+    [favFolderId],
   );
 
   const loadPage = useCallback(
-    async (targetPage: number) => {
+    async (targetPage: number, keywordValue = keyword, orderValue = order) => {
       setListLoading(true);
       try {
-        const pageData = await fetchPageData(targetPage);
+        const pageData = await fetchPageData(targetPage, keywordValue, orderValue);
         if (!pageData) {
           setHasMore(false);
           return;
@@ -140,17 +145,20 @@ const Favorites = () => {
         setListLoading(false);
       }
     },
-    [appendItems, fetchPageData, setItems],
+    [appendItems, fetchPageData, keyword, order, setItems],
   );
 
-  // 统一处理数据加载：当 favFolderId、keyword 或 order 变化时重新加载
+  // 初次或收藏夹变化时加载数据
   useEffect(() => {
+    const defaultKeyword = "";
+    const defaultOrder = "mtime";
     pageRef.current = 1;
-    setKeyword("");
-    setOrder("mtime");
+    setKeyword(defaultKeyword);
+    setOrder(defaultOrder);
     clearItems();
-    loadPage(1);
-  }, [clearItems, favFolderId, loadPage]);
+    void loadPage(1, defaultKeyword, defaultOrder);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [clearItems, favFolderId]);
 
   const handleLoadMore = useCallback(() => {
     if (!listLoading && hasMore) {
@@ -170,18 +178,19 @@ const Favorites = () => {
     (order: string) => {
       setOrder(order);
       pageRef.current = 1;
-      loadPage(1);
+      loadPage(1, keyword, order);
     },
-    [loadPage],
+    [keyword, loadPage],
   );
 
   const handleKeywordSearch = useCallback(
     (keyword?: string) => {
-      setKeyword(keyword || "");
+      const normalized = keyword || "";
+      setKeyword(normalized);
       pageRef.current = 1;
-      loadPage(1);
+      loadPage(1, normalized, order);
     },
-    [loadPage],
+    [loadPage, order],
   );
 
   const handleItemPress = useCallback((item: FavMedia) => {
@@ -410,13 +419,22 @@ const Favorites = () => {
             color: "success",
           });
           break;
+        case "bililink":
+          openBiliVideoLink({
+            type: item.type === 2 ? "mv" : "audio",
+            bvid: item.bvid,
+            sid: item.type === 12 ? item.id : undefined,
+          });
+          break;
+        default:
+          break;
       }
     },
     [favFolderId, isCreatedBySelf, handleRemoveItem, refreshInfo],
   );
 
   return (
-    <ScrollContainer ref={scrollRef} resetOnChange={favFolderId} className="h-full w-full px-4 pb-6">
+    <ScrollContainer enableBackToTop ref={scrollRef} resetOnChange={favFolderId} className="h-full w-full px-4 pb-6">
       <Header
         loading={loading}
         type={CollectionType.Favorite}
@@ -477,7 +495,14 @@ const Favorites = () => {
         mid={Number(favFolderId)}
         isOpen={isEditOpen}
         onOpenChange={onEditChange}
-        onSuccess={mutateInfo}
+        onSuccess={info => {
+          mutateInfo(info);
+          useFavoritesStore.getState().modifyCreatedFavorite({
+            id: info.id,
+            cover: info.cover,
+            title: info.title,
+          });
+        }}
       />
     </ScrollContainer>
   );

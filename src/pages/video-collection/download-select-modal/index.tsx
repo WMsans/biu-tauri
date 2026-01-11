@@ -5,12 +5,11 @@ import { Button, Modal, ModalBody, ModalContent, ModalFooter, ModalHeader, Check
 import clx from "classnames";
 
 import { CollectionType } from "@/common/constants/collection";
+import { getAllFavMedia } from "@/common/utils/fav";
 import Image from "@/components/image";
 import ScrollContainer from "@/components/scroll-container";
 import { getUserVideoArchivesList } from "@/service/user-video-archives-list";
 import { tauriAdapter } from "@/utils/tauri-adapter";
-
-import { getAllFavMedia } from "../utils";
 
 interface DownloadSelectModalProps {
   type: CollectionType;
