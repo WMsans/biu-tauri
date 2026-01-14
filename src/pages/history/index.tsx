@@ -205,7 +205,7 @@ const History = () => {
         });
         break;
       case "bililink":
-        window.electron.openExternal(`https://www.bilibili.com/video/${item.history.bvid}`);
+        tauriAdapter.openExternal(`https://www.bilibili.com/video/${item.history.bvid}`);
         break;
       case "delete":
         useModalStore.getState().onOpenConfirmModal({

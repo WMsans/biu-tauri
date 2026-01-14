@@ -106,6 +106,11 @@ export const tauriAdapter: any = {
   httpPost: (url: string, body?: any, options?: any) =>
     invoke("http_post", { url, body, options: { ...options, url } }),
 
+  // Lyrics
+  searchNeteaseSongs: (params: any) => invoke("search_netease_songs", { params }),
+  getNeteaseLyrics: (params: any) => invoke("get_netease_lyrics", { params }),
+  searchLrclibLyrics: (params: any) => invoke("search_lrclib_lyrics", { params }),
+
   // Platform
   getPlatform: () => {
     const userAgent = navigator.userAgent.toLowerCase();

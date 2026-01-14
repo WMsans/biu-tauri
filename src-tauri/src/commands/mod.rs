@@ -7,9 +7,13 @@ pub mod store;
 pub mod system;
 pub mod window;
 pub mod shortcut;
+pub mod lyrics;
 
 pub fn get_handlers() -> impl Fn(Invoke) -> bool {
     tauri::generate_handler![
+        lyrics::search_netease_songs,
+        lyrics::get_netease_lyrics,
+        lyrics::search_lrclib_lyrics,
         app::get_app_version,
         app::check_app_update,
         app::download_app_update,

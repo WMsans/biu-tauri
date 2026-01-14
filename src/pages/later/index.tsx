@@ -189,7 +189,7 @@ const Later = () => {
         });
         break;
       case "bililink":
-        window.electron.openExternal(`https://www.bilibili.com/video/${item.bvid}`);
+        tauriAdapter.openExternal(`https://www.bilibili.com/video/${item.bvid}`);
         break;
       default:
         break;
