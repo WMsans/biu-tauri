@@ -63,7 +63,7 @@ const LyricsSearchModal = ({ isOpen, onOpenChange, onLyricsAdopted }: Props) => 
         setLrclibLoading(false);
         try {
           setNeteaseLoading(true);
-          const res = await window.electron.searchNeteaseSongs({
+          const res = await tauriAdapter.searchNeteaseSongs({
             s: query,
             type: NETEASE_TYPE_SONG,
             limit: DEFAULT_LIMIT,
@@ -81,7 +81,7 @@ const LyricsSearchModal = ({ isOpen, onOpenChange, onLyricsAdopted }: Props) => 
         setNeteaseLoading(false);
         try {
           setLrclibLoading(true);
-          const res = await window.electron.searchLrclibLyrics({ q: query });
+          const res = await tauriAdapter.searchLrclibLyrics({ q: query });
           setLrclibSongs(res ?? []);
         } catch {
           setLrclibSongs([]);

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { memo, useEffect, useMemo, useRef } from "react";
 
 import { Button, Slider } from "@heroui/react";
 import {
@@ -21,13 +21,30 @@ import { useStyle } from "./use-style";
 
 const PlayModeList = getPlayModeList(16);
 
+const CoverView = memo(() => {
+  const cover = usePlayState(s => s.cover);
+  if (!cover) return null;
+  return (
+    <Image
+      removeWrapper
+      radius="none"
+      src={cover}
+      width={100}
+      height="100%"
+      params="672w_378h_1c.avif"
+      loading="eager"
+      decoding="async"
+      style={{ transform: "translateZ(0)", backfaceVisibility: "hidden", willChange: "transform", contain: "paint" }}
+    />
+  );
+});
+
 const MiniPlayer = () => {
-  const { isSingle, isPlaying, title, cover, duration, playMode } = usePlayState(
+  const { isSingle, isPlaying, title, duration, playMode } = usePlayState(
     useShallow(state => ({
       isSingle: state.isSingle,
       isPlaying: state.isPlaying,
       title: state.title,
-      cover: state.cover,
       duration: state.duration,
       playMode: state.playMode,
     })),
@@ -115,9 +132,7 @@ const MiniPlayer = () => {
   return (
     <div className="window-drag rounded-medium flex h-screen w-screen flex-col overflow-hidden select-none">
       <div className="flex h-full items-center">
-        {Boolean(cover) && (
-          <Image removeWrapper radius="none" src={cover} width={100} height="100%" params="672w_378h_1c.avif" />
-        )}
+        <CoverView />
         <div className="flex min-w-0 flex-1 flex-col space-y-1 px-2">
           <div className="flex min-w-0 flex-col">
             {title ? (
@@ -152,6 +167,7 @@ const MiniPlayer = () => {
               isIconOnly
               size="sm"
               variant="light"
+              disableAnimation
               onPress={togglePlayMode}
               className="hover:text-primary window-no-drag"
               aria-label="播放模式"
@@ -164,6 +180,7 @@ const MiniPlayer = () => {
                 isIconOnly
                 size="sm"
                 variant="light"
+                disableAnimation
                 onPress={prev}
                 className="hover:text-primary window-no-drag"
               >
@@ -174,6 +191,7 @@ const MiniPlayer = () => {
                 isIconOnly
                 size="sm"
                 variant="light"
+                disableAnimation
                 onPress={() => {
                   togglePlay();
                 }}
@@ -186,6 +204,7 @@ const MiniPlayer = () => {
                 isIconOnly
                 size="sm"
                 variant="light"
+                disableAnimation
                 onPress={() => {
                   next();
                 }}
@@ -198,6 +217,7 @@ const MiniPlayer = () => {
               isIconOnly
               size="sm"
               variant="light"
+              disableAnimation
               onPress={toggleMiniMode}
               className="hover:text-primary window-no-drag"
             >

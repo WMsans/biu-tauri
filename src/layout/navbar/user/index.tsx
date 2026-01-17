@@ -19,6 +19,7 @@ import {
   RiRefreshLine,
   RiSettings3Line,
 } from "@remixicon/react";
+import { twMerge } from "tailwind-merge";
 
 import { postPassportLoginExit } from "@/service/passport-login-exit";
 import { useFavoritesStore } from "@/store/favorite";
@@ -162,6 +163,7 @@ const UserCard = ({ onDropdownOpenChange }: UserCardProps) => {
       <Dropdown
         shouldBlockScroll={false}
         triggerScaleOnOpen={false}
+        radius="md"
         classNames={{
           content: "min-w-[140px]",
         }}
@@ -179,14 +181,13 @@ const UserCard = ({ onDropdownOpenChange }: UserCardProps) => {
           />
         </DropdownTrigger>
         <DropdownMenu aria-label="用户操作" variant="flat" items={dropdownItems}>
-          {({ key, label, ...rest }) => (
-            <DropdownItem key={key} {...rest}>
+          {({ key, label, className, ...rest }) => (
+            <DropdownItem className={twMerge("rounded-medium", className)} key={key} {...rest}>
               {label}
             </DropdownItem>
           )}
         </DropdownMenu>
       </Dropdown>
-
       <Login isOpen={isLoginModalOpen} onOpenChange={onLoginModalOpenChange} />
     </>
   );

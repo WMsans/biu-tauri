@@ -19,6 +19,7 @@ const useSystemSettingsForm = () => {
   const {
     fontFamily,
     primaryColor,
+    backgroundColor,
     borderRadius,
     downloadPath,
     closeWindowOption,
@@ -35,6 +36,7 @@ const useSystemSettingsForm = () => {
     useShallow(s => ({
       fontFamily: s.fontFamily,
       primaryColor: s.primaryColor,
+      backgroundColor: s.backgroundColor,
       borderRadius: s.borderRadius,
       downloadPath: s.downloadPath,
       closeWindowOption: s.closeWindowOption,
@@ -61,6 +63,7 @@ const useSystemSettingsForm = () => {
     defaultValues: {
       fontFamily,
       primaryColor,
+      backgroundColor,
       borderRadius,
       downloadPath,
       closeWindowOption,
@@ -83,11 +86,12 @@ const useSystemSettingsForm = () => {
   });
 
   useEffect(() => {
-    const subscription = watch(values => {
-      // @ts-ignore hiddenMenuKeys类型错误，但是实际运行时没有问题
-      updateSettings(values);
-      if (values.proxySettings && tauriAdapter?.setProxySettings) {
-        tauriAdapter.setProxySettings(values.proxySettings as ProxySettings);
+    const subscription = watch((values, { name }) => {
+      if (!name) return;
+      const patch = { [name]: (values as any)[name] } as Partial<AppSettings>;
+      updateSettings(patch);
+      if (name === "proxySettings" && values.proxySettings && window.electron?.setProxySettings) {
+        window.electron.setProxySettings(values.proxySettings as ProxySettings);
       }
     });
     return () => subscription.unsubscribe();

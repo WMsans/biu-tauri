@@ -1,6 +1,6 @@
 {
   "name": "biu",
-  "version": "1.12.0",
+  "version": "1.13.0",
   "private": true,
   "type": "module",
   "description": "music application based on bilibili api",
@@ -52,6 +52,7 @@
     "ahooks": "^3.9.5",
     "axios": "^1.11.0",
     "classnames": "^2.5.1",
+    "color2k": "^2.0.3",
     "cookie": "^1.1.1",
     "es-toolkit": "^1.39.10",
     "filesize": "^11.0.13",
