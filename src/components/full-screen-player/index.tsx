@@ -54,6 +54,7 @@ const FullScreenPlayer = () => {
       })),
     );
   const playItem = list.find(item => item.id === playId);
+  const isLocal = playItem?.source === "local";
 
   const [windowWidth, setWindowWidth] = useState(typeof window !== "undefined" ? window.innerWidth : 1000);
   const [windowHeight, setWindowHeight] = useState(typeof window !== "undefined" ? window.innerHeight : 800);
@@ -119,6 +120,7 @@ const FullScreenPlayer = () => {
   };
 
   const scheduleHideUi = (delay: number) => {
+    if (isSettingsOpen) return;
     if (hideUiTimeoutRef.current) {
       window.clearTimeout(hideUiTimeoutRef.current);
     }
@@ -128,7 +130,7 @@ const FullScreenPlayer = () => {
   };
 
   const handleMouseLeave = () => {
-    scheduleHideUi(2000);
+    scheduleHideUi(3000);
   };
 
   const coverSrc = playItem?.pageCover || playItem?.cover;
@@ -296,7 +298,16 @@ const FullScreenPlayer = () => {
                   <h2 className="truncate text-xl select-none">{playItem.pageTitle || playItem.title}</h2>
                   <Popover
                     isOpen={isSettingsOpen && isUiVisible}
-                    onOpenChange={setIsSettingsOpen}
+                    onOpenChange={open => {
+                      setIsSettingsOpen(open);
+                      if (open) {
+                        if (hideUiTimeoutRef.current) {
+                          window.clearTimeout(hideUiTimeoutRef.current);
+                          hideUiTimeoutRef.current = null;
+                        }
+                        setIsUiVisible(true);
+                      }
+                    }}
                     placement="bottom-start"
                   >
                     <PopoverTrigger>
@@ -315,7 +326,7 @@ const FullScreenPlayer = () => {
               </div>
 
               <div className="flex h-full w-full items-center justify-center">
-                {showCover && (
+                {!isLocal && showCover && (
                   <div
                     className={clsx(
                       "flex h-full w-full items-center px-12",
@@ -341,7 +352,7 @@ const FullScreenPlayer = () => {
                   </div>
                 )}
 
-                {showLyrics && (
+                {!isLocal && showLyrics && (
                   <div
                     className={clsx(
                       "h-full w-full overflow-hidden px-12 py-24",

@@ -2,7 +2,9 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router";
 
 import { addToast, Spinner } from "@heroui/react";
+import { RiPlayFill } from "@remixicon/react";
 
+import AsyncButton from "@/components/async-button";
 import SearchWithSort from "@/components/search-with-sort";
 import { getSpaceWbiArcSearch, type SpaceArcVListItem } from "@/service/space-wbi-arc-search";
 import { useModalStore } from "@/store/modal";
@@ -152,20 +154,111 @@ const VideoPost: React.FC<VideoPostProps> = ({ getScrollElement }) => {
     }
   }, []);
 
+  const handlePlayAll = useCallback(async () => {
+    if (!id) {
+      addToast({ title: "缺少用户信息", color: "warning" });
+      return;
+    }
+
+    try {
+      const pageSize = 50;
+      const maxItems = 200;
+      const firstRes = await getSpaceWbiArcSearch({
+        mid: Number(id),
+        ps: pageSize,
+        pn: 1,
+        keyword: keyword?.trim() || undefined,
+        order,
+      });
+
+      if (firstRes.code !== 0 || !firstRes.data?.list?.vlist) {
+        addToast({ title: "暂无可播放内容", color: "warning" });
+        return;
+      }
+
+      const totalCount = firstRes.data.page?.count ?? 0;
+      const collected: SpaceArcVListItem[] = [...firstRes.data.list.vlist];
+
+      if (totalCount > pageSize && collected.length < maxItems) {
+        const totalLimit = Math.min(totalCount || maxItems, maxItems);
+        const totalPages = Math.ceil(totalLimit / pageSize);
+        const tasks = Array.from({ length: totalPages - 1 }, (_, index) => {
+          const pn = index + 2;
+          return getSpaceWbiArcSearch({
+            mid: Number(id),
+            ps: pageSize,
+            pn,
+            keyword: keyword?.trim() || undefined,
+            order,
+          });
+        });
+
+        const results = await Promise.allSettled(tasks);
+        results.forEach(result => {
+          if (result.status === "fulfilled") {
+            const res = result.value;
+            if (res.code === 0 && res.data?.list?.vlist) {
+              collected.push(...res.data.list.vlist);
+            }
+          }
+        });
+      }
+
+      const limited = collected.slice(0, maxItems);
+      const playItems = limited
+        .map(item => ({
+          type: "mv" as const,
+          bvid: item.bvid,
+          title: item.title,
+          cover: item.pic,
+          ownerName: item.author,
+          ownerMid: item.mid,
+        }))
+        .filter(item => Boolean(item.bvid));
+
+      if (!playItems.length) {
+        addToast({ title: "暂无可播放内容", color: "warning" });
+        return;
+      }
+
+      await usePlayList.getState().playList(playItems);
+      addToast({
+        title: `已添加 ${playItems.length} 个投稿到播放列表`,
+        description: "播放内容只获取最多 200 条数据",
+        color: "success",
+      });
+    } catch {
+      addToast({ title: "播放列表生成失败", color: "danger" });
+    }
+  }, [id, keyword, order]);
+
   return (
     <div className="h-full w-full">
       <div className="mb-4 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-        <div className="text-default-500 pl-2 text-sm">共 {total} 个视频</div>
-        <SearchWithSort
-          onKeywordSearch={setKeyword}
-          order={order}
-          orderOptions={[
-            { key: "pubdate", label: "最新发布" },
-            { key: "click", label: "最多播放" },
-            { key: "stow", label: "最多收藏" },
-          ]}
-          onOrderChange={setOrder}
-        />
+        <div className="flex items-center">
+          <AsyncButton
+            color="primary"
+            startContent={<RiPlayFill size={18} />}
+            isDisabled={initialLoading || items.length === 0}
+            onPress={handlePlayAll}
+            className="dark:text-black"
+          >
+            播放
+          </AsyncButton>
+          <div className="text-default-500 pl-2 text-sm">共 {total} 条</div>
+        </div>
+        <div className="flex items-center gap-3">
+          <SearchWithSort
+            onKeywordSearch={setKeyword}
+            order={order}
+            orderOptions={[
+              { key: "pubdate", label: "最新发布" },
+              { key: "click", label: "最多播放" },
+              { key: "stow", label: "最多收藏" },
+            ]}
+            onOrderChange={setOrder}
+          />
+        </div>
       </div>
       {initialLoading ? (
         <div className="flex h-[280px] items-center justify-center">

@@ -2,12 +2,13 @@ use tauri::ipc::Invoke;
 
 pub mod app;
 pub mod download;
+pub mod local_music;
+pub mod lyrics;
 pub mod network;
+pub mod shortcut;
 pub mod store;
 pub mod system;
 pub mod window;
-pub mod shortcut;
-pub mod lyrics;
 
 pub fn get_handlers() -> impl Fn(Invoke) -> bool {
     tauri::generate_handler![
@@ -28,6 +29,8 @@ pub fn get_handlers() -> impl Fn(Invoke) -> bool {
         download::retry_media_download_task,
         download::cancel_media_download_task,
         download::clear_media_download_task_list,
+        local_music::scan_local_music,
+        local_music::delete_local_music_file,
         network::http_request,
         network::get_cookie,
         network::set_cookie,
@@ -35,6 +38,7 @@ pub fn get_handlers() -> impl Fn(Invoke) -> bool {
         network::http_post,
         network::get_proxy_port,
         network::wbi_sign_params,
+        network::set_proxy_settings,
         shortcut::register_shortcut,
         shortcut::unregister_shortcut,
         shortcut::register_all_shortcuts,

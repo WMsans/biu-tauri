@@ -1,5 +1,84 @@
 # Changelog
 
+## v1.16.0
+
+[compare changes](https://github.com/wood3n/biu/compare/v1.15.0...v1.16.0)
+
+### 🚀 新功能
+
+- 为用户投稿页面添加全部播放按钮 ([0c25e07](https://github.com/wood3n/biu/commit/0c25e07))
+- 新增点赞按钮和一键三连功能 ([8515a5f](https://github.com/wood3n/biu/commit/8515a5f))
+
+### 🩹 修复问题
+
+- Review problem ([c5360dd](https://github.com/wood3n/biu/commit/c5360dd))
+
+### 🎨 UI 调整
+
+- 调整音乐推荐页面样式以及投稿播放全部的逻辑 ([60cc885](https://github.com/wood3n/biu/commit/60cc885))
+
+### ❤️ Contributors
+
+- Wood3n
+- ShellMonster
+
+## v1.15.0
+
+[compare changes](https://github.com/wood3n/biu/compare/v1.14.0...v1.15.0)
+
+### 🚀 新功能
+
+- 为侧边栏收藏夹添加折叠功能 ([6498bdc](https://github.com/wood3n/biu/commit/6498bdc))
+- 推荐音乐增加音乐、鬼畜分区显示 ([ca4617f](https://github.com/wood3n/biu/commit/ca4617f))
+
+### 🩹 修复问题
+
+- 修复一些UI显示问题 ([845466d](https://github.com/wood3n/biu/commit/845466d))
+- 修复一些UI显示问题 ([992aa6b](https://github.com/wood3n/biu/commit/992aa6b))
+- 修复收藏夹分组标题换行问题 ([81a13cc](https://github.com/wood3n/biu/commit/81a13cc))
+- Use dev icon ([af9cd7a](https://github.com/wood3n/biu/commit/af9cd7a))
+- 修复筛选排序点击问题 ([7f71c05](https://github.com/wood3n/biu/commit/7f71c05))
+- 移除无用的文件和依赖 ([133f1f8](https://github.com/wood3n/biu/commit/133f1f8))
+- Update pnpm lock ([d78cfc2](https://github.com/wood3n/biu/commit/d78cfc2))
+- Review problem ([0f20b58](https://github.com/wood3n/biu/commit/0f20b58))
+- 优化数据请求 ([4a866ea](https://github.com/wood3n/biu/commit/4a866ea))
+
+### 💅 Refactors
+
+- 重构收藏夹分组渲染逻辑 ([6cdef07](https://github.com/wood3n/biu/commit/6cdef07))
+
+### 🎨 UI 调整
+
+- 优化顶部用户动态页面显示 ([5190753](https://github.com/wood3n/biu/commit/5190753))
+- 优化推荐音乐页面显示 ([edeb874](https://github.com/wood3n/biu/commit/edeb874))
+
+### ❤️ Contributors
+
+- Wood3n
+- ShellMonster
+
+## v1.14.0
+
+[compare changes](https://github.com/wood3n/biu/compare/v1.13.0...v1.14.0)
+
+### 🚀 新功能
+
+- Add toggle to stop reporting playback history ([f6dd39e](https://github.com/wood3n/biu/commit/f6dd39e))
+- Add a button to enable/disable reporting playback history in history page ([4142a8a](https://github.com/wood3n/biu/commit/4142a8a))
+- 新增本地音乐页面 ([147f9cd](https://github.com/wood3n/biu/commit/147f9cd))
+
+### 🩹 修复问题
+
+- 修复视频系列数据显示问题 ([5ad3f8e](https://github.com/wood3n/biu/commit/5ad3f8e))
+- 移除无用的代码 ([b66e374](https://github.com/wood3n/biu/commit/b66e374))
+- Review problem ([1b54010](https://github.com/wood3n/biu/commit/1b54010))
+- Review problem ([1376532](https://github.com/wood3n/biu/commit/1376532))
+
+### ❤️ Contributors
+
+- Wood3n
+- UtopiaXC
+
 ## v1.13.0
 
 [compare changes](https://github.com/wood3n/biu/compare/v1.12.0...v1.13.0)

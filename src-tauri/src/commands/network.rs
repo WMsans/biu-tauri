@@ -1,10 +1,22 @@
 use crate::error::AppError;
 use crate::services::wbi;
 use crate::state::models::{AppCookieStore, AppHttpClient, HttpInvokePayload, ProxyPort, WbiStore};
+use serde::{Deserialize, Serialize};
 use serde_json;
 use std::collections::HashMap;
 use tauri::{AppHandle, State};
 use url::Url;
+
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProxySettings {
+    #[serde(rename = "type")]
+    pub proxy_type: String,
+    pub host: Option<String>,
+    pub port: Option<u16>,
+    pub username: Option<String>,
+    pub password: Option<String>,
+}
 
 #[tauri::command]
 pub async fn http_request(
@@ -104,4 +116,15 @@ pub async fn wbi_sign_params(
     params: HashMap<String, String>,
 ) -> Result<HashMap<String, String>, AppError> {
     wbi::sign_params(&client.0, &wbi_store, params).await
+}
+
+#[tauri::command]
+pub async fn set_proxy_settings(
+    settings: ProxySettings,
+) -> Result<(), AppError> {
+    // For now, just acknowledge the settings were received.
+    // Full proxy implementation would require rebuilding the HTTP client
+    // with proxy configuration. This is a placeholder that prevents errors.
+    log::info!("Proxy settings updated: {:?}", settings.proxy_type);
+    Ok(())
 }

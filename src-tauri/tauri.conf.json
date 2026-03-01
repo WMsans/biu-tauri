@@ -27,6 +27,6 @@
   "bundle": {
     "active": true,
     "targets": "all",
-    "icon": ["../electron/icons/logo.png", "../electron/icons/win/logo.ico"]
+    "icon": ["icons/icon.png"]
   }
 }

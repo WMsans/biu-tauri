@@ -30,7 +30,9 @@ const PlayListDrawer = () => {
 
   const playItem = useMemo(() => list.find(item => item.id === playId), [list, playId]);
   const pureList = useMemo(() => {
-    return uniqBy(list, item => item.bvid);
+    return uniqBy(list, item =>
+      item.source === "local" ? `local:${item.id}` : item.type === "mv" ? `mv:${item.bvid}` : `audio:${item.sid}`,
+    );
   }, [list]);
 
   const handleAction = useCallback(async (key: string, item: PlayData) => {
@@ -84,7 +86,10 @@ const PlayListDrawer = () => {
       return;
     }
 
-    const targetIndex = pureList.findIndex(item => isSame(playItem, item));
+    const targetIndex =
+      playItem?.source === "local"
+        ? pureList.findIndex(item => item.id === playItem.id)
+        : pureList.findIndex(item => isSame(playItem, item));
     if (targetIndex < 0) {
       addToast({ title: "未在列表中找到当前播放的歌曲", color: "warning" });
       return;
@@ -109,7 +114,7 @@ const PlayListDrawer = () => {
   return (
     <Drawer
       radius="md"
-      shadow="lg"
+      shadow="md"
       backdrop="transparent"
       size="sm"
       hideCloseButton
@@ -124,7 +129,9 @@ const PlayListDrawer = () => {
     >
       <DrawerContent>
         <DrawerHeader className="border-divider/40 flex flex-row items-center justify-between space-x-2 border-b px-4 py-3">
-          <h3>播放列表</h3>
+          <h3>
+            播放列表<span className="text-default-500 text-sm">({pureList?.length || 0})</span>
+          </h3>
           <div className="flex items-center">
             {Boolean(pureList?.length) && (
               <>
@@ -149,7 +156,7 @@ const PlayListDrawer = () => {
                 <ListItem
                   data={item}
                   isLogin={Boolean(user?.isLogin)}
-                  isPlaying={isSame(playItem, item)}
+                  isPlaying={playItem?.source === "local" ? playItem?.id === item.id : isSame(playItem, item)}
                   onClose={() => setOpen(false)}
                   onPress={() => playListItem(item.id)}
                   onAction={key => handleAction(key, item)}

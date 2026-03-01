@@ -249,6 +249,7 @@ export const SystemSettingsTab = ({
             name="audioQuality"
             render={({ field }) => (
               <Select
+                disallowEmptySelection
                 aria-label="音质偏好"
                 selectedKeys={field.value ? new Set([field.value]) : new Set()}
                 onSelectionChange={keys => {
@@ -265,6 +266,18 @@ export const SystemSettingsTab = ({
             )}
           />
         </div>
+      </div>
+      {/* 播放记录上报 */}
+      <div className="flex w-full items-center justify-between">
+        <div className="mr-6 space-y-1">
+          <div className="text-medium font-medium">上报本机播放记录</div>
+          <div className="text-sm text-zinc-500">将播放进度同步到Bilibili服务器</div>
+        </div>
+        <Controller
+          control={control}
+          name="reportPlayHistory"
+          render={({ field }) => <Switch disableAnimation isSelected={field.value} onValueChange={field.onChange} />}
+        />
       </div>
 
       <Divider />
@@ -385,9 +398,7 @@ export const SystemSettingsTab = ({
             </>
           )}
         </div>
-        <div className="flex w-[64px] justify-end">
-          <UpdateCheckButton />
-        </div>
+        <UpdateCheckButton />
       </div>
       <ImportExport />
     </Form>

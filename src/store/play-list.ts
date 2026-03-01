@@ -60,6 +60,8 @@ export interface PlayData {
   isLossless?: boolean;
   /** 是否为杜比音频 */
   isDolby?: boolean;
+  /** 来源 */
+  source?: "local" | "online";
 }
 
 interface State {
@@ -89,6 +91,9 @@ interface State {
 
 export interface PlayItem {
   type: PlayDataType;
+  id?: string;
+  source?: "local" | "online";
+  audioUrl?: string;
   title: string;
   bvid?: string;
   sid?: number;
@@ -250,17 +255,23 @@ const updatePositionState = () => {
 };
 
 export const isSame = (
-  item1?: { type: "mv" | "audio"; sid?: number; bvid?: string },
-  item2?: { type: "mv" | "audio"; sid?: number; bvid?: string },
+  item1?: { type: "mv" | "audio"; sid?: number; bvid?: string; source?: "local" | "online"; id?: string },
+  item2?: { type: "mv" | "audio"; sid?: number; bvid?: string; source?: "local" | "online"; id?: string },
 ) => {
-  if (!item1 || !item2 || item1.type !== item2.type) {
+  if (!item1 || !item2) {
+    return false;
+  }
+  if (item1.source === "local" || item2.source === "local") {
+    return Boolean(item1.id) && Boolean(item2.id) && item1.id === item2.id;
+  }
+  if (item1.type !== item2.type) {
     return false;
   }
   if (item1.type === "mv") {
-    return item1.bvid === item2.bvid;
+    return Boolean(item1.bvid) && Boolean(item2.bvid) && item1.bvid === item2.bvid;
   }
   if (item1.type === "audio") {
-    return item1.sid === item2.sid;
+    return item1.sid !== undefined && item2.sid !== undefined && item1.sid === item2.sid;
   }
   return false;
 };
@@ -269,7 +280,9 @@ const getProxyUrl = (url: string, referer: string, port: number) => {
   if (!url || !port) return url;
   return `http://127.0.0.1:${port}/?url=${encodeURIComponent(url)}&referer=${encodeURIComponent(referer)}`;
 };
-const isMvItem = (item?: { type: PlayDataType }) => item?.type === "mv";
+
+const shouldReportPlayRecord = (item?: { type: PlayDataType; source?: "local" | "online" }) =>
+  item?.type === "mv" && item?.source !== "local";
 
 export const usePlayList = create<State & Action>()(
   persist(
@@ -277,6 +290,18 @@ export const usePlayList = create<State & Action>()(
       const ensureAudioSrcValid = async () => {
         const { playId, list, proxyPort } = get();
         const currentPlayItem = list.find(item => item.id === playId);
+
+        // Handle local music files (no proxy needed)
+        if (currentPlayItem?.source === "local" && currentPlayItem?.audioUrl) {
+          if (audio.src !== currentPlayItem.audioUrl) {
+            audio.src = currentPlayItem.audioUrl;
+          }
+          const currentTime = usePlayProgress.getState().currentTime;
+          if (typeof currentTime === "number" && currentTime > 0) {
+            audio.currentTime = currentTime;
+          }
+          return;
+        }
 
         // Decide the referer based on item type
         const referer = currentPlayItem?.bvid
@@ -383,7 +408,7 @@ export const usePlayList = create<State & Action>()(
               const currentTime = Math.round(audio.currentTime * 100) / 100;
               usePlayProgress.getState().setCurrentTime(currentTime);
               const playItem = get().getPlayItem?.();
-              if (isMvItem(playItem)) {
+              if (shouldReportPlayRecord(playItem)) {
                 void reportHeartbeat(playItem, currentTime, audio.duration, 0);
               }
             };
@@ -401,7 +426,7 @@ export const usePlayList = create<State & Action>()(
               updatePlaybackState();
               updatePositionState();
               const playItem = get().getPlayItem?.();
-              if (isMvItem(playItem)) {
+              if (shouldReportPlayRecord(playItem)) {
                 void reportHeartbeat(playItem, audio.currentTime, audio.duration, 1);
               }
             };
@@ -411,7 +436,7 @@ export const usePlayList = create<State & Action>()(
               updatePlaybackState();
               updatePositionState();
               const playItem = get().getPlayItem?.();
-              if (isMvItem(playItem)) {
+              if (shouldReportPlayRecord(playItem)) {
                 void reportHeartbeat(playItem, audio.currentTime, audio.duration, 2);
               }
             };
@@ -422,7 +447,7 @@ export const usePlayList = create<State & Action>()(
               }
 
               const playItem = get().getPlayItem?.();
-              if (isMvItem(playItem)) {
+              if (shouldReportPlayRecord(playItem)) {
                 void reportHeartbeat(playItem, audio.duration, audio.duration, 4);
                 endPlayReport();
               }
@@ -554,13 +579,14 @@ export const usePlayList = create<State & Action>()(
         setShouldKeepPagesOrderInRandomPlayMode: shouldKeep => {
           set({ shouldKeepPagesOrderInRandomPlayMode: shouldKeep });
         },
-        play: async ({ type, bvid, sid, title, cover, ownerName, ownerMid }: PlayItem) => {
+        play: async ({ type, bvid, sid, title, cover, ownerName, ownerMid, id, source, audioUrl }: PlayItem) => {
           const { list, playId } = get();
           const currentItem = list?.find(item => item.id === playId);
           const sanitizedTitle = sanitizeTitle(title);
+          const candidate = { type, bvid, sid, source, id };
 
           // 当前正在播放，如果暂停了则播放
-          if (isSame(currentItem, { type, bvid, sid })) {
+          if (isSame(currentItem, candidate)) {
             if (audio.paused) {
               await ensureAudioSrcValid();
               await playAudioSafely();
@@ -569,27 +595,45 @@ export const usePlayList = create<State & Action>()(
           }
 
           // 列表已存在
-          const existItem = list?.find(item => isSame(item, { type, bvid, sid }));
+          const existItem = list?.find(item => isSame(item, candidate));
           if (existItem) {
             set({ playId: existItem.id });
+            try {
+              await ensureAudioSrcValid();
+              await playAudioSafely();
+            } catch (error) {
+              handlePlayError(error);
+            }
             return;
           }
 
+          const isLocal = source === "local";
           // 新添加项
-          let playItem: PlayData[] = [
-            {
-              id: idGenerator(),
-              type,
-              bvid,
-              sid,
-              title: sanitizedTitle,
-              cover: cover ? formatUrlProtocol(cover) : undefined,
-              ownerName,
-              ownerMid,
-            },
-          ];
+          let playItem: PlayData[] =
+            isLocal && id
+              ? [
+                  {
+                    id,
+                    type,
+                    source,
+                    audioUrl,
+                    title: sanitizedTitle,
+                  },
+                ]
+              : [
+                  {
+                    id: idGenerator(),
+                    type,
+                    bvid,
+                    sid,
+                    title: sanitizedTitle,
+                    cover: cover ? formatUrlProtocol(cover) : undefined,
+                    ownerName,
+                    ownerMid,
+                  },
+                ];
           // 补充缺失信息
-          if (!cover || !ownerName || !ownerMid) {
+          if (!isLocal && (!cover || !ownerName || !ownerMid)) {
             if (type === "mv" && bvid) {
               playItem = await getMVData(bvid);
             }
@@ -626,12 +670,12 @@ export const usePlayList = create<State & Action>()(
           const newList = items.map(item => ({
             ...item,
             title: sanitizeTitle(item.title),
-            id: idGenerator(),
+            id: item.source === "local" && item.id ? item.id : idGenerator(),
           }));
 
           set(state => {
-            state.playId = newList[0].id;
             state.list = newList;
+            state.playId = newList[0].id;
           });
         },
         next: async () => {
@@ -724,25 +768,26 @@ export const usePlayList = create<State & Action>()(
             state.playId = list[prevIndex].id;
           });
         },
-        addToNext: async ({ type, title, bvid, sid, cover, ownerName, ownerMid }) => {
+        addToNext: async ({ type, title, bvid, sid, cover, ownerName, ownerMid, id, source, audioUrl }) => {
           const { playId, nextId: currentNextId, list } = get();
           const currentItem = list.find(item => item.id === playId);
           const sanitizedTitle = sanitizeTitle(title);
+          const candidate = { type, bvid, sid, source, id };
           // 如果当前正在播放，则不添加
-          if (isSame({ type, bvid, sid }, currentItem)) {
+          if (isSame(candidate, currentItem)) {
             return;
           }
 
           // 如果下一首就是要添加的，则不添加
           if (currentNextId) {
             const currentNextItem = list.find(item => item.id === currentNextId);
-            if (isSame({ type, bvid, sid }, currentNextItem)) {
+            if (isSame(candidate, currentNextItem)) {
               return;
             }
           }
 
           // 列表已存在
-          const existItemIndex = list?.findIndex(item => isSame(item, { type, bvid, sid })) ?? -1;
+          const existItemIndex = list?.findIndex(item => isSame(item, candidate)) ?? -1;
           if (existItemIndex !== -1) {
             set(state => {
               state.nextId = list[existItemIndex].id;
@@ -756,19 +801,35 @@ export const usePlayList = create<State & Action>()(
             return;
           }
 
-          let nextPlayItem: PlayData[] = [
-            {
-              id: idGenerator(),
-              type,
-              bvid,
-              sid,
-              title: sanitizedTitle,
-              cover: cover ? formatUrlProtocol(cover) : undefined,
-              ownerName,
-              ownerMid,
-            },
-          ];
-          if (!cover || !ownerName || !ownerMid) {
+          let nextPlayItem: PlayData[] =
+            source === "local" && id
+              ? [
+                  {
+                    id,
+                    type,
+                    bvid,
+                    sid,
+                    source,
+                    audioUrl,
+                    title: sanitizedTitle,
+                    cover: cover ? formatUrlProtocol(cover) : undefined,
+                    ownerName,
+                    ownerMid,
+                  },
+                ]
+              : [
+                  {
+                    id: idGenerator(),
+                    type,
+                    bvid,
+                    sid,
+                    title: sanitizedTitle,
+                    cover: cover ? formatUrlProtocol(cover) : undefined,
+                    ownerName,
+                    ownerMid,
+                  },
+                ];
+          if (source !== "local" && (!cover || !ownerName || !ownerMid)) {
             if (type === "mv" && bvid) {
               nextPlayItem = await getMVData(bvid);
             }
@@ -804,7 +865,9 @@ export const usePlayList = create<State & Action>()(
 
           // 当前播放的是视频，找到最后一个分集的索引，插入到其后面
           if (currentItem?.type === "mv") {
-            const currentMVLastPageIndex = list.findLastIndex(item => item.bvid === currentItem.bvid);
+            const currentMVLastPageIndex = list.findLastIndex(item =>
+              isSame(item, { type: "mv", bvid: currentItem.bvid }),
+            );
             set(state => {
               state.nextId = nextId;
               state.list.splice(currentMVLastPageIndex + 1, 0, ...nextPlayItem);
@@ -820,35 +883,25 @@ export const usePlayList = create<State & Action>()(
 
           const currentItem = list.find(item => item.id === playId);
 
-          const newItemIdentifiers = new Set(
-            items.map(item => (item.type === "mv" ? `mv:${item.bvid}` : `audio:${item.sid}`)),
-          );
-
-          const cleanList = list.filter(item => {
-            // 如果是当前播放的，保留
-            if (item.id === playId) {
-              return true;
-            }
-            const identifier = item.type === "mv" ? `mv:${item.bvid}` : `audio:${item.sid}`;
-            return !newItemIdentifiers.has(identifier);
-          });
-
           const paddingItems = items
             .filter(item => {
-              // 如果是当前播放的，不添加（因为已经保留在 cleanList 中）
               if (currentItem && isSame(item, currentItem)) {
                 return false;
               }
-              return true;
+              return !list.some(existing => isSame(existing, item));
             })
             .map(item => ({
               ...item,
               title: sanitizeTitle(item.title),
-              id: idGenerator(),
+              id: item.source === "local" && item.id ? item.id : idGenerator(),
             }));
 
+          if (paddingItems.length === 0) {
+            return;
+          }
+
           set({
-            list: [...cleanList, ...paddingItems],
+            list: [...list, ...paddingItems],
           });
         },
         delPage: async id => {
@@ -911,7 +964,7 @@ export const usePlayList = create<State & Action>()(
         },
         clear: () => {
           const currentPlayItem = get().getPlayItem?.();
-          if (isMvItem(currentPlayItem)) {
+          if (shouldReportPlayRecord(currentPlayItem)) {
             endPlayReport();
           }
           if (audio) {
@@ -1027,7 +1080,7 @@ usePlayList.subscribe(async (state, prevState) => {
   if (state.playId !== prevState.playId) {
     if (!state.playId) {
       const prevPlayItem = prevState.list.find(item => item.id === prevState.playId);
-      if (isMvItem(prevPlayItem)) {
+      if (shouldReportPlayRecord(prevPlayItem)) {
         endPlayReport();
       }
     }
@@ -1040,16 +1093,21 @@ usePlayList.subscribe(async (state, prevState) => {
     if (state.playId) {
       const playItem = state.list.find(item => item.id === state.playId);
       if (playItem) {
-        if (isMvItem(playItem)) {
+        if (shouldReportPlayRecord(playItem)) {
           void beginPlayReport(playItem);
         }
       }
 
-      // Fix: Calculate referer for the current item
+      // Handle local music files (no proxy needed)
+      if (playItem?.source === "local" && playItem?.audioUrl && audio.paused) {
+        resetAudioAndPlay(playItem.audioUrl, "");
+        return;
+      }
+
+      // Calculate referer for the current item
       const referer = playItem?.bvid ? `https://www.bilibili.com/video/${playItem.bvid}` : "https://www.bilibili.com/";
 
       if (isUrlValid(playItem?.audioUrl) && audio.paused && !state.isPlaying) {
-        // Fix: Pass referer
         resetAudioAndPlay(playItem.audioUrl!, referer);
         return;
       }

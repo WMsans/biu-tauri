@@ -174,4 +174,15 @@ export const tauriAdapter: any = {
       unlistenLeave();
     };
   },
+
+  // Local Music
+  scanLocalMusic: (dirs: string[]) => invoke("scan_local_music", { dirs }),
+  deleteLocalMusicFile: (path: string) => invoke("delete_local_music_file", { path }),
+
+  // Proxy Settings
+  setProxySettings: (settings: ProxySettings) => invoke("set_proxy_settings", { settings }),
+
+  // Dev utilities
+  isDev: () => Promise.resolve(import.meta.env.DEV),
+  toggleDevTools: () => invoke("toggle_dev_tools").catch(() => {}),
 };

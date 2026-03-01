@@ -30,6 +30,7 @@ const UpdateCheckButton = () => {
     } else {
       addToast({
         title: "当前版本为最新版本",
+        color: "success",
       });
     }
   };

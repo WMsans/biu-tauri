@@ -32,6 +32,7 @@ const useSystemSettingsForm = () => {
     pageTransition,
     showSearchHistory,
     proxySettings,
+    reportPlayHistory,
   } = useSettings(
     useShallow(s => ({
       fontFamily: s.fontFamily,
@@ -49,6 +50,7 @@ const useSystemSettingsForm = () => {
       pageTransition: s.pageTransition,
       showSearchHistory: s.showSearchHistory,
       proxySettings: s.proxySettings,
+      reportPlayHistory: s.reportPlayHistory,
     })),
   );
   const updateSettings = useSettings(s => s.update);
@@ -82,6 +84,7 @@ const useSystemSettingsForm = () => {
         username: "",
         password: "",
       },
+      reportPlayHistory,
     },
   });
 
@@ -90,8 +93,8 @@ const useSystemSettingsForm = () => {
       if (!name) return;
       const patch = { [name]: (values as any)[name] } as Partial<AppSettings>;
       updateSettings(patch);
-      if (name === "proxySettings" && values.proxySettings && window.electron?.setProxySettings) {
-        window.electron.setProxySettings(values.proxySettings as ProxySettings);
+      if (name === "proxySettings" && values.proxySettings) {
+        tauriAdapter.setProxySettings(values.proxySettings as ProxySettings);
       }
     });
     return () => subscription.unsubscribe();

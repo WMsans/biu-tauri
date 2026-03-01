@@ -12,7 +12,7 @@ import VirtualPageList from "@/components/virtual-page-list";
 import { usePlayList } from "@/store/play-list";
 import { useSettings } from "@/store/settings";
 
-import { getContextMenus } from "./menu";
+import { getContextMenus } from "../collections/menu";
 
 export interface SeriesListProps {
   data: Media[];
@@ -20,9 +20,19 @@ export interface SeriesListProps {
   className?: string;
   getScrollElement: () => HTMLElement | null;
   onMenuAction: (key: string, item: Media) => void;
+  onLoadMore?: () => void;
+  hasMore?: boolean;
 }
 
-const SeriesList = ({ data, loading, className, getScrollElement, onMenuAction }: SeriesListProps) => {
+const SeriesList = ({
+  data,
+  loading,
+  className,
+  getScrollElement,
+  onMenuAction,
+  onLoadMore,
+  hasMore,
+}: SeriesListProps) => {
   const displayMode = useSettings(state => state.displayMode);
   const isCompact = displayMode === "compact";
 
@@ -56,7 +66,8 @@ const SeriesList = ({ data, loading, className, getScrollElement, onMenuAction }
         items={data}
         rowHeight={isCompact ? 36 : 64}
         getScrollElement={getScrollElement}
-        hasMore={false}
+        hasMore={hasMore}
+        onLoadMore={onLoadMore}
         loading={loading}
         renderItem={(item, index) => {
           return (
@@ -68,8 +79,6 @@ const SeriesList = ({ data, loading, className, getScrollElement, onMenuAction }
               sid={item.id}
               title={item.title}
               cover={item.cover}
-              upName={item.upper?.name}
-              upMid={item.upper?.mid}
               playCount={item.cnt_info?.play}
               duration={item.duration}
               pubTime={formatSecondsToDate(item.pubtime)}

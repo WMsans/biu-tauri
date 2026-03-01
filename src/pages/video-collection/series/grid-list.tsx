@@ -9,7 +9,7 @@ import MusicCard from "@/components/music-card";
 import VirtualGridPageList from "@/components/virtual-grid-page-list";
 import { usePlayList } from "@/store/play-list";
 
-import { getContextMenus } from "./menu";
+import { getContextMenus } from "../collections/menu";
 
 export interface SeriesGridListProps {
   data: Media[];
@@ -17,9 +17,19 @@ export interface SeriesGridListProps {
   className?: string;
   getScrollElement: () => HTMLElement | null;
   onMenuAction: (key: string, item: Media) => void;
+  onLoadMore?: () => void;
+  hasMore?: boolean;
 }
 
-const SeriesGridList = ({ data, loading, className, getScrollElement, onMenuAction }: SeriesGridListProps) => {
+const SeriesGridList = ({
+  data,
+  loading = false,
+  className,
+  getScrollElement,
+  onMenuAction,
+  onLoadMore,
+  hasMore,
+}: SeriesGridListProps) => {
   const renderGridItem = useCallback(
     (item: Media) => {
       return (
@@ -71,8 +81,9 @@ const SeriesGridList = ({ data, loading, className, getScrollElement, onMenuActi
       renderItem={renderGridItem}
       getScrollElement={getScrollElement}
       className={className}
-      hasMore={false}
-      loading={false}
+      hasMore={hasMore}
+      onLoadMore={onLoadMore}
+      loading={loading}
     />
   );
 };

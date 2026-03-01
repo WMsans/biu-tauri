@@ -46,6 +46,7 @@ uuid = { version = "1.19.0", features = ["v4", "fast-rng"] }
 thiserror = "2.0.17"
 anyhow = "1.0.100"
 md5 = "0.8.0"
+lofty = "0.22"
 reqwest_cookie_store = "0.9.0"
 tauri-plugin-single-instance = "2.3.6"
 tauri-plugin-global-shortcut = "2.3.1"

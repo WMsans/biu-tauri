@@ -2,6 +2,16 @@ declare global {
   type AppPlatForm = "macos" | "windows" | "linux";
 
   type StoreName = keyof StoreDataMap;
+  interface LocalMusicItem {
+    id: string;
+    path: string;
+    dir: string;
+    title: string;
+    size: number;
+    format: string;
+    duration?: number;
+    createdTime?: number;
+  }
 
   interface ElectronAPI {
     /** 获取指定name的存储值 */
@@ -11,7 +21,7 @@ declare global {
     /** 清除指定name的存储值 */
     clearStore: (name: StoreName) => Promise<void>;
     /** 打开系统目录选择对话框，返回选中的目录路径 */
-    selectDirectory: () => Promise<string | null>;
+    selectDirectory: (title?: string) => Promise<string | null>;
     /** 显示指定路径的文件 */
     showFileInFolder: (filePath: string) => Promise<boolean>;
     /** 打开系统文件选择对话框，返回选中的文件路径 */
@@ -104,10 +114,14 @@ declare global {
     retryMediaDownloadTask: (id: string) => Promise<void>;
     /** 清除下载任务列表 */
     clearMediaDownloadTaskList: () => Promise<void>;
+    /** 扫描本地音乐文件 */
+    scanLocalMusic: (dirs: string[]) => Promise<LocalMusicItem[]>;
+    /** 删除本地音乐文件 */
+    deleteLocalMusicFile: (filePath: string) => Promise<boolean>;
   }
 
   interface Window {
-    electron: ElectronAPI;
+    electron?: ElectronAPI;
   }
 }
 
